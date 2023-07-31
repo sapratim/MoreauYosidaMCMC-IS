@@ -9,9 +9,9 @@ target_val <- function(x)
   return(u)
 }
 
-proxfunc <- function(x, y)
+proxfunc <- function(x, y, mu)
 {
-  z <- abs(y) + ((x-y)^2)/2   # proximal function
+  z <- abs(y) + ((x-y)^2)/(2*mu)   # proximal function
   return(z)
 }
 
@@ -25,14 +25,14 @@ px.mala <- function(in_val, iter, lambda, delta)
   for (i in 2:iter) 
   {
     ifelse(in_val + lambda < 0, dummy.in <- in_val + lambda, dummy.in <- in_val - lambda)
-    val0.in <- proxfunc(in_val, 0)
-    valdummy.in <- proxfunc(in_val, dummy.in)
+    val0.in <- proxfunc(in_val, 0, lambda)
+    valdummy.in <- proxfunc(in_val, dummy.in, lambda)
     ifelse(val0.in < valdummy.in, prox.in <- 0, prox.in <- dummy.in)
     propval <- (1 - frac)*in_val + frac*prox.in + sqrt(delta)*noise[i]   # proposal step
     
     ifelse(propval + lambda < 0, dummy.prop <- propval + lambda, dummy.prop <- propval - lambda)
-    val0.prop <- proxfunc(propval, 0)
-    valdummy.prop <- proxfunc(propval, dummy.prop)
+    val0.prop <- proxfunc(propval, 0, lambda)
+    valdummy.prop <- proxfunc(propval, dummy.prop, lambda)
     ifelse(val0.prop < valdummy.prop, prox.prop <- 0, prox.prop <- dummy.prop)
     mh.ratio <- (target_val(propval)*dnorm(in_val, (1 - frac)*propval + frac*prox.prop, delta)) /
            (target_val(in_val)*dnorm(propval, (1 - frac)*in_val + frac*prox.in, delta))
