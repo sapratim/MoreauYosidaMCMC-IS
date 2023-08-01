@@ -1,42 +1,46 @@
 
- ## Code for Px-MALA and Px-Barker algorithms with standard Laplace target
+## Code for Px-MALA and Px-Barker algorithms with standard Laplace target
 
 library(extraDistr)
 
 target_val <- function(x)
 {
-  u <- dlaplace(x, 0, 1)
+  u <- dlaplace(x, 0, 1, log = TRUE)
   return(u)
 }
 
-proxfunc <- function(x, y, mu)
+prox_arg <- function(x, y, mu)
 {
   z <- abs(y) + ((x-y)^2)/(2*mu)   # proximal function
   return(z)
 }
 
+prox_func <- function(val, mu)
+{
+  vec <- c(0, val - mu, val + mu)
+  fun.val <- prox_arg(val, vec, mu)
+  index <- which.min(fun.val)
+  prox <- vec[index]
+  return(prox)
+}
+
+log_gradpi <- function(val, mu)
+{
+  gradval <- - (val - prox_func(val, mu)) / mu 
+  return(gradval)
+}
+
 px.mala <- function(in_val, iter, lambda, delta)
   {
-  frac <- delta / 2*lambda
-  noise <- rnorm(iter, 0, delta)
   samp.pxm <- numeric(length = iter)
   samp.pxm[1] <- in_val
   
   for (i in 2:iter) 
   {
-    ifelse(in_val + lambda < 0, dummy.in <- in_val + lambda, dummy.in <- in_val - lambda)
-    val0.in <- proxfunc(in_val, 0, lambda)
-    valdummy.in <- proxfunc(in_val, dummy.in, lambda)
-    ifelse(val0.in < valdummy.in, prox.in <- 0, prox.in <- dummy.in)
-    propval <- (1 - frac)*in_val + frac*prox.in + sqrt(delta)*noise[i]   # proposal step
-    
-    ifelse(propval + lambda < 0, dummy.prop <- propval + lambda, dummy.prop <- propval - lambda)
-    val0.prop <- proxfunc(propval, 0, lambda)
-    valdummy.prop <- proxfunc(propval, dummy.prop, lambda)
-    ifelse(val0.prop < valdummy.prop, prox.prop <- 0, prox.prop <- dummy.prop)
-    mh.ratio <- (target_val(propval)*dnorm(in_val, (1 - frac)*propval + frac*prox.prop, delta)) /
-           (target_val(in_val)*dnorm(propval, (1 - frac)*in_val + frac*prox.in, delta))
-      if(runif(1) <= mh.ratio)
+    propval <- rnorm(1, in_val + (delta / 2)*log_gradpi(in_val, lambda), sqrt(delta))   # proposal step
+    mh.ratio <- target_val(propval) + dnorm(in_val, propval + (delta / 2)*log_gradpi(propval, lambda), delta, log = TRUE) - 
+           target_val(in_val) - dnorm(propval, in_val + (delta / 2)*log_gradpi(in_val, lambda), delta, log = TRUE)
+      if(log(runif(1)) <= mh.ratio)
       {
         samp.pxm[i] <- propval
       }
@@ -50,9 +54,9 @@ px.mala <- function(in_val, iter, lambda, delta)
 }
 
 iter <- 1e5
-in_val <- 5
-lambda.vec <- c(1, 0.1, 0.01, 0.001)
+in_val <- 1
 delta.vec <- rep(1, 4)
+lambda.vec <- c(1, 0.5, 0.005, 0.00001)
 
 plot(density(sample <- rlaplace(1e5, 0, 1)), xlab = "values",
      ylab = "density", main = "Proximal MALA for standard Laplace", col = "black")
@@ -63,3 +67,16 @@ lines(density(samp.l4 <- px.mala(in_val, iter, lambda.vec[4], delta.vec[4])) ,co
 legend("topright", c("Truth", "lambda = 1", "lambda = 0.1", "lambda = 0.01", "lambda = 0.001"),
    col = c("black", "blue", "green", "orange", "red"), fill = c("black", "blue", "green", "orange", "red"))
 
+# acf plots
+par(mfrow = c(2,2))
+acf(samp.l1)
+acf(samp.l2)
+acf(samp.l3)
+acf(samp.l4)
+
+# Trace plots
+par(mfrow = c(2,2))
+plot.ts(samp.l1)
+plot.ts(samp.l2)
+plot.ts(samp.l3)
+plot.ts(samp.l4)

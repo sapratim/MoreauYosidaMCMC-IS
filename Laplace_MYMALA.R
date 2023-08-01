@@ -84,4 +84,3 @@ acf(samp.l1)
 acf(samp.l2)
 acf(samp.l3)
 acf(samp.l4)
-
