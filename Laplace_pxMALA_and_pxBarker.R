@@ -81,8 +81,6 @@ px.barker <- function(in_val, iter, lambda, delta)
     propval <- bark.prop(in_val, delta, lambda)
     mh.ratio <- target_val(propval) + log(bark.dens(propval, in_val, delta, lambda)) - target_val(in_val) -
                     log(bark.dens(in_val, propval, delta, lambda))
-    #print(exp(target_val(propval))) 
-    #print(exp(target_val(in_val)))
     if(log(runif(1)) <= mh.ratio)
     {
       samp.bark[i] <- propval
@@ -99,7 +97,7 @@ px.barker <- function(in_val, iter, lambda, delta)
 
 iter <- 1e5
 in_val <- 1
-delta <- 1
+delta <- 0.25
 lambda.vec <- c(1, 0.5, 0.005, 0.00001)
 
 #  PxMALA samples 
