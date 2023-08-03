@@ -44,11 +44,10 @@ bark.dens <- function(in_val, propval, delta, lambda)
   return(value)
 }
   
-px.mala <- function(in_val, iter, lambda, delta)
+mymala <- function(in_val, iter, lambda, delta)
 {
   samp.pxm <- numeric(length = iter)
   samp.pxm[1] <- in_val
-  
   for (i in 2:iter) 
   {
     propval <- rnorm(1, in_val + (delta / 2)*log_gradpi(in_val, lambda), sqrt(delta))   # proposal step
@@ -69,7 +68,7 @@ px.mala <- function(in_val, iter, lambda, delta)
   return(samp.pxm)
 }
 
-px.barker <- function(in_val, iter, lambda, delta)
+mybarker <- function(in_val, iter, lambda, delta)
 {
   samp.bark <- numeric(length = iter)
   samp.bark[1] <- in_val
@@ -97,23 +96,23 @@ px.barker <- function(in_val, iter, lambda, delta)
 
 iter <- 1e5
 in_val <- 1
-delta <- 1
+delta <- 0.1
 lambda.vec <- c(1, 0.5, 0.005, 0.00001)
 
 #  MYMALA samples 
 
-mala.l1 <- px.mala(in_val, iter, lambda.vec[1], delta)
-mala.l2 <- px.mala(in_val, iter, lambda.vec[2], delta)
-mala.l3 <- px.mala(in_val, iter, lambda.vec[3], delta)
-mala.l4 <- px.mala(in_val, iter, lambda.vec[4], delta)
+mala.l1 <- mymala(in_val, iter, lambda.vec[1], delta)
+mala.l2 <- mymala(in_val, iter, lambda.vec[2], delta)
+mala.l3 <- mymala(in_val, iter, lambda.vec[3], delta)
+mala.l4 <- mymala(in_val, iter, lambda.vec[4], delta)
 mala <- list(mala.l1, mala.l2, mala.l3, mala.l4)
 
 # MYBarker samples
 
-barker.l1 <- px.barker(in_val, iter, lambda.vec[1], delta)
-barker.l2 <- px.barker(in_val, iter, lambda.vec[2], delta)
-barker.l3 <- px.barker(in_val, iter, lambda.vec[3], delta)
-barker.l4 <- px.barker(in_val, iter, lambda.vec[4], delta)
+barker.l1 <- mybarker(in_val, iter, lambda.vec[1], delta)
+barker.l2 <- mybarker(in_val, iter, lambda.vec[2], delta)
+barker.l3 <- mybarker(in_val, iter, lambda.vec[3], delta)
+barker.l4 <- mybarker(in_val, iter, lambda.vec[4], delta)
 barker <- list(barker.l1, barker.l2, barker.l3, barker.l4)
 
 # Density plots
