@@ -48,6 +48,7 @@ mymala <- function(in_val, iter, lambda, delta)
 {
   samp.pxm <- numeric(length = iter)
   samp.pxm[1] <- in_val
+  accept <- 0
   for (i in 2:iter) 
   {
     propval <- rnorm(1, in_val + (delta / 2)*log_gradpi(in_val, lambda), sqrt(delta))   # proposal step
@@ -58,6 +59,7 @@ mymala <- function(in_val, iter, lambda, delta)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.pxm[i] <- propval
+      accept <- accept + 1
     }
     else
     {
@@ -65,6 +67,8 @@ mymala <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.pxm[i]
   }
+  acceptance <- accept / iter
+  print(paste("Acceptance rate is = ", acceptance))
   return(samp.pxm)
 }
 
@@ -72,7 +76,7 @@ mybarker <- function(in_val, iter, lambda, delta)
 {
   samp.bark <- numeric(length = iter)
   samp.bark[1] <- in_val
-  
+  accept <- 0
   for (i in 2:iter)
   {
     propval <- bark.prop(in_val, delta, lambda)
@@ -83,6 +87,7 @@ mybarker <- function(in_val, iter, lambda, delta)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.bark[i] <- propval
+      accept <- accept + 1
     }
     else
     {
@@ -90,13 +95,15 @@ mybarker <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.bark[i]
   }
+  acceptance <- accept / iter
+  print(paste("Acceptance rate is = ", acceptance))
   return(samp.bark)
 }
 
 
 iter <- 1e5
 in_val <- 1
-delta <- 0.1
+delta <- 4
 lambda.vec <- c(1, 0.5, 0.005, 0.00001)
 
 #  MYMALA samples 
