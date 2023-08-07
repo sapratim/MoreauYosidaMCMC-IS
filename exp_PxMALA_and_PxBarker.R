@@ -12,10 +12,13 @@ target_val <- function(x)
   return(u)
 }
 
-prox_arg <- function(x, y, mu)
+prox_func <- function(val, mu)
 {
-  z <- abs(y) + ((x-y)^2)/(2*mu)   # proximal function
-  return(z)
+  t <- sqrt(3)*sqrt((mu^3)*(27*mu*(val^2) + 1)) + 9*(mu^2)*val
+  numer <- (3^(1/3))*(t^(2/3)) - (3^(2/3))*mu
+  denom <- 6*mu*(t^(1/3))
+  prox <-  numer / denom   
+  return(prox)
 }
 
 prox_func <- function(val, mu)
