@@ -11,6 +11,13 @@ target_val <- function(x)
   u <- - x^4 - log(norm_const)
   return(u)
 }
+# function calculates the inside of the proximal function
+
+prox_arg <- function(x, y, mu)     # x is the current value
+{
+  z_x <-  y^4 + ((x-y)^2)/2*mu  
+  return(z_x)
+}
 
 prox_func <- function(val, mu)
 {
