@@ -28,15 +28,6 @@ prox_func <- function(val, mu)
   return(prox)
 }
 
-prox_func <- function(val, mu)
-{
-  vec <- c(0, val - mu, val + mu)
-  fun.val <- prox_arg(val, vec, mu)
-  index <- which.min(fun.val)
-  prox <- vec[index]
-  return(prox)
-}
-
 log_gradpi <- function(val, mu)
 {
   gradval <- - (val - prox_func(val, mu)) / mu 
