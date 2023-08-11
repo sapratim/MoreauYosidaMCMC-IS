@@ -184,7 +184,7 @@ par(mfrow = c(1,3))
 for (k in 1:3)
 {
   plot(density(sample <- rlaplace(1e5, 0, 1)), xlab = "values",
-       ylab = "density", main = bquote(delta == .(delta.vec[k])), col = "black") 
+       ylab = "density", main = bquote(h == .(delta.vec[k])), col = "black") 
   lines(density(as.numeric(unlist(mala.del[k]))) ,col = "blue")
   lines(density(as.numeric(unlist(barker.del[k]))) ,col = "red")
   legend("topright", c("Truth", "PxMALA", "PxBarker"), lty = 1,
