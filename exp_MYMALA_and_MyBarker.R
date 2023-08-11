@@ -100,64 +100,124 @@ mybarker <- function(in_val, iter, lambda, delta)
 
 iter <- 1e5
 in_val <- 1
-delta <- 1
-lambda.vec <- c(1, 0.5, 0.005, 0.00001)
+delta <- 2
+lambda.vec <- c(1, 0.00001)
+
+#  MYMALA samples 
 
 mala.l1 <- mymala(in_val, iter, lambda.vec[1], delta)
 mala.l2 <- mymala(in_val, iter, lambda.vec[2], delta)
-mala.l3 <- mymala(in_val, iter, lambda.vec[3], delta)
-mala.l4 <- mymala(in_val, iter, lambda.vec[4], delta)
-mala <- list(mala.l1, mala.l2, mala.l3, mala.l4)
+mala <- list(mala.l1, mala.l2)
 
+# MYBarker samples
 
 barker.l1 <- mybarker(in_val, iter, lambda.vec[1], delta)
 barker.l2 <- mybarker(in_val, iter, lambda.vec[2], delta)
-barker.l3 <- mybarker(in_val, iter, lambda.vec[3], delta)
-barker.l4 <- mybarker(in_val, iter, lambda.vec[4], delta)
-barker <- list(barker.l1, barker.l2, barker.l3, barker.l4)
+barker <- list(barker.l1, barker.l2)
 
+# Actual density shape
 sam <- seq(-4, 4, length = iter)
 den <- exp(-(sam^4)) / (2 * gamma(5/4))
 
+
 # Density plots
+pdf("plotexp_del2_MY.pdf", height = 6, width = 12)
+par(mfrow = c(1,2))
 
-par(mfrow = c(2,2))
-
-for (k in 1:4)
+for (k in 1:2)
 {
-  plot(sam, den, type = 'l', xlab = "values",
-       ylab = "density", main = paste("lambda = ", lambda.vec[k]), col = "black") 
+  plot(sam, den, type = 'l', xlab = "values", ylab = "density",
+       main = bquote(lambda == .(lambda.vec[k])), col = "black")
   lines(density(as.numeric(unlist(mala[k]))) ,col = "blue")
   lines(density(as.numeric(unlist(barker[k]))) ,col = "red")
-  legend("topright", c("Truth", "MYMALA", "MYBarker"),
-         col = c("black", "blue", "red"), cex = 0.5,fill = c("black", "blue", "red"))
+  legend("topright", c("Truth", "MYMALA", "MYBarker"), lty = 1,
+         col = c("black", "blue", "red"), cex = 1, bty = "n")
 }
 
 # acf plots
 
-par(mfrow = c(2,2))
+par(mfrow = c(1,2))
 
-for (k in 1:4)
+for (k in 1:2)
 {
   acf.mala <- acf(as.numeric(unlist(mala[k])), plot = FALSE)$acf
   acf.barker <- acf(as.numeric(unlist(barker[k])), plot = FALSE)$acf
   plot(1:length(acf.mala), acf.mala, col = "blue", type = 'l',
-       xlab = "Lag", ylab = "Autocorrelation", main = paste("ACF plot for lambda = ", lambda.vec[k]))
+       xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.25, 1))
   lines(1:length(acf.mala), acf.barker, col = "red", type = 'l')
-  legend("topright", c("Truth", "MYMALA", "MYBarker"),
-         col = c("black", "blue", "red"), cex = 0.5,fill = c("black", "blue", "red"))
+  legend("topright", c("Truth", "MYMALA", "MYBarker"), lty = 1,
+         col = c("black", "blue", "red"), cex = 1, bty = "n")
 }
 
 # Trace plots
 
-par(mfrow = c(2,2))
+par(mfrow = c(1,2))
 
-for (k in 1:4)
+for (k in 1:2)
 {
-  plot.ts(as.numeric(unlist(mala[k])), col = "blue", ylab = "sample values",
-          main = paste("Trace plot for lambda = ", lambda.vec[k]))
-  lines(as.numeric(unlist(barker[k])), col = "red")
-  legend("topright", c("Truth", "MYMALA", "MYBarker"),
-         col = c("black", "blue", "red"), cex = 0.5,fill = c("black", "blue", "red"))
+  plot.ts(as.numeric(unlist(barker[k])[1:1e3]), col = "red", ylab = "sample values",
+          ylim = c(-5, 5))
+  lines(as.numeric(unlist(mala[k])[1:1e3]), col = "blue")
+  legend("topright", c("MYMALA", "MYBarker"), lty =1,
+         col = c("blue", "red"), cex = 1, bty = "n")
+}
+dev.off()
+
+
+
+delta.vec <- c(10, 50, 100)
+
+mala.del1 <- mymala(in_val, iter, lambda.vec[2], delta.vec[1])
+mala.del2 <- mymala(in_val, iter, lambda.vec[2], delta.vec[2])
+mala.del3 <- mymala(in_val, iter, lambda.vec[2], delta.vec[3])
+mala.del <- list(mala.del1, mala.del2, mala.del3)
+
+barker.del1 <- mybarker(in_val, iter, lambda.vec[2], delta.vec[1])
+barker.del2 <- mybarker(in_val, iter, lambda.vec[2], delta.vec[2])
+barker.del3 <- mybarker(in_val, iter, lambda.vec[2], delta.vec[3])
+barker.del <- list(barker.del1, barker.del2, barker.del3)
+
+pdf("plotexp_lam_MY.pdf", height = 6, width = 15)
+
+# Density plots for varying delta
+
+par(mfrow = c(1,3))
+
+for (k in 1:3)
+{
+  plot(sam, den, type = 'l', xlab = "values", ylab = "density",
+       main = bquote(delta == .(delta.vec[k])), col = "black")
+  lines(density(as.numeric(unlist(mala.del[k]))) ,col = "blue")
+  lines(density(as.numeric(unlist(barker.del[k]))) ,col = "red")
+  legend("topright", c("Truth", "MYMALA", "MYBarker"), lty = 1,
+         col = c("black", "blue", "red"), cex = 1, bty = "n")
 }
 
+# acf plots
+
+par(mfrow = c(1,3))
+
+for (k in 1:3)
+{
+  acf.mala <- acf(as.numeric(unlist(mala.del[k])), plot = FALSE)$acf
+  acf.barker <- acf(as.numeric(unlist(barker.del[k])), plot = FALSE)$acf
+  plot(1:length(acf.mala), acf.mala, col = "blue", type = 'l',
+       xlab = "Lag", ylab = "Autocorrelation", ylim = c(- .05, 1))
+  lines(1:length(acf.mala), acf.barker, col = "red", type = 'l')
+  legend("topright", c("Truth", "MYMALA", "MYBarker"), lty = 1,
+         col = c("black", "blue", "red"), cex = 1, bty = "n")
+}
+
+# Trace plots for varying delta
+
+par(mfrow = c(1,3))
+
+for (k in 1:3)
+{
+  plot.ts(as.numeric(unlist(barker.del[k])[1:1e3]), col = "red", ylab = "sample values",
+          ylim = c(-5, 5))
+  lines(as.numeric(unlist(mala.del[k])[1:1e3]), col = "blue")
+  legend("topright", c("MYMALA", "MYBarker"), lty = 1,
+         col = c("blue", "red"), cex = 1, bty = "n")
+}
+dev.off()
