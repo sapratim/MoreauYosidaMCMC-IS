@@ -117,7 +117,7 @@ barker_alg <- function(delta, iter, in_val)
   
 iter <- 1e5
 in_val <- 1
-delta <- 10
+delta <- 2
 lambda.vec <- c(1, 0.00001)
 
 # PxBarker samples
@@ -160,8 +160,8 @@ for (k in 1:2)
   plot(1:length(acf.pxbarker), acf.pxbarker, col = "blue", type = 'l',
        xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
   lines(1:length(acf.pxbarker), acf.barker, col = "red", type = 'l')
-  legend("topright", c("Truth", "PxBarker", "Barker"), lty = 1,
-         col = c("black", "blue", "red"), cex = 1, bty = "n")
+  legend("topright", c("PxBarker", "Barker"), lty = 1,
+         col = c("blue", "red"), cex = 1, bty = "n")
 }
 
 # Trace plots
