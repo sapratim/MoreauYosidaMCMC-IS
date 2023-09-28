@@ -80,6 +80,7 @@ mymala <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.mym[i]
   }
+  print(accept/iter)
   object <- list(samp.mym, wts_is_est)
   return(object)
 }
@@ -105,6 +106,7 @@ px.mala <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.pxm[i]
   }
+  print(accept/iter)
   return(samp.pxm)
 }
 
@@ -129,35 +131,36 @@ px.barker <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.bark[i]
   }
+  print(accept/iter)
   return(samp.bark)
 }
 
 
 iter <- 1e4
 in_val <- 2
-delta <- 1
+delta <- c(2.8, 4, 255, 1275)
 lambda.vec <- c(0.1, 1, 100, 500)
 
 #  MYMALA samples and weights
 
-mala.l1 <- mymala(in_val, iter, lambda.vec[1], delta)
-mala.l2 <- mymala(in_val, iter, lambda.vec[2], delta)
-mala.l3 <- mymala(in_val, iter, lambda.vec[3], delta)
-mala.l4 <- mymala(in_val, iter, lambda.vec[4], delta)
+mala.l1 <- mymala(in_val, iter, lambda.vec[1], delta[1])
+mala.l2 <- mymala(in_val, iter, lambda.vec[2], delta[2])
+mala.l3 <- mymala(in_val, iter, lambda.vec[3], delta[3])
+mala.l4 <- mymala(in_val, iter, lambda.vec[4], delta[4])
 
 # PXMALA samples
 
-pxmala.l1 <- px.mala(in_val, iter, lambda.vec[1], delta)
-pxmala.l2 <- px.mala(in_val, iter, lambda.vec[1], delta)
-pxmala.l3 <- px.mala(in_val, iter, lambda.vec[1], delta)
-pxmala.l4 <- px.mala(in_val, iter, lambda.vec[1], delta)
+pxmala.l1 <- px.mala(in_val, iter, lambda.vec[1], delta[1])
+pxmala.l2 <- px.mala(in_val, iter, lambda.vec[2], delta[2])
+pxmala.l3 <- px.mala(in_val, iter, lambda.vec[3], delta[3])
+pxmala.l4 <- px.mala(in_val, iter, lambda.vec[4], delta[4])
 
 # PxBarker samples
 
-barker.l1 <- px.barker(in_val, iter, lambda.vec[1], delta)
-barker.l2 <- px.barker(in_val, iter, lambda.vec[1], delta)
-barker.l3 <- px.barker(in_val, iter, lambda.vec[1], delta)
-barker.l4 <- px.barker(in_val, iter, lambda.vec[1], delta)
+barker.l1 <- px.barker(in_val, iter, lambda.vec[1], delta[1])
+barker.l2 <- px.barker(in_val, iter, lambda.vec[2], delta[2])
+barker.l3 <- px.barker(in_val, iter, lambda.vec[3], delta[3])
+barker.l4 <- px.barker(in_val, iter, lambda.vec[4], delta[4])
 
 
 mala_samp <- list(mala.l1[1], mala.l2[1], mala.l3[1], mala.l4[1])
@@ -182,7 +185,7 @@ for (i in 1:length(lambda.vec))
    
    for (j in 1:length(samp))
     {
-       num <- sum(abs(sam_is[1:samp[j]])*weights[1:samp[j]])   
+       num <- sum(sam_is[1:samp[j]]*weights[1:samp[j]])   
        mean_mat.is[j, i] <- num / (sum(weights[1:samp[j]])) 
        mean_mat.pxm[j, i] <- mean(sam_pxm[1:samp[j]])
        mean_mat.bark[j, i] <- mean(sam_bark[1:samp[j]])
