@@ -80,7 +80,6 @@ mymala <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.mym[i]
   }
-  print(accept/iter)
   object <- list(samp.mym, wts_is_est)
   return(object)
 }
@@ -106,7 +105,6 @@ px.mala <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.pxm[i]
   }
-  print(accept/iter)
   return(samp.pxm)
 }
 
@@ -131,67 +129,65 @@ px.barker <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.bark[i]
   }
-  print(accept/iter)
   return(samp.bark)
 }
 
-
-iter <- 1e4
+iter <- 1e2
 in_val <- 2
-delta <- c(2.8, 4, 255, 1275)
 lambda.vec <- c(0.1, 1, 100, 500)
+delta_is <- c(2.8, 4, 255, 1275)
+delta_pxm <- c(2.8, 3.2, 1, 1)
+delta_bark <- c(5, 4.8, 1, 1)
 
-#  MYMALA samples and weights
+# Sample variance 
 
-mala.l1 <- mymala(in_val, iter, lambda.vec[1], delta[1])
-mala.l2 <- mymala(in_val, iter, lambda.vec[2], delta[2])
-mala.l3 <- mymala(in_val, iter, lambda.vec[3], delta[3])
-mala.l4 <- mymala(in_val, iter, lambda.vec[4], delta[4])
-
-# PXMALA samples
-
-pxmala.l1 <- px.mala(in_val, iter, lambda.vec[1], delta[1])
-pxmala.l2 <- px.mala(in_val, iter, lambda.vec[2], delta[2])
-pxmala.l3 <- px.mala(in_val, iter, lambda.vec[3], delta[3])
-pxmala.l4 <- px.mala(in_val, iter, lambda.vec[4], delta[4])
-
-# PxBarker samples
-
-barker.l1 <- px.barker(in_val, iter, lambda.vec[1], delta[1])
-barker.l2 <- px.barker(in_val, iter, lambda.vec[2], delta[2])
-barker.l3 <- px.barker(in_val, iter, lambda.vec[3], delta[3])
-barker.l4 <- px.barker(in_val, iter, lambda.vec[4], delta[4])
-
-
-mala_samp <- list(mala.l1[1], mala.l2[1], mala.l3[1], mala.l4[1])
-mala_wts <- list(mala.l1[2], mala.l2[2], mala.l3[2], mala.l4[2])
-pxm_samp <- list(pxmala.l1, pxmala.l2, pxmala.l3, pxmala.l4)
-barker_samp <- list(barker.l1, barker.l2, barker.l3, barker.l4)
-
-# sample size vector and mean matrix initialisation
-
-samp <- c(10, 1e2, 1e3, 1e4)
-mean_mat.is <- matrix(0, nrow = length(samp), ncol = length(lambda.vec))
-mean_mat.pxm <- matrix(0, nrow = length(samp), ncol = length(lambda.vec))
-mean_mat.bark <- matrix(0, nrow = length(samp), ncol = length(lambda.vec))
-
+reps <- 1e2
+augm_mat_is <- matrix(0, nrow = reps, ncol = length(lambda.vec))
+augm_mat_pxm <- matrix(0, nrow = reps, ncol = length(lambda.vec))
+augm_mat_pxb <- matrix(0, nrow = reps, ncol = length(lambda.vec))
 
 for (i in 1:length(lambda.vec)) 
   {
-   sam_is <- as.numeric(unlist(mala_samp[i]))
-   weights <- as.numeric(unlist(mala_wts[i]))
-   sam_pxm <- as.numeric(unlist(pxm_samp[i]))
-   sam_bark <- as.numeric(unlist(barker_samp[i]))
-   
-   for (j in 1:length(samp))
-    {
-       num <- sum(sam_is[1:samp[j]]*weights[1:samp[j]])   
-       mean_mat.is[j, i] <- num / (sum(weights[1:samp[j]])) 
-       mean_mat.pxm[j, i] <- mean(sam_pxm[1:samp[j]])
-       mean_mat.bark[j, i] <- mean(sam_bark[1:samp[j]])
-   }  
-}      
+   for (j in 1:reps)
+     {
+     mala.is <- mymala(in_val, iter, lambda.vec[i], delta_is[i])
+     px_mala <- px.mala(in_val, iter, lambda.vec[i], delta_pxm[i])
+     px_bark <- px.barker(in_val, iter, lambda.vec[i], delta_bark[i])
+     
+     is_samp <- as.numeric(unlist(mala.is[1]))
+     is_wts <- as.numeric(unlist(mala.is[2]))
+     num <- sum(is_samp*is_wts)
+     augm_mat_is[j, i] <- num / sum(is_wts) 
+     augm_mat_pxm[j, i] <- mean(as.numeric(unlist(px_mala)))
+     augm_mat_pxb[j, i] <- mean(as.numeric(unlist(px_bark)))
+     }
+  }
 
-mean_mat.is      
-mean_mat.pxm
-mean_mat.bark
+# matrix of second moments
+
+sqmat_is <- augm_mat_is^2
+sqmat_pxm <- augm_mat_pxm^2
+sqmat_pxb <- augm_mat_pxb^2
+
+# sum of matrix of second moments
+
+secmom_mat_is <- apply(sqmat_is, 2, sum)
+secmom_mat_pxm <- apply(sqmat_pxm, 2, sum)
+secmom_mat_pxb <- apply(sqmat_pxb, 2, sum)
+
+# mean square matrix of estimates
+
+meansq_mat_is <- colMeans(augm_mat_is)^2
+meansq_mat_pxm <- colMeans(augm_mat_pxm)^2
+meansq_mat_pxb <- colMeans(augm_mat_pxb)^2
+
+# sample variances
+
+samp_var.is <- (secmom_mat_is - reps*meansq_mat_is) / (reps - 1)
+samp_var.pxm <- (secmom_mat_pxm - reps*meansq_mat_pxm) / (reps - 1)
+samp_var.pxb <- (secmom_mat_pxb - reps*meansq_mat_pxb) / (reps - 1)
+
+var_mat <- rbind(samp_var.is, samp_var.pxm, samp_var.pxb)
+colnames(var_mat) <- c("lambda = 0.1", "lambda = 1", "lambda = 100", "lambda = 500")
+
+var_mat   # variance comparison
