@@ -132,7 +132,7 @@ px.barker <- function(in_val, iter, lambda, delta)
   return(samp.bark)
 }
 
-iter <- 1e2
+iter <- 1e4
 in_val <- 2
 lambda.vec <- c(0.1, 1, 100, 500)
 delta_is <- c(2.8, 4, 255, 1275)
