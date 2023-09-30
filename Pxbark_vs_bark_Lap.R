@@ -1,32 +1,31 @@
+## Code for PxBarker and Barker algorithms with standard Laplace target
 
-###########  PxBarker vs Barker for exp(-x^4)
+set.seed(123)
 library(mcmcse)
 library(extraDistr)
 
 target_val <- function(x)
 {
-  norm_const <- 2 * gamma(5/4)
-  u <- - x^4 - log(norm_const)
+  u <- dlaplace(x, 0, 1, log = TRUE)
   return(u)
 }
-# function calculates the inside of the proximal function
 
-prox_arg <- function(x, y, mu)     # x is the current value
+prox_arg <- function(x, y, mu)
 {
-  z_x <-  y^4 + ((x-y)^2)/2*mu  
-  return(z_x)
+  z <- abs(y) + ((x-y)^2)/(2*mu)   # proximal function
+  return(z)
 }
 
 prox_func <- function(val, mu)
 {
-  t <- sqrt(3)*sqrt((mu^3)*(27*mu*(val^2) + 1)) + 9*(mu^2)*val
-  numer <- (3^(1/3))*(t^(2/3)) - (3^(2/3))*mu
-  denom <- 6*mu*(t^(1/3))
-  prox <-  numer / denom   
+  vec <- c(0, val - mu, val + mu)
+  fun.val <- prox_arg(val, vec, mu)
+  index <- which.min(fun.val)
+  prox <- vec[index]
   return(prox)
 }
 
-log_gradpi <- function(val, mu)    #### gradient of the MY envelope
+log_gradpi <- function(val, mu)
 {
   gradval <- - (val - prox_func(val, mu)) / mu 
   return(gradval)
@@ -34,7 +33,7 @@ log_gradpi <- function(val, mu)    #### gradient of the MY envelope
 
 tru_log_gradpi <- function(p)
 {
-  grad <- - 4*(p^3)
+  grad <- - p / abs(p)
   return(grad)
 }
 
@@ -91,13 +90,13 @@ barker_alg <- function(delta, iter, in_val)
   U <- runif(iter)
   V <- runif(iter)
   for (i in 2:iter) 
-    {
+  {
     z <- err[i]
     prob <- 1 / (1 + exp(- z * tru_log_gradpi(in_val)))
     propval <- ifelse(U[i] < prob, in_val + z, in_val - z)
     ratio_prop = (1+exp((in_val - propval)*tru_log_gradpi(in_val))) /
-                  (1+exp((propval - in_val)*tru_log_gradpi(propval)))
-    power_rat <- propval^4 - in_val^4
+      (1+exp((propval - in_val)*tru_log_gradpi(propval)))
+    power_rat <- abs(propval) - abs(in_val)
     acc_prob <- min(1, exp(- power_rat)*ratio_prop)
     if(V[i] < acc_prob)
     {
@@ -114,7 +113,7 @@ barker_alg <- function(delta, iter, in_val)
   print(paste("Acceptance rate is = ", acceptance))
   return(samp.bark)
 }
-  
+
 iter <- 1e5
 in_val <- 1
 delta <- 2
@@ -131,17 +130,13 @@ barker.l1 <- barker_alg(delta, iter, in_val)
 barker.l2 <- barker_alg(delta, iter, in_val)
 barker <- list(barker.l1, barker.l2)
 
-# Actual density shape
-sam <- seq(-4, 4, length = iter)
-den <- exp(-(sam^4)) / (2 * gamma(5/4))
-
 # Density plots
-pdf("plotexp_bark.pdf", height = 6, width = 12)
+pdf("plotlap_bark.pdf", height = 6, width = 12)
 par(mfrow = c(1,2))
 
 for (k in 1:2)
 {
-  plot(sam, den, type = 'l', xlab = "values", ylab = "density",
+  plot(density(sample <- rlaplace(1e5, 0, 1)), xlab = "values", ylab = "density",
        main = bquote(lambda == .(lambda.vec[k])), col = "black")
   lines(density(as.numeric(unlist(pxbarker[k]))) ,col = "blue")
   lines(density(as.numeric(unlist(barker[k]))) ,col = "red")
@@ -177,3 +172,4 @@ for (k in 1:2)
          col = c("blue", "red"), cex = 1, bty = "n")
 }
 dev.off()
+
