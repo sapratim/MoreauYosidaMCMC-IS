@@ -12,7 +12,7 @@ target_val <- function(x)
 
 prox_arg <- function(x, y, mu)     # x is the current value
 {
-  z_x <-  y^4 + ((x-y)^2)/2*mu  
+  z_x <-  y^4 + ((x-y)^2)/(2*mu)  
   return(z_x)
 }
 
@@ -54,7 +54,7 @@ mymala <- function(in_val, iter, lambda, delta)
   samp.mym <- numeric(length = iter)
   wts_is_est <- numeric(length = iter)
   samp.mym[1] <- in_val
-  wts_is_est[1] <- exp(-abs(in_val)) / exp(-prox_arg(in_val, prox_func(in_val, lambda), lambda))
+  wts_is_est[1] <- exp(-(in_val^4)) / exp(-prox_arg(in_val, prox_func(in_val, lambda), lambda))
   accept <- 0
   for (i in 2:iter) 
   {
@@ -131,7 +131,7 @@ px.barker <- function(in_val, iter, lambda, delta)
   return(samp.bark)
 }
 
-iter <- 1e4
+iter <- 1e3
 in_val <- 2
 lambda.vec <- c(0.1, 1, 100, 500)
 delta_is <- c(1.3, 4.2, 0.02, 0.004)
@@ -190,3 +190,15 @@ var_mat <- rbind(samp_var.is, samp_var.pxm, samp_var.pxb)
 colnames(var_mat) <- c("lambda = 0.1", "lambda = 1", "lambda = 100", "lambda = 500")
 
 var_mat   # variance comparison
+
+pdf("density_g_lambda.pdf", height = 6, width = 12)
+par(mfrow = c(2,2))
+
+for (k in 1:4) {
+  
+s <- mymala(in_val, iter, lambda.vec[k], delta_is[k])
+u <- as.numeric(unlist(s[1]))
+plot(density(u), main = bquote(lambda == .(lambda.vec[k])))
+
+}
+dev.off()

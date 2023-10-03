@@ -132,7 +132,7 @@ px.barker <- function(in_val, iter, lambda, delta)
   return(samp.bark)
 }
 
-iter <- 1e4
+iter <- 1e3
 in_val <- 2
 lambda.vec <- c(0.1, 1, 100, 500)
 delta_is <- c(2.8, 4, 255, 1275)
@@ -191,3 +191,15 @@ var_mat <- rbind(samp_var.is, samp_var.pxm, samp_var.pxb)
 colnames(var_mat) <- c("lambda = 0.1", "lambda = 1", "lambda = 100", "lambda = 500")
 
 var_mat   # variance comparison
+
+pdf("density_g_lambda_lap.pdf", height = 6, width = 12)
+par(mfrow = c(2,2))
+
+for (k in 1:4) {
+  
+  s <- mymala(in_val, iter, lambda.vec[k], delta_is[k])
+  u <- as.numeric(unlist(s[1]))
+  plot(density(u), main = bquote(lambda == .(lambda.vec[k])))
+  
+}
+dev.off()
