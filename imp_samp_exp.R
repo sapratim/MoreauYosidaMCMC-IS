@@ -76,7 +76,7 @@ mymala <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.mym[i]
   }
-  #print(accept/iter)
+  print(accept/iter)
   object <- list(samp.mym, wts_is_est)
   return(object)
 }
@@ -134,7 +134,7 @@ px.barker <- function(in_val, iter, lambda, delta)
 iter <- 1e3
 in_val <- 2
 lambda.vec <- c(0.1, 1, 100, 500)
-delta_is <- c(1.3, 4.2, 0.02, 0.004)
+delta_is <- c(1.3, 4.2, 250, 1200)
 delta_pxm <- c(1, 0.7, 0.5, 0.45)
 delta_bark <- c(1.2, 0.65, 0.5, 0.5)
 
@@ -196,7 +196,7 @@ par(mfrow = c(2,2))
 
 for (k in 1:4) {
   
-s <- mymala(in_val, iter, lambda.vec[k], delta_is[k])
+s <- mymala(in_val, 1e5, lambda.vec[k], delta_is[k])
 u <- as.numeric(unlist(s[1]))
 plot(density(u), main = bquote(lambda == .(lambda.vec[k])))
 
