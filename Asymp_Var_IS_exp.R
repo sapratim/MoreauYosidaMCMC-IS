@@ -1,6 +1,7 @@
 #set.seed(123)
 
 library(extraDistr)
+library(mcmcse)
 
 target_val <- function(x)
 {
@@ -131,74 +132,48 @@ px.barker <- function(in_val, iter, lambda, delta)
   return(samp.bark)
 }
 
-iter <- 1e3
+iter <- 1e4
 in_val <- 2
 lambda.vec <- c(0.1, 1, 100, 500)
 delta_is <- c(1.2, 4.2, 260, 1300)
 delta_pxm <- c(1, 0.7, 0.5, 0.45)
 delta_bark <- c(1.2, 0.65, 0.5, 0.5)
 
-# Sample variance 
+asymp_covmat_is <- numeric(length = length(lambda.vec))
+asymp_covmat_pxm <- numeric(length = length(lambda.vec))
+asymp_covmat_pxb <- numeric(length = length(lambda.vec))
 
-reps <- 1e2
-augm_mat_is <- matrix(0, nrow = reps, ncol = length(lambda.vec))
-augm_mat_pxm <- matrix(0, nrow = reps, ncol = length(lambda.vec))
-augm_mat_pxb <- matrix(0, nrow = reps, ncol = length(lambda.vec))
-
-for (i in 1:length(lambda.vec)) 
+for (i in 1:length(lambda.vec))
 {
-  for (j in 1:reps)
-  {
-    mala.is <- mymala(in_val, iter, lambda.vec[i], delta_is[i])
-    px_mala <- px.mala(in_val, iter, lambda.vec[i], delta_pxm[i])
-    px_bark <- px.barker(in_val, iter, lambda.vec[i], delta_bark[i])
-    
-    is_samp <- as.numeric(unlist(mala.is[1]))
-    is_wts <- as.numeric(unlist(mala.is[2]))
-    num <- sum(is_samp*is_wts)
-    augm_mat_is[j, i] <- num / sum(is_wts) 
-    augm_mat_pxm[j, i] <- mean(as.numeric(unlist(px_mala)))
-    augm_mat_pxb[j, i] <- mean(as.numeric(unlist(px_bark)))
-  }
+  mala.is <- mymala(in_val, iter, lambda.vec[i], delta_is[i])
+  px_mala <- px.mala(in_val, iter, lambda.vec[i], delta_pxm[i])
+  px_bark <- px.barker(in_val, iter, lambda.vec[i], delta_bark[i])
+  
+  # Importance sampling estimator asymptotic variance
+  
+  is_samp <- as.numeric(unlist(mala.is[1]))
+  is_wts <- as.numeric(unlist(mala.is[2]))
+  wts_mean <- mean(is_wts)
+  num <- is_samp*is_wts
+  is_est <- sum(num) / sum(is_wts)
+  input_mat <- cbind(num, is_wts)  # input samples for mcse
+  Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covarince matrix of the tuple
+  kappa_eta_mat <- matrix(c(1 / wts_mean , is_est / wts_mean), 
+                          nrow = 1, ncol = 2, byrow = TRUE)      # derivative of kappa matrix 
+  asymp_covmat_is[i] <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat)
+  
+  # PxMALA asymptotic variance
+  
+  asymp_covmat_pxm[i] <- mcse.multi(px_mala)$cov
+  
+  # PxBarker asymptotic variance
+  
+  asymp_covmat_pxb[i] <- mcse.multi(px_bark)$cov 
 }
 
-# matrix of second moments
+# Asymptotic variance comparison
 
-sqmat_is <- augm_mat_is^2
-sqmat_pxm <- augm_mat_pxm^2
-sqmat_pxb <- augm_mat_pxb^2
-
-# sum of matrix of second moments
-
-secmom_mat_is <- apply(sqmat_is, 2, sum)
-secmom_mat_pxm <- apply(sqmat_pxm, 2, sum)
-secmom_mat_pxb <- apply(sqmat_pxb, 2, sum)
-
-# mean square matrix of estimates
-
-meansq_mat_is <- colMeans(augm_mat_is)^2
-meansq_mat_pxm <- colMeans(augm_mat_pxm)^2
-meansq_mat_pxb <- colMeans(augm_mat_pxb)^2
-
-# sample variances
-
-samp_var.is <- (secmom_mat_is - reps*meansq_mat_is) / (reps - 1)
-samp_var.pxm <- (secmom_mat_pxm - reps*meansq_mat_pxm) / (reps - 1)
-samp_var.pxb <- (secmom_mat_pxb - reps*meansq_mat_pxb) / (reps - 1)
-
-var_mat <- rbind(samp_var.is, samp_var.pxm, samp_var.pxb)
+var_mat <- rbind(asymp_covmat_is, asymp_covmat_pxm, asymp_covmat_pxb)
 colnames(var_mat) <- c("lambda = 0.1", "lambda = 1", "lambda = 100", "lambda = 500")
 
-var_mat   # variance comparison
-
-pdf("density_g_lambda.pdf", height = 6, width = 12)
-par(mfrow = c(2,2))
-
-for (k in 1:4) {
-  
-s <- mymala(in_val, 1e5, lambda.vec[k], delta_is[k])
-u <- as.numeric(unlist(s[1]))
-plot(density(u), main = bquote(lambda == .(lambda.vec[k])))
-
-}
-dev.off()
+var_mat
