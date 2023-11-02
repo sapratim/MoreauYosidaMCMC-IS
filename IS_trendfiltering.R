@@ -188,6 +188,9 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta)
 
 iter <- 1e4
 delta <- 0.0008
+mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
+px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
+
 # # delta_bark <- c(5, 4.8, 1, 1)
 # 
 # asymp_covmat_is <- numeric(length = length(lambda.vec))
