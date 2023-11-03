@@ -8,8 +8,10 @@ library(spmrf)
 
 alpha_hat <- 18.9   # obtained from the first dataset
 sigma2_hat <- 12.5  # obtained from the first dataset
-x <- seq(1, 100, length = 100)   # input vector
-y <- read.csv("data_trendf.csv", header = T)$x  # given data 
+x <- seq(1,100,len=100)
+f <- Vectorize(function(x){if(x<=35){x} else if(x<=70){70-x} else{0.5*x-35}})
+fx_linear <- f(x)
+y <- fx_linear + rnorm(length(x), sd = 3)
 
 # function calculates the inside of the proximal function
 
