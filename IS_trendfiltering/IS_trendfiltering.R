@@ -1,3 +1,4 @@
+
 ## Code for asymptotic variance comparison of weighted importance sampling estimator 
 ## for trend filtering example
 library(mcmcse)
@@ -6,6 +7,7 @@ library(glmgen)
 library(Matrix)
 library(spmrf)
 
+set.seed(301297)
 alpha_hat <- 18.9   # obtained from the first dataset
 sigma2_hat <- 12.5  # obtained from the first dataset
 x <- seq(1,100,len=100)
@@ -188,7 +190,7 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta)
 #   return(samp.bark)
 # }
 
-iter <- 1e3
+iter <- 1e4
 delta <- 0.0008
 mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
 px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
@@ -202,15 +204,15 @@ px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
 
    # Importance sampling estimator asymptotic variance
 
-   is_samp <- as.matrix(unlist(mala.is[1]))
+   is_samp <- matrix(unlist(mala.is[1]), nrow = iter, ncol = length(y))
    is_wts <- as.numeric(unlist(mala.is[2]))
    wts_mean <- mean(is_wts)
    num <- is_samp*is_wts
    sum_mat <- apply(num, 2, sum)
    is_est <- sum_mat / sum(is_wts)
    input_mat <- cbind(num, is_wts)  # input samples for mcse
-   Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covarince matrix of the tuple
-   kappa_eta_mat <- cbind(diag(1/wts_mean, length(y)), t(is_est/wts_mean)) # derivative of kappa matrix
+   Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
+   kappa_eta_mat <- cbind(diag(1/wts_mean, length(y)), is_est/wts_mean) # derivative of kappa matrix
    asymp_covmat_is <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat)
 
   # PxMALA asymptotic variance
@@ -220,7 +222,6 @@ px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
    # PxBarker asymptotic variance
 
    # asymp_covmat_pxb[i] <- mcse.multi(px_bark)$cov
-
 
  # Asymptotic variance comparison
  var_mat <- cbind(det(asymp_covmat_is), det(asymp_covmat_pxm)) #asymp_covmat_pxb)
