@@ -96,8 +96,8 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta)
     beta_next <- rnorm(length(beta_current), beta_current + 
             (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), 
             sqrt(delta))   # proposal step
-    prox_val.next <- prox_func(beta_current, lambda, alpha, k, grid)
-    prox_val.curr <- prox_func(beta_next, lambda, alpha, k, grid)
+    prox_val.next <- prox_func(beta_next, lambda, alpha, k, grid)
+    prox_val.curr <- prox_func(beta_current, lambda, alpha, k, grid)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
     q.next_to_curr <- sum(dnorm(beta_current, beta_next + 
@@ -112,7 +112,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta)
     {
       samp.mym[i,] <- beta_next
       g_val <- alpha*sum(abs(D_mat%*%beta_next))
-      g_lambda_val <- prox_arg(prox_val.curr, beta_next, lambda=lambda, alpha)
+      g_lambda_val <- prox_arg(prox_val.next, beta_next, lambda=lambda, alpha)
       wts_is_est[i] <- exp(g_lambda_val - g_val)
       accept <- accept + 1
     }
@@ -120,7 +120,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta)
     {
       samp.mym[i,] <- beta_current
       g_val <- alpha*sum(abs(D_mat%*%beta_current))
-      g_lambda_val <- prox_arg(prox_val.next, beta_current, lambda=lambda, alpha)
+      g_lambda_val <- prox_arg(prox_val.curr, beta_current, lambda=lambda, alpha)
       wts_is_est[i] <- exp(g_lambda_val - g_val)
     }
     beta_current <- samp.mym[i,]
