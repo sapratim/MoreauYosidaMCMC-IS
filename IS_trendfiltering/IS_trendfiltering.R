@@ -84,42 +84,42 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta)
   wts_is_est <- numeric(length = iter)
   beta_current <- y
   samp.mym[1,] <- beta_current
-  wts_num <- exp(-(alpha*sum(abs(D_mat%*%beta_current))))
+  g_val <- alpha*sum(abs(D_mat%*%beta_current))
   prox_start <- prox_func(beta_current, lambda, alpha, k, grid)
-  wts_denom <- exp(-prox_arg(prox_start, beta_current, lambda=lambda, alpha))
-  wts_is_est[1] <- wts_num / wts_denom
+  g_lambda_val <- prox_arg(prox_start, beta_current, lambda=lambda, alpha)
+  wts_is_est[1] <- exp(g_lambda_val - g_val)
   accept <- 0
   for (i in 2:iter) 
   {
     beta_next <- rnorm(length(beta_current), beta_current + 
             (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), 
-            sqrt(delta)*diag(1,length(y)))   # proposal step
+            sqrt(delta))   # proposal step
     prox_val.next <- prox_func(beta_current, lambda, alpha, k, grid)
     prox_val.curr <- prox_func(beta_next, lambda, alpha, k, grid)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
     q.next_to_curr <- sum(dnorm(beta_current, beta_next + 
                         (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid),
-                                   sqrt(delta)*diag(1,length(y)), log = TRUE))
+                        sqrt(delta), log = TRUE))
     q.curr_to_next <- sum(dnorm(beta_next, beta_current + 
                                   (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid),
-                                sqrt(delta)*diag(1,length(y)), log = TRUE))
+                                sqrt(delta), log = TRUE))
     mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
-    print(mh.ratio)
+    # print(mh.ratio)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.mym[i,] <- beta_next
-      wts_num <- exp(-(alpha*sum(abs(D_mat%*%beta_next))))
-      wts_denom <- exp(-prox_arg(prox_val.curr, beta_next, lambda=lambda, alpha))
-      wts_is_est[i] <- wts_num/wts_denom
+      g_val <- alpha*sum(abs(D_mat%*%beta_next))
+      g_lambda_val <- prox_arg(prox_val.curr, beta_next, lambda=lambda, alpha)
+      wts_is_est[i] <- exp(g_lambda_val - g_val)
       accept <- accept + 1
     }
     else
     {
-      samp.mym[i] <- beta_current
-      wts_num <- exp(-(alpha*sum(abs(D_mat%*%beta_current))))
-      wts_denom <- exp(-prox_arg(prox_val.next, beta_current, lambda=lambda, alpha))
-      wts_is_est[i] <- wts_num/wts_denom
+      samp.mym[i,] <- beta_current
+      g_val <- alpha*sum(abs(D_mat%*%beta_current))
+      g_lambda_val <- prox_arg(prox_val.next, beta_current, lambda=lambda, alpha)
+      wts_is_est[i] <- exp(g_lambda_val - g_val)
     }
     beta_current <- samp.mym[i,]
   }
@@ -138,15 +138,15 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta)
   {
     beta_next <- rnorm(length(beta_current), beta_current + 
                          (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), 
-                       sqrt(delta)*diag(1,length(y)))   # proposal step
+                       sqrt(delta))   # proposal step
     U_betanext <- - (sum((y - beta_next)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_next))))
     U_betacurr <- - (sum((y - beta_current)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_current))))
     q.next_to_curr <- sum(dnorm(beta_current, beta_next + 
                                   (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid),
-                                sqrt(delta)*diag(1,length(y)), log = TRUE))
+                                sqrt(delta), log = TRUE))
     q.curr_to_next <- sum(dnorm(beta_next, beta_current + 
                                   (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid),
-                                sqrt(delta)*diag(1,length(y)), log = TRUE))
+                                sqrt(delta), log = TRUE))
     mh.ratio <- U_betanext + q.next_to_curr - (U_betacurr + q.curr_to_next)
     if(log(runif(1)) <= mh.ratio)
     {
@@ -186,48 +186,43 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta)
 #   return(samp.bark)
 # }
 
-iter <- 1e4
+iter <- 1e3
 delta <- 0.0008
 mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
 px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
 
-# # delta_bark <- c(5, 4.8, 1, 1)
-# 
-# asymp_covmat_is <- numeric(length = length(lambda.vec))
-# asymp_covmat_pxm <- numeric(length = length(lambda.vec))
-# # asymp_covmat_pxb <- numeric(length = length(lambda.vec))
-# 
-# for (i in 1:length(lambda.vec))
-# {
-#   mala.is <- mymala(in_val, iter, lambda.vec[i], delta_is[i])
-#   px_mala <- px.mala(in_val, iter, lambda.vec[i], delta_pxm[i])
-#   # px_bark <- px.barker(in_val, iter, lambda.vec[i], delta_bark[i])
-#   
-#   # Importance sampling estimator asymptotic variance
-#   
-#   is_samp <- as.numeric(unlist(mala.is[1]))
-#   is_wts <- as.numeric(unlist(mala.is[2]))
-#   wts_mean <- mean(is_wts)
-#   num <- is_samp*is_wts
-#   is_est <- sum(num) / sum(is_wts)
-#   input_mat <- cbind(num, is_wts)  # input samples for mcse
-#   Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covarince matrix of the tuple
-#   kappa_eta_mat <- matrix(c(1 / wts_mean , is_est / wts_mean), 
-#                           nrow = 1, ncol = 2, byrow = TRUE)      # derivative of kappa matrix 
-#   asymp_covmat_is[i] <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat)
-#   
-#   # PxMALA asymptotic variance
-#   
-#   asymp_covmat_pxm[i] <- mcse.multi(px_mala)$cov 
-#   
-#   # PxBarker asymptotic variance
-#   
-#   # asymp_covmat_pxb[i] <- mcse.multi(px_bark)$cov 
-# }
-# 
-# # Asymptotic variance comparison
-# 
-# var_mat <- rbind(asymp_covmat_is, asymp_covmat_pxm) #asymp_covmat_pxb)
-# colnames(var_mat) <- c("lambda = 0.1", "lambda = 1", "lambda = 100", "lambda = 500")
-# 
-# var_mat
+
+ asymp_covmat_is <- numeric(length = length(lambda.vec))
+ asymp_covmat_pxm <- numeric(length = length(lambda.vec))
+ asymp_covmat_pxb <- numeric(length = length(lambda.vec))
+
+  mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
+  px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
+
+   # Importance sampling estimator asymptotic variance
+
+   is_samp <- as.matrix(unlist(mala.is[1]))
+   is_wts <- as.numeric(unlist(mala.is[2]))
+   wts_mean <- mean(is_wts)
+   num <- is_samp*is_wts
+   sum_mat <- apply(num, 2, sum)
+   is_est <- sum_mat / sum(is_wts)
+   input_mat <- cbind(num, is_wts)  # input samples for mcse
+   Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covarince matrix of the tuple
+   kappa_eta_mat <- cbind(diag(1/wts_mean, length(y)), t(is_est/wts_mean)) # derivative of kappa matrix
+   asymp_covmat_is <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat)
+
+  # PxMALA asymptotic variance
+
+   asymp_covmat_pxm[i] <- mcse.multi(px_mala)$cov
+
+   # PxBarker asymptotic variance
+
+   # asymp_covmat_pxb[i] <- mcse.multi(px_bark)$cov
+
+
+ # Asymptotic variance comparison
+ var_mat <- cbind(det(asymp_covmat_is), det(asymp_covmat_pxm)) #asymp_covmat_pxb)
+ colnames(var_mat) <- c("Imp_sampling", "PxMala")
+
+ var_mat
