@@ -81,6 +81,7 @@ mymala <- function(in_val, iter, lambda, delta)
     in_val <- samp.mym[i]
   }
   object <- list(samp.mym, wts_is_est)
+  print(accept/iter)
   return(object)
 }
 
@@ -105,6 +106,7 @@ px.mala <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.pxm[i]
   }
+  print(accept/iter)
   return(samp.pxm)
 }
 
@@ -129,6 +131,7 @@ px.barker <- function(in_val, iter, lambda, delta)
     }
     in_val <- samp.bark[i]
   }
+  print(accept/iter)
   return(samp.bark)
 }
 

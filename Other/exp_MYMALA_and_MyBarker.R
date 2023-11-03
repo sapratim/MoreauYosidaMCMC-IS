@@ -1,4 +1,3 @@
-## Code for Px-MALA and Px-Barker algorithms with standard Laplace target
 
 # function calculates the inside of the proximal function
 
