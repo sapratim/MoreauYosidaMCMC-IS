@@ -82,7 +82,7 @@ log_gradpi <- function(beta,lambda,y,sigma2,alpha,k,grid)
 mymala <- function(y, alpha, sigma2, k, grid, iter, delta)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
-  lambda <- 0.01*sigma2
+  lambda <- 0.00001*sigma2
   wts_is_est <- numeric(length = iter)
   beta_current <- y
   samp.mym[1,] <- beta_current
@@ -132,7 +132,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta)
 px.mala <- function(y, alpha, sigma2, k, grid, iter, delta)
 {
   samp.pxm <- matrix(0, nrow = iter, ncol = length(y))
-  lambda <- 0.01*sigma2
+  lambda <- 0.00001*sigma2
   beta_current <- y
   samp.pxm[1,] <- beta_current
   accept <- 0
@@ -194,10 +194,9 @@ mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
 px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
 
 
- asymp_covmat_is <- numeric(length = length(lambda.vec))
- asymp_covmat_pxm <- numeric(length = length(lambda.vec))
- asymp_covmat_pxb <- numeric(length = length(lambda.vec))
-
+ asymp_covmat_is <- matrix(0, length(y), length(y))
+ asymp_covmat_pxm <- matrix(0, length(y), length(y))
+ 
   mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
   px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta)
 
