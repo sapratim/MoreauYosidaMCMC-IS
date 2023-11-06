@@ -35,8 +35,8 @@ asymp_covmat_pxm <- mcse.multi(px_mala)$cov
 # asymp_covmat_pxb[i] <- mcse.multi(px_bark)$cov
 
 # Asymptotic variance comparison
-var_mat <- cbind(det(asymp_covmat_is), det(asymp_covmat_pxm)) #asymp_covmat_pxb)
+var_mat <- cbind(sum(log(eigen(asymp_covmat_is)$values)), 
+                               sum(log(eigen(asymp_covmat_pxm)$values))) #asymp_covmat_pxb)
 colnames(var_mat) <- c("Imp_sampling", "PxMala")
 
 var_mat
-plot.ts(mala.is[[1]])
