@@ -117,20 +117,19 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
   }
   print(accept/iter)
   object <- samp.mym
-  covariance_mat <- cor(object)
-  result <- list(object, covariance_mat)
+  cor_mat <- cor(object)
+  result <- list(object, cor_mat)
   return(result)
 }
 
-
-dmvnorm_fn <- function(point, mu, sigma, delta)
+dmvnorm_fn <- function(point, mu, mat, delta)
 {
   diff <- point - mu
-  exp_term <- (t(diff) %*% solve(sigma)) %*% diff 
+  exp_term <- (t(diff) %*% mat) %*% diff 
   den_value <- -(exp_term/(2*delta))
 }
   
-mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
+mymala <- function(y, alpha, sigma2, k, grid, iter, delta, cormat)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff*sigma2
@@ -141,7 +140,8 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
   prox_start <- prox_func(beta_current, lambda, alpha, k, grid)
   g_lambda_val <- prox_arg(prox_start, beta_current, lambda=lambda, alpha)
   wts_is_est[1] <- exp(g_lambda_val - g_val)
-  U <- sqrtm(covmat)
+  U <- sqrtm(cormat)
+  mat.inv <- solve(cormat)
   accept <- 0
   for (i in 2:iter) 
   {
@@ -152,9 +152,9 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
-                 (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), covmat, delta)
+                 (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), mat.inv, delta)
     q.curr_to_next <- dmvnorm_fn(beta_next, beta_current + 
-                 (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), covmat, delta) 
+                 (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), mat.inv, delta) 
     mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
     # print(mh.ratio)
     if(log(runif(1)) <= mh.ratio)
@@ -179,14 +179,15 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
   return(object)
 }
 
-px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
+px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, cormat)
 {
   samp.pxm <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff*sigma2
   beta_current <- y
   samp.pxm[1,] <- beta_current
   accept <- 0
-  U <- sqrtm(covmat)
+  U <- sqrtm(cormat)
+  mat.inv <- solve(cormat)
   for (i in 2:iter) 
   {
     beta_next <- beta_current +  (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
@@ -194,9 +195,9 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     U_betanext <- - (sum((y - beta_next)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_next))))
     U_betacurr <- - (sum((y - beta_current)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_current))))
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
-                       (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), covmat, delta)
+                       (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), mat.inv, delta)
     q.curr_to_next <- dmvnorm_fn(beta_next, beta_current + 
-                         (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), covmat, delta) 
+                         (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), mat.inv, delta) 
     mh.ratio <- U_betanext + q.next_to_curr - (U_betacurr + q.curr_to_next)
     if(log(runif(1)) <= mh.ratio)
     {

@@ -5,9 +5,10 @@ iter <- 1e3
 delta <- 0.00004
 lamb_coeff <- 0.000001
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
-covmat <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter = 1e4, delta = delta)[[2]]
-mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta, covmat)
-px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta, covmat)
+cormat <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter = 1e4, delta = delta)[[2]]
+delta_samp <- 0.000000032
+mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, cormat)
+px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, cormat)
 
 # Asymptotic variance
 
