@@ -117,7 +117,7 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
   }
   print(accept/iter)
   object <- samp.mym
-  covariance_mat <- mcse.multi(object)
+  covariance_mat <- cov(object)
   result <- list(object, covariance_mat)
   return(result)
 }
@@ -145,7 +145,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
   for (i in 2:iter) 
   {
     beta_next <- beta_current +  (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
-                           U %*% rnorm(length(beta_current), 0, 1)   # proposal step
+                           (sqrt(delta)*U) %*% rnorm(length(beta_current), 0, 1)   # proposal step
     prox_val.next <- prox_func(beta_next, lambda, alpha, k, grid)
     prox_val.curr <- prox_func(beta_current, lambda, alpha, k, grid)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
@@ -173,6 +173,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     }
     beta_current <- samp.mym[i,]
   }
+  print(accept/iter)
   object <- list(samp.mym, wts_is_est)
   return(object)
 }
@@ -188,7 +189,7 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
   for (i in 2:iter) 
   {
     beta_next <- beta_current +  (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
-                     U %*% rnorm(length(beta_current), 0, 1)   # proposal step
+                 (sqrt(delta)*U) %*% rnorm(length(beta_current), 0, 1)   # proposal step
     U_betanext <- - (sum((y - beta_next)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_next))))
     U_betacurr <- - (sum((y - beta_current)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_current))))
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
@@ -207,6 +208,7 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     }
     beta_current <- samp.pxm[i,]
   }
+  print(accept/iter)
   return(samp.pxm)
 }
 
