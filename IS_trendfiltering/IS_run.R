@@ -38,3 +38,4 @@ var_mat <- cbind(det(asymp_covmat_is), det(asymp_covmat_pxm)) #asymp_covmat_pxb)
 colnames(var_mat) <- c("Imp_sampling", "PxMala")
 
 var_mat
+

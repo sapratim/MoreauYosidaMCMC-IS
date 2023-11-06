@@ -117,16 +117,17 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
   }
   print(accept/iter)
   object <- samp.mym
-  covariance_mat <- cov(object)
+  covariance_mat <- cor(object)
   result <- list(object, covariance_mat)
   return(result)
 }
 
-dmvnorm_fn <- function(point, mu, sigma)
+
+dmvnorm_fn <- function(point, mu, sigma, delta)
 {
   diff <- point - mu
   exp_term <- (t(diff) %*% solve(sigma)) %*% diff 
-  den_value <- -(exp_term/2)
+  den_value <- -(exp_term/(2*delta))
 }
   
 mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
@@ -151,9 +152,9 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
-                 (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), covmat)
+                 (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), covmat, delta)
     q.curr_to_next <- dmvnorm_fn(beta_next, beta_current + 
-                 (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), covmat) 
+                 (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), covmat, delta) 
     mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
     # print(mh.ratio)
     if(log(runif(1)) <= mh.ratio)
@@ -193,9 +194,9 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     U_betanext <- - (sum((y - beta_next)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_next))))
     U_betacurr <- - (sum((y - beta_current)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_current))))
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
-                       (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), covmat)
+                       (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), covmat, delta)
     q.curr_to_next <- dmvnorm_fn(beta_next, beta_current + 
-                         (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), covmat) 
+                         (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), covmat, delta) 
     mh.ratio <- U_betanext + q.next_to_curr - (U_betacurr + q.curr_to_next)
     if(log(runif(1)) <= mh.ratio)
     {
