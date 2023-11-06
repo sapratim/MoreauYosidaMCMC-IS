@@ -1,14 +1,14 @@
 
 source("IS_trendfiltering_functions.R")
 
-iter <- 1e3
-delta <- 0.00004
-lamb_coeff <- 0.000001
+iter <- 1e5
+delta <- 0.00008
+lamb_coeff <- 0.000002
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
-cormat <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter = 1e4, delta = delta)[[2]]
-delta_samp <- 0.000000032
-mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, cormat)
-px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, cormat)
+covmat <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter = 1e5, delta = delta)[[2]]
+delta_samp <- 0.0004
+mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
+px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
 
 # Asymptotic variance
 
@@ -39,4 +39,4 @@ var_mat <- cbind(det(asymp_covmat_is), det(asymp_covmat_pxm)) #asymp_covmat_pxb)
 colnames(var_mat) <- c("Imp_sampling", "PxMala")
 
 var_mat
-
+plot.ts(mala.is[[1]])

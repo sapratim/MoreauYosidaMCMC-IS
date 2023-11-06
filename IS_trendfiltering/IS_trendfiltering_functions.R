@@ -84,7 +84,7 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff*sigma2
-  beta_current <- y
+  beta_current <- trendfilter(grid,y, k=k,lambda = lambda*alpha)$beta
   samp.mym[1,] <- beta_current
   accept <- 0
   for (i in 2:iter) 
@@ -117,8 +117,8 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
   }
   print(accept/iter)
   object <- samp.mym
-  cor_mat <- cor(object)
-  result <- list(object, cor_mat)
+  cov_mat <- cov(object)
+  result <- list(object, cov_mat)
   return(result)
 }
 
@@ -129,32 +129,32 @@ dmvnorm_fn <- function(point, mu, mat, delta)
   den_value <- -(exp_term/(2*delta))
 }
   
-mymala <- function(y, alpha, sigma2, k, grid, iter, delta, cormat)
+mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff*sigma2
   wts_is_est <- numeric(length = iter)
-  beta_current <- y
+  beta_current <- trendfilter(grid,y, k=k,lambda = lambda*alpha)$beta
   samp.mym[1,] <- beta_current
   g_val <- alpha*sum(abs(D_mat%*%beta_current))
   prox_start <- prox_func(beta_current, lambda, alpha, k, grid)
   g_lambda_val <- prox_arg(prox_start, beta_current, lambda=lambda, alpha)
   wts_is_est[1] <- exp(g_lambda_val - g_val)
-  U <- sqrtm(cormat)
-  mat.inv <- solve(cormat)
+  U <- sqrtm(covmat)
+  mat.inv <- solve(covmat)
   accept <- 0
   for (i in 2:iter) 
   {
-    beta_next <- beta_current +  (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
+    beta_next <- beta_current +  ((delta / 2)*covmat)%*%log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
                            (sqrt(delta)*U) %*% rnorm(length(beta_current), 0, 1)   # proposal step
     prox_val.next <- prox_func(beta_next, lambda, alpha, k, grid)
     prox_val.curr <- prox_func(beta_current, lambda, alpha, k, grid)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
-                 (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), mat.inv, delta)
+                                   ((delta / 2)*covmat)%*%log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), mat.inv, delta)
     q.curr_to_next <- dmvnorm_fn(beta_next, beta_current + 
-                 (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), mat.inv, delta) 
+                                   ((delta / 2)*covmat)%*%log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), mat.inv, delta) 
     mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
     # print(mh.ratio)
     if(log(runif(1)) <= mh.ratio)
@@ -179,25 +179,25 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, cormat)
   return(object)
 }
 
-px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, cormat)
+px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
 {
   samp.pxm <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff*sigma2
-  beta_current <- y
+  beta_current <- trendfilter(grid,y, k=k,lambda = lambda*alpha)$beta
   samp.pxm[1,] <- beta_current
   accept <- 0
-  U <- sqrtm(cormat)
-  mat.inv <- solve(cormat)
+  U <- sqrtm(covmat)
+  mat.inv <- solve(covmat)
   for (i in 2:iter) 
   {
-    beta_next <- beta_current +  (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
+    beta_next <- beta_current +  ((delta / 2)*covmat)%*%log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
                  (sqrt(delta)*U) %*% rnorm(length(beta_current), 0, 1)   # proposal step
     U_betanext <- - (sum((y - beta_next)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_next))))
     U_betacurr <- - (sum((y - beta_current)^2)/(2*sigma2) + alpha*(sum(abs(D_mat%*%beta_current))))
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
-                       (delta / 2)*log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), mat.inv, delta)
+                                   ((delta / 2)*covmat)%*%log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), mat.inv, delta)
     q.curr_to_next <- dmvnorm_fn(beta_next, beta_current + 
-                         (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), mat.inv, delta) 
+                                   ((delta / 2)*covmat)%*%log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), mat.inv, delta) 
     mh.ratio <- U_betanext + q.next_to_curr - (U_betacurr + q.curr_to_next)
     if(log(runif(1)) <= mh.ratio)
     {
