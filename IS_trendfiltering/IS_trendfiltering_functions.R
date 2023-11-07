@@ -114,6 +114,9 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
       samp.mym[i,] <- beta_current
     }
     beta_current <- samp.mym[i,]
+    if(i %% 1000 == 0){
+      print(i)
+    }
   }
   print(accept/iter)
   object <- samp.mym
@@ -173,6 +176,9 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
       wts_is_est[i] <- exp(g_lambda_val - g_val)
     }
     beta_current <- samp.mym[i,]
+    if(i %% 1000 == 0){
+      print(i)
+    }
   }
   print(accept/iter)
   object <- list(samp.mym, wts_is_est)
@@ -209,6 +215,9 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
       samp.pxm[i,] <- beta_current
     }
     beta_current <- samp.pxm[i,]
+    if(i %% 1000 == 0){
+      print(i)
+    }
   }
   print(accept/iter)
   return(samp.pxm)

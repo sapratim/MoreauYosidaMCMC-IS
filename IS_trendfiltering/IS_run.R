@@ -5,8 +5,8 @@ iter <- 1e5
 delta <- 0.00008
 lamb_coeff <- 0.000002
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
-covmat <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter = 1e5, delta = delta)[[2]]
-delta_samp <- 0.0004
+covmat <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter, delta = delta)[[2]]
+delta_samp <- 0.0003
 mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
 px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
 
