@@ -1,13 +1,17 @@
 
 source("IS_trendf_Pereyra.R")
 
-iter <- 1e3
-delta <- 0.0025
-lamb_coeff <- 0.2
+iter <- 1e4
+
+lamb_coeff <- 0.5
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
+delta <- .4
 covmat <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter, delta = delta)[[2]]
-delta_samp <- 0.0011
+delta_samp <- .5
 mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
+plot.ts(mala.is[[1]][, 1:10])
+plot.ts(mala.is[[2]])
+hist(mala.is[[2]])
 #px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
 
 # Asymptotic variance

@@ -55,7 +55,7 @@ prox_func <- function(beta,lambda,alpha,sigma2,k,grid)
   betaval <- (beta+(lambda_star*y))/sqrt(1+lambda_star)
   lambdaval <- (lambda*alpha)/sqrt(1+lambda_star)
   temp = trendfilter(grid,betaval, k=k,lambda = lambdaval)$beta
-  out <- (temp)/sqrt(1+lambda)
+  out <- (temp)/sqrt(1+lambda_star)
   return(as.vector(out))
 }
 
@@ -87,8 +87,8 @@ log_gradpi <- function(beta,lambda,y,sigma2,alpha,k,grid)  # gradient of log tar
 mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
-  lambda <- lamb_coeff*sigma2
-  beta_current <- trendfilter(grid,y, k=k,lambda = (lambda*alpha)/(1+(lambda/sigma2)))$beta
+  lambda <- lamb_coeff
+  beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha)$beta
   samp.mym[1,] <- beta_current
   accept <- 0
   for (i in 2:iter) 
@@ -139,11 +139,11 @@ dmvnorm_fn <- function(point, mu, mat, delta)
 mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
-  lambda <- lamb_coeff*sigma2
+  lambda <- lamb_coeff
   wts_is_est <- numeric(length = iter)
-  beta_current <- trendfilter(grid,y, k=k,lambda = (lambda*alpha)/(1+(lambda/sigma2)))$beta
+  beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha)$beta
   samp.mym[1,] <- beta_current
-  g_val <- alpha*sum(abs(D_mat%*%beta_current)) + sum((y - beta_current)^2)/2
+  g_val <- alpha*sum(abs(D_mat%*%beta_current)) + sum((y - beta_current)^2)/(2*sigma2)
   prox_start <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
   g_lambda_val <- prox_arg(prox_start, beta_current, lambda=lambda, y, sigma2, alpha)
   wts_is_est[1] <- g_lambda_val - g_val
@@ -167,7 +167,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.mym[i,] <- beta_next
-      g_val <- alpha*sum(abs(D_mat%*%beta_next)) + + sum((y - beta_next)^2)/2
+      g_val <- alpha*sum(abs(D_mat%*%beta_next)) + sum((y - beta_next)^2)/(2*sigma2)
       g_lambda_val <- prox_arg(prox_val.next, beta_next, lambda=lambda, y, sigma2, alpha)
       wts_is_est[i] <- g_lambda_val - g_val
       accept <- accept + 1
@@ -175,7 +175,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     else
     {
       samp.mym[i,] <- beta_current
-      g_val <- alpha*sum(abs(D_mat%*%beta_current)) + + sum((y - beta_current)^2)/2
+      g_val <- alpha*sum(abs(D_mat%*%beta_current)) + sum((y - beta_current)^2)/(2*sigma2)
       g_lambda_val <- prox_arg(prox_val.curr, beta_current, lambda=lambda, y, sigma2, alpha)
       wts_is_est[i] <- g_lambda_val - g_val
     }
@@ -193,7 +193,7 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
 {
   samp.pxm <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff*sigma2
-  beta_current <- trendfilter(grid,y, k=k,lambda = lambda*alpha)$beta
+  beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha)$beta
   samp.pxm[1,] <- beta_current
   accept <- 0
   U <- sqrtm(covmat)
