@@ -36,30 +36,33 @@ getD <- function(k, n, x=NULL){
 
 log_target <- function(eta,beta,lambda,y,sigma2,alpha)
 {
-  f.beta <- sum((y-beta)^2)/(2*sigma2)
-  g_lambda.beta <- alpha*(sum(abs(D_mat%*%eta))) + sum((beta-eta)^2)/(2*lambda)
-  dens_val <- f.beta + g_lambda.beta
+  dens_val <- alpha*(sum(abs(D_mat%*%eta))) + sum((beta-eta)^2)/(2*lambda) + 
+                             sum((y-eta)^2)/(2*sigma2)
   return(-dens_val)
 }
 
-prox_arg <- function(eta,beta,lambda,alpha)     # MY-envelope
+prox_arg <- function(eta,beta,lambda,y,sigma2,alpha)     # value of MY-envelope
 {
-  MY_env <- alpha*(sum(abs(D_mat%*%eta))) + sum((beta-eta)^2)/(2*lambda) + sum((y-eta)^2)/2    
+  MY_env <- alpha*(sum(abs(D_mat%*%eta))) + sum((beta-eta)^2)/(2*lambda) + 
+                              sum((y-eta)^2)/(2*sigma2)    
   return(MY_env)
 }
 
 # function calculates the value of the proximal function
-prox_func <- function(beta,lambda,alpha,k,grid)
+prox_func <- function(beta,lambda,alpha,sigma2,k,grid)
 {
-  temp = trendfilter(grid,(beta+(lambda*y))/sqrt(1+lambda), k=k,lambda = (lambda*alpha)/sqrt(1+lambda))
-  out <- (temp$beta)/sqrt(1+lambda)
+  lambda_star <- lambda/sigma2
+  betaval <- (beta+(lambda_star*y))/sqrt(1+lambda_star)
+  lambdaval <- (lambda*alpha)/sqrt(1+lambda_star)
+  temp = trendfilter(grid,betaval, k=k,lambda = lambdaval)$beta
+  out <- (temp)/sqrt(1+lambda)
   return(as.vector(out))
 }
 
-log_gradpi <- function(beta,lambda,y,sigma2,alpha,k,grid)
+log_gradpi <- function(beta,lambda,y,sigma2,alpha,k,grid)  # gradient of log target
 {
-  beta_prox <- prox_func(beta,lambda,alpha,k,grid)
-  ans <- (beta-y)/sigma2 + (beta-beta_prox)/lambda
+  beta_prox <- prox_func(beta,lambda,alpha,sigma2,k,grid)
+  ans <-  (beta-beta_prox)/lambda
   return(-ans)
 }
 
@@ -85,7 +88,7 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff*sigma2
-  beta_current <- trendfilter(grid,y, k=k,lambda = lambda*alpha)$beta
+  beta_current <- trendfilter(grid,y, k=k,lambda = (lambda*alpha)/(1+(lambda/sigma2)))$beta
   samp.mym[1,] <- beta_current
   accept <- 0
   for (i in 2:iter) 
@@ -93,8 +96,8 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
     beta_next <- rnorm(length(beta_current), beta_current + 
                          (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), 
                        sqrt(delta))   # proposal step
-    prox_val.next <- prox_func(beta_next, lambda, alpha, k, grid)
-    prox_val.curr <- prox_func(beta_current, lambda, alpha, k, grid)
+    prox_val.next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
+    prox_val.curr <- prox_func(beta_current, lambda, alpha,sigma2, k, grid)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
     q.next_to_curr <- sum(dnorm(beta_current, beta_next + 
@@ -138,12 +141,12 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff*sigma2
   wts_is_est <- numeric(length = iter)
-  beta_current <- trendfilter(grid,y, k=k,lambda = lambda*alpha)$beta
+  beta_current <- trendfilter(grid,y, k=k,lambda = (lambda*alpha)/(1+(lambda/sigma2)))$beta
   samp.mym[1,] <- beta_current
   g_val <- alpha*sum(abs(D_mat%*%beta_current)) + sum((y - beta_current)^2)/2
-  prox_start <- prox_func(beta_current, lambda, alpha, k, grid)
-  g_lambda_val <- prox_arg(prox_start, beta_current, lambda=lambda, alpha)
-  wts_is_est[1] <- exp(g_lambda_val - g_val)
+  prox_start <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
+  g_lambda_val <- prox_arg(prox_start, beta_current, lambda=lambda, y, sigma2, alpha)
+  wts_is_est[1] <- g_lambda_val - g_val
   U <- sqrtm(covmat)
   mat.inv <- solve(covmat)
   accept <- 0
@@ -151,8 +154,8 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
   {
     beta_next <- beta_current +  ((delta / 2)*covmat)%*%log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
       (sqrt(delta)*U) %*% rnorm(length(beta_current), 0, 1)   # proposal step
-    prox_val.next <- prox_func(beta_next, lambda, alpha, k, grid)
-    prox_val.curr <- prox_func(beta_current, lambda, alpha, k, grid)
+    prox_val.next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
+    prox_val.curr <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
@@ -165,16 +168,16 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     {
       samp.mym[i,] <- beta_next
       g_val <- alpha*sum(abs(D_mat%*%beta_next)) + + sum((y - beta_next)^2)/2
-      g_lambda_val <- prox_arg(prox_val.next, beta_next, lambda=lambda, alpha)
-      wts_is_est[i] <- exp(g_lambda_val - g_val)
+      g_lambda_val <- prox_arg(prox_val.next, beta_next, lambda=lambda, y, sigma2, alpha)
+      wts_is_est[i] <- g_lambda_val - g_val
       accept <- accept + 1
     }
     else
     {
       samp.mym[i,] <- beta_current
       g_val <- alpha*sum(abs(D_mat%*%beta_current)) + + sum((y - beta_current)^2)/2
-      g_lambda_val <- prox_arg(prox_val.curr, beta_current, lambda=lambda, alpha)
-      wts_is_est[i] <- exp(g_lambda_val - g_val)
+      g_lambda_val <- prox_arg(prox_val.curr, beta_current, lambda=lambda, y, sigma2, alpha)
+      wts_is_est[i] <- g_lambda_val - g_val
     }
     beta_current <- samp.mym[i,]
     if(i %% 1000 == 0){
