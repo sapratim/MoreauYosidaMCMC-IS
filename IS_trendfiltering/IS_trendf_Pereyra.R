@@ -10,11 +10,12 @@ library(expm)
 
 set.seed(301297)
 alpha_hat <- 5   # obtained from the first dataset
-sigma2_hat <- 12.5  # obtained from the first dataset
+sigma2_hat <- 1  # obtained from the first dataset
 x <- seq(1,100,len=100)
-f <- Vectorize(function(x){if(x<=35){x} else if(x<=70){70-x} else{0.5*x-35}})
+ f <- Vectorize(function(x){if(x<=35){x} else if(x<=70){70-x} else{0.5*x-35}})
 fx_linear <- f(x)
-y <- fx_linear + rnorm(length(x), sd = 3)
+y <- fx_linear + rnorm(length(x), sd = 1)
+tol <- 1e-20
 
 # function calculates the inside of the proximal function
 
@@ -54,7 +55,8 @@ prox_func <- function(beta,lambda,alpha,sigma2,k,grid)
   lambda_star <- lambda/sigma2
   betaval <- (beta+(lambda_star*y))/sqrt(1+lambda_star)
   lambdaval <- (lambda*alpha)/sqrt(1+lambda_star)
-  temp = trendfilter(grid,betaval, k=k,lambda = lambdaval)$beta
+  temp = trendfilter(grid,betaval, k=k,lambda = lambdaval,
+                     control = trendfilter.control.list(obj_tol = tol))$beta
   out <- (temp)/sqrt(1+lambda_star)
   return(as.vector(out))
 }
@@ -88,7 +90,8 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff
-  beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha)$beta
+  beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha,
+                              control = trendfilter.control.list(obj_tol = tol))$beta
   samp.mym[1,] <- beta_current
   accept <- 0
   for (i in 2:iter) 
@@ -141,7 +144,8 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff
   wts_is_est <- numeric(length = iter)
-  beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha)$beta
+  beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha,
+                              control = trendfilter.control.list(obj_tol = tol))$beta
   samp.mym[1,] <- beta_current
   g_val <- alpha*sum(abs(D_mat%*%beta_current)) + sum((y - beta_current)^2)/(2*sigma2)
   prox_start <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
@@ -193,7 +197,8 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
 {
   samp.pxm <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff*sigma2
-  beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha)$beta
+  beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha,
+                              control = trendfilter.control.list(obj_tol = tol))$beta
   samp.pxm[1,] <- beta_current
   accept <- 0
   U <- sqrtm(covmat)
