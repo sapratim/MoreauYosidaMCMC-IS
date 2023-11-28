@@ -3,22 +3,25 @@ source("IS_trendf_Pereyra.R")
 
 iter <- 1e4
 
-lamb_coeff <- 0.5
+lamb_coeff <- 0.0005
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
-delta <- .4
+delta <- .0002
 covmat <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter, delta = delta)[[2]]
-delta_samp <- .5
+delta_samp <- .065
 mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
 
 freq_mode <- trendfilter(x,y, k=1,lambda = sigma2_hat*alpha_hat,
-                         control = trendfilter.control.list(obj_tol = tol))$beta
+                  control = trendfilter.control.list(obj_tol = tol, max_iter = 1e3L))$beta
 proxval <- prox_func(freq_mode, lamb_coeff,alpha_hat, sigma2_hat, k=1, grid = x)
 mode_diff <- abs(freq_mode-proxval)
 mode_diff
 
-# plot.ts(mala.is[[1]][, 1:10])
+plot(density(mala.is[[1]][,36]))
+abline(v = proxval[36], col = "red")
+
+plot.ts(mala.is[[1]][36])
 # plot.ts(mala.is[[2]])
-# hist(mala.is[[2]])
+hist(mala.is[[2]])
 #px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
 
 # Asymptotic variance
