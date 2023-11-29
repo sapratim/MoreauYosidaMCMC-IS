@@ -16,7 +16,7 @@ log_post <- function(y,beta,alpha,sigma2)  # log value of the posterior distribu
   term1 <- (sum((y-x*beta)^2))/(2*sigma2)
   term2 <- (alpha*abs(beta))/sqrt(sigma2)
   value <- term1 + term2
-  return(value)
+  return(-value)
 }
 
 log_target <- function(eta,beta,lambda,y,sigma2,alpha)  # log of MY envelope
@@ -102,3 +102,16 @@ mymala_fn <- function(y, alpha, sigma2, lambda, iter, delta)
 
 result <- mymala_fn(y=y,alpha = alpha_true,sigma2 = noise_sd^2,lambda = lamb_coeff, 
                iter = iterations, delta = step_size)
+
+# Mode matching
+values <- seq(-35,40, length = 1e4)
+prox_vals <- numeric(length = 1e4)
+den_val <- numeric(length = 1e4)
+for (i in 1:length(prox_vals)) 
+  {
+  prox_vals[i] = prox_func(values[i],lamb_coeff,y,noise_sd^2,alpha_true)
+  den_val[i] <- log_target(prox_vals[i],values[i],lamb_coeff,y,noise_sd^2,alpha_true)
+}
+plot(values, den_val, type = "l")
+abline(v=prox_func(beta=3,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
+abline(v=3, col = "blue")
