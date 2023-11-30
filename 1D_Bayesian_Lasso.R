@@ -6,8 +6,8 @@ noise_sd <- 3
 x <- seq(1, 10, length = 100)   # vector of regressors
 y <- rnorm(length(x), x*beta_par, noise_sd)  # actual generated data
 alpha_true <- 5  # penalty parameter
-lamb_coeff <- 0.1  # coefficient of closeness
-step_size <- 0.35
+lamb_coeff <- 1  # coefficient of closeness
+step_size <- 2
 beta_start <- 1   
 iterations <- 1e5  
 
@@ -32,7 +32,10 @@ prox_func <- function(beta,lambda,y,sigma2,alpha)  # function returns proximal v
   mu <- (lambda*(sum(x*y)) + beta*sigma2) / denom 
   temp <- (alpha*lambda*sqrt(sigma2)) / denom
   vec <- c(0, mu + temp, mu - temp)
-  fun.val <- log_target(vec,beta,lambda,y,sigma2,alpha)
+  fun.val <- numeric(length = length(vec))
+  fun.val[1] <- log_target(vec[1],beta,lambda,y,sigma2,alpha)
+  fun.val[2] <- log_target(vec[2],beta,lambda,y,sigma2,alpha)
+  fun.val[3] <- log_target(vec[3],beta,lambda,y,sigma2,alpha)
   index <- which.min(fun.val)
   prox <- vec[index]
   return(prox)
