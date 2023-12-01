@@ -1,15 +1,16 @@
 ### One dimensional Bayesian Lasso
 
+set.seed(12345)
 beta_par <- 3  # true value of beta
 ndata <- 100
 noise_sd <- 3 
 x <- seq(1, 10, length = 100)   # vector of regressors
 y <- rnorm(length(x), x*beta_par, noise_sd)  # actual generated data
-alpha_true <- 5  # penalty parameter
-lamb_coeff <- 1  # coefficient of closeness
-step_size <- 2
-beta_start <- 1   
-iterations <- 1e5  
+alpha_true <- 1  # penalty parameter
+lamb_coeff <- 0.01  # coefficient of closeness
+step_size <- 0.03
+beta_start <- 3  
+iterations <- 1e4  
 
 log_post <- function(y,beta,alpha,sigma2)  # log value of the posterior distribution
  {
@@ -21,8 +22,8 @@ log_post <- function(y,beta,alpha,sigma2)  # log value of the posterior distribu
 
 log_target <- function(eta,beta,lambda,y,sigma2,alpha)  # log of MY envelope
 {
-  dens_val <- sum((y - x*eta)^2)/ (2*sigma2) + (alpha*abs(eta))/sqrt(sigma2) + 
-                                  sum((eta - beta)^2)/(2*lambda) 
+  dens_val <- (sum((y - x*eta)^2))/ (2*sigma2) + (alpha*abs(eta))/sqrt(sigma2) + 
+                                  ((eta - beta)^2)/(2*lambda) 
   return(-dens_val)
 }
 
@@ -36,9 +37,23 @@ prox_func <- function(beta,lambda,y,sigma2,alpha)  # function returns proximal v
   fun.val[1] <- log_target(vec[1],beta,lambda,y,sigma2,alpha)
   fun.val[2] <- log_target(vec[2],beta,lambda,y,sigma2,alpha)
   fun.val[3] <- log_target(vec[3],beta,lambda,y,sigma2,alpha)
-  index <- which.min(fun.val)
+  index <- which.max(fun.val)
   prox <- vec[index]
   return(prox)
+}
+
+mode_fn <- function(beta,y,alpha,sigma2)    # function to calculate true mode
+{
+  kappa <- sum(x*y)/sum(x^2)
+  mu <- (alpha*sqrt(sigma2))/sum(x^2)
+  vec <- c(0, kappa + mu, kappa - mu)
+  targ.val <- numeric(length = length(vec))
+  targ.val[1] <- log_post(y,vec[1],alpha,sigma2)
+  targ.val[2] <- log_post(y,vec[2],alpha,sigma2)
+  targ.val[3] <- log_post(y,vec[3],alpha,sigma2)
+  index <- which.max(targ.val)
+  modal_value <- vec[index]
+  return(modal_value)
 }
 
 log_gradpi <- function(beta,lambda,y,sigma2,alpha)  # gradient of log target(MY envelope)
@@ -61,7 +76,7 @@ mymala_fn <- function(y, alpha, sigma2, lambda, iter, delta)
   accept <- 0
   for (i in 2:iter) 
   {
-    beta_next <- rnorm(length(beta_current), beta_current + 
+    beta_next <- rnorm(1, beta_current + 
                          (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha), 
                        sqrt(delta))   # proposal step
     prox_val.next <- prox_func(beta_next, lambda, y, sigma2, alpha)
@@ -94,7 +109,7 @@ mymala_fn <- function(y, alpha, sigma2, lambda, iter, delta)
       wts_is_est[i] <- g_lambda_val - g_val
     }
     beta_current <- samp.mym[i,]
-    if(i %% 10000 == 0){
+    if(i %% 1000 == 0){
       print(i)
     }
   }
@@ -103,18 +118,35 @@ mymala_fn <- function(y, alpha, sigma2, lambda, iter, delta)
   return(object)
 }
 
+# MALA samples and weights
 result <- mymala_fn(y=y,alpha = alpha_true,sigma2 = noise_sd^2,lambda = lamb_coeff, 
                iter = iterations, delta = step_size)
 
-# Mode matching
-values <- seq(-35,40, length = 1e4)
-prox_vals <- numeric(length = 1e4)
-den_val <- numeric(length = 1e4)
-for (i in 1:length(prox_vals)) 
+# Mode difference 
+beta_samps <- as.numeric(unlist(result[[1]]))
+mode_diff <- numeric(length = iterations)
+for (i in 1:iterations) 
   {
-  prox_vals[i] = prox_func(values[i],lamb_coeff,y,noise_sd^2,alpha_true)
-  den_val[i] <- log_target(prox_vals[i],values[i],lamb_coeff,y,noise_sd^2,alpha_true)
+    true_mode <- mode_fn(beta_samps[i],y,alpha_true,noise_sd^2)
+    prox_mode <- prox_func(beta_samps[i],lamb_coeff,y,noise_sd^2,alpha_true)
+    mode_diff <- prox_mode - true_mode
 }
-plot(values, den_val, type = "l")
-abline(v=prox_func(beta=3,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
-abline(v=3, col = "blue")
+
+max_diff <- max(abs(mode_diff))
+max_diff
+
+#  Density functions
+data_points <- 1e4
+xvals <- seq(1, 6, length = data_points)
+denvals <- numeric(length = data_points)
+denvals_targ <- numeric(length = data_points)
+for (i in 1:data_points) 
+  {
+  proxval <- prox_func(xvals[i],lamb_coeff,y,noise_sd^2,alpha_true)
+  denvals[i] <- log_target(proxval,xvals[i],lamb_coeff,y,noise_sd^2,alpha_true)
+  denvals_targ[i] <- log_post(y,xvals[i],alpha_true,noise_sd^2)
+}
+plot(xvals, denvals, type = "l")
+abline(v=mode_fn(beta = beta_par,y,alpha_true,noise_sd^2), col = "blue")
+plot(xvals, exp(denvals_targ), type = "l")
+abline(v=prox_func(beta = beta_par,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
