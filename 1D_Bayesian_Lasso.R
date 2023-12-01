@@ -9,7 +9,7 @@ y <- rnorm(length(x), x*beta_par, noise_sd)  # actual generated data
 alpha_true <- 1  # penalty parameter
 lamb_coeff <- 0.01  # coefficient of closeness
 step_size <- 0.03
-beta_start <- 3  
+beta_start <- 1
 iterations <- 1e4  
 
 log_post <- function(y,beta,alpha,sigma2)  # log value of the posterior distribution
