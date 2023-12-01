@@ -1,6 +1,6 @@
 ### One dimensional Bayesian Lasso
 
-set.seed(12345)
+set.seed(123)
 beta_par <- 3  # true value of beta
 ndata <- 100
 noise_sd <- 3 
@@ -137,7 +137,7 @@ max_diff
 
 #  Density functions
 data_points <- 1e4
-xvals <- seq(1, 6, length = data_points)
+xvals <- seq(2, 4.5, length = data_points)
 denvals <- numeric(length = data_points)
 denvals_targ <- numeric(length = data_points)
 for (i in 1:data_points) 
@@ -146,7 +146,24 @@ for (i in 1:data_points)
   denvals[i] <- log_target(proxval,xvals[i],lamb_coeff,y,noise_sd^2,alpha_true)
   denvals_targ[i] <- log_post(y,xvals[i],alpha_true,noise_sd^2)
 }
-plot(xvals, denvals, type = "l")
+
+#  MY approx density
+plot(xvals, denvals, type = "l", xlab = "beta", ylab = "value")
 abline(v=mode_fn(beta = beta_par,y,alpha_true,noise_sd^2), col = "blue")
-plot(xvals, exp(denvals_targ), type = "l")
 abline(v=prox_func(beta = beta_par,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
+legend("topright", c("MY_approx_density", "actual mode", "prox value at mode"), lty = 1,
+       col = c("black", "blue", "red"), cex = 0.5, bty = "n")
+
+#  log of actual posterior density
+plot(xvals, denvals_targ, type = "l", xlab = "beta", ylab = "value")
+abline(v=prox_func(beta = beta_par,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
+abline(v=mode_fn(beta = beta_par,y,alpha_true,noise_sd^2), col = "blue")
+legend("topright", c("log_actual_target", "actual mode", "prox value at mode"), lty = 1,
+       col = c("black", "blue", "red"), cex = 0.5, bty = "n")
+
+#  Actual posterior density
+plot(xvals, exp(denvals_targ), type = "l", xlab = "beta", ylab = "value")
+abline(v=prox_func(beta = beta_par,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
+abline(v=mode_fn(beta = beta_par,y,alpha_true,noise_sd^2), col = "blue")
+legend("topright", c("actual_target", "actual mode", "prox value at mode"), lty = 1,
+       col = c("black", "blue", "red"), cex = 0.5, bty = "n")
