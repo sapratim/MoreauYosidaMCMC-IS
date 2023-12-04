@@ -1,14 +1,15 @@
 ### One dimensional Bayesian Lasso
 
 set.seed(123)
-beta_par <- 3  # true value of beta
+library(mcmcse)
+beta_par <- 1  # true value of beta
 ndata <- 100
 noise_sd <- 3 
 x <- seq(1, 10, length = 100)   # vector of regressors
 y <- rnorm(length(x), x*beta_par, noise_sd)  # actual generated data
-alpha_true <- 1  # penalty parameter
-lamb_coeff <- 0.01  # coefficient of closeness
-step_size <- 0.03
+alpha_true <- 10  # penalty parameter
+lamb_coeff <- 100  # coefficient of closeness
+step_size <- 250
 beta_start <- 1
 iterations <- 1e4  
 
@@ -42,7 +43,7 @@ prox_func <- function(beta,lambda,y,sigma2,alpha)  # function returns proximal v
   return(prox)
 }
 
-mode_fn <- function(beta,y,alpha,sigma2)    # function to calculate true mode
+mode_fn <- function(y,alpha,sigma2)    # function to calculate true mode
 {
   kappa <- sum(x*y)/sum(x^2)
   mu <- (alpha*sqrt(sigma2))/sum(x^2)
@@ -122,22 +123,11 @@ mymala_fn <- function(y, alpha, sigma2, lambda, iter, delta)
 result <- mymala_fn(y=y,alpha = alpha_true,sigma2 = noise_sd^2,lambda = lamb_coeff, 
                iter = iterations, delta = step_size)
 
-# Mode difference 
-beta_samps <- as.numeric(unlist(result[[1]]))
-mode_diff <- numeric(length = iterations)
-for (i in 1:iterations) 
-  {
-    true_mode <- mode_fn(beta_samps[i],y,alpha_true,noise_sd^2)
-    prox_mode <- prox_func(beta_samps[i],lamb_coeff,y,noise_sd^2,alpha_true)
-    mode_diff <- prox_mode - true_mode
-}
-
-max_diff <- max(abs(mode_diff))
-max_diff
+mode_true_pi <- mode_fn(y,alpha_true,noise_sd^2) #  Analytical mode of pi
 
 #  Density functions
 data_points <- 1e4
-xvals <- seq(2, 4.5, length = data_points)
+xvals <- seq(0, 2.5, length = data_points)
 denvals <- numeric(length = data_points)
 denvals_targ <- numeric(length = data_points)
 for (i in 1:data_points) 
@@ -147,23 +137,51 @@ for (i in 1:data_points)
   denvals_targ[i] <- log_post(y,xvals[i],alpha_true,noise_sd^2)
 }
 
+
 #  MY approx density
-plot(xvals, denvals, type = "l", xlab = "beta", ylab = "value")
-abline(v=mode_fn(beta = beta_par,y,alpha_true,noise_sd^2), col = "blue")
-abline(v=prox_func(beta = beta_par,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
+plot(xvals, denvals, type = "l", xlab = "beta", ylab = "value", 
+                                       main = "Mode matching for pi^{lambda}")
+abline(v=mode_true_pi, col = "blue")
+abline(v=prox_func(beta = mode_true_pi,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
 legend("topright", c("MY_approx_density", "actual mode", "prox value at mode"), lty = 1,
        col = c("black", "blue", "red"), cex = 0.5, bty = "n")
 
 #  log of actual posterior density
 plot(xvals, denvals_targ, type = "l", xlab = "beta", ylab = "value")
-abline(v=prox_func(beta = beta_par,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
-abline(v=mode_fn(beta = beta_par,y,alpha_true,noise_sd^2), col = "blue")
+abline(v=prox_func(beta = mode_true_pi,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
+abline(v=mode_true_pi, col = "blue")
 legend("topright", c("log_actual_target", "actual mode", "prox value at mode"), lty = 1,
        col = c("black", "blue", "red"), cex = 0.5, bty = "n")
 
 #  Actual posterior density
 plot(xvals, exp(denvals_targ), type = "l", xlab = "beta", ylab = "value")
-abline(v=prox_func(beta = beta_par,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
-abline(v=mode_fn(beta = beta_par,y,alpha_true,noise_sd^2), col = "blue")
+abline(v=prox_func(beta = mode_true_pi,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
+abline(v=mode_true_pi, col = "blue")
 legend("topright", c("actual_target", "actual mode", "prox value at mode"), lty = 1,
        col = c("black", "blue", "red"), cex = 0.5, bty = "n")
+
+
+plot(density(result[[1]]), xlab = "x", ylab = "f(x)", 
+                           main = "Est. density from MCMC samples for lambda = 100")
+abline(v=prox_func(beta = mode_true_pi,lamb_coeff,y,noise_sd^2,alpha_true), col = "red")
+abline(v=mode_true_pi, col = "blue")
+legend("topright", c("est_density_MCMC", "analytical mode", "prox value at mode"), lty = 1,
+       col = c("black", "blue", "red"), cex = 0.5, bty = "n")
+
+grids <- seq(0, 2, length = 1e6)
+pi_vals <- numeric(length = length(grids))
+pi_lam_vals <- numeric(length = length(grids))
+for (k in 1:length(grids)) 
+  {
+  pi_vals[k] <- log_post(y,grids[k],alpha_true,noise_sd^2)
+  proxs <- prox_func(grids[k],lamb_coeff,y,noise_sd^2,alpha_true)
+  pi_lam_vals[k] <- log_target(proxs,grids[k],lamb_coeff,y,noise_sd^2,alpha_true)
+}
+
+mode_com_pi <- grids[which.max(pi_vals)]
+mode_com_pilam <- grids[which.max(pi_lam_vals)]
+prox_mode <- prox_func(mode_true_pi,lamb_coeff,y,noise_sd^2,alpha_true)
+mode_com_pi
+mode_com_pilam
+mode_true_pi
+prox_mode

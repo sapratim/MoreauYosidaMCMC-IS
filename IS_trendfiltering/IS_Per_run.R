@@ -5,24 +5,40 @@ iter <- 1e4
 
 lamb_coeff <- 0.0005
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
-delta <- .0002
-covmat <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter, delta = delta)[[2]]
-delta_samp <- .065
+delta <- .0006
+prec_mat_chain <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter, delta = delta)
+covmat <- prec_mat_chain[[2]]
+delta_samp <- .07
 mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
 
 freq_mode <- trendfilter(x,y, k=1,lambda = sigma2_hat*alpha_hat,
                   control = trendfilter.control.list(obj_tol = tol, max_iter = 1e3L))$beta
 proxval <- prox_func(freq_mode, lamb_coeff,alpha_hat, sigma2_hat, k=1, grid = x)
 mode_diff <- abs(freq_mode-proxval)
-mode_diff
+mode_diff   #   difference in modes
 
-plot(density(mala.is[[1]][,36]))
-abline(v = proxval[36], col = "red")
+i <- 1
 
-plot.ts(mala.is[[1]][36])
-# plot.ts(mala.is[[2]])
-hist(mala.is[[2]])
-#px_mala <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
+# Repeated execution gives density functions for different components
+plot(density(mala.is[[1]][, i]))
+abline(v = proxval[i], col = "red")
+abline(v= freq_mode[i], col = "blue")
+legend("topright", c("est_density_MCMC", "frequentist mode", "prox value at mode"), lty = 1,
+       col = c("black", "blue", "red"), cex = 0.6, bty = "n")
+i <- i + 1
+
+
+###  Trace plots
+plot.ts(mala.is[[1]][, 1:10])
+plot.ts(mala.is[[1]][, 11:20])
+plot.ts(mala.is[[1]][, 21:30])
+plot.ts(mala.is[[1]][, 31:40])
+plot.ts(mala.is[[1]][, 41:50])
+plot.ts(mala.is[[1]][, 51:60])
+plot.ts(mala.is[[1]][, 61:70])
+plot.ts(mala.is[[1]][, 71:80])
+plot.ts(mala.is[[1]][, 81:90])
+plot.ts(mala.is[[1]][, 91:100])
 
 # Asymptotic variance
 
@@ -54,10 +70,4 @@ hist(mala.is[[2]])
 # colnames(var_mat) <- c("Imp_sampling", "PxMala")
 # 
 # var_mat
-
-
-
-
-
-
 
