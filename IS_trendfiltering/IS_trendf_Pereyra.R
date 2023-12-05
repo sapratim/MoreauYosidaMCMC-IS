@@ -15,7 +15,8 @@ x <- seq(1,100,len=100)
  f <- Vectorize(function(x){if(x<=35){x} else if(x<=70){70-x} else{0.5*x-35}})
 fx_linear <- f(x)
 y <- fx_linear + rnorm(length(x), sd = 1)
-tol <- 1e-100
+tol <- 1e-13
+max_iter <- 1e5L
 
 # function calculates the inside of the proximal function
 
@@ -53,9 +54,9 @@ prox_arg <- function(eta,beta,lambda,y,sigma2,alpha)     # value of MY-envelope
 prox_func <- function(beta,lambda,alpha,sigma2,k,grid)
 {
   betaval <- (beta*sigma2+(lambda*y))/(sigma2+lambda)
-  lambdaval <- (lambda*alpha)
+  lambdaval <- (alpha)/ ((lambda + sigma2)/ (lambda*sigma2) )
   temp = trendfilter(grid,betaval, k=k,lambda = lambdaval,
-                     control = trendfilter.control.list(obj_tol = tol, max_iter = 1e3L))$beta
+                     control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))$beta
   return(as.vector(temp))
 }
 
@@ -89,7 +90,7 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta) #pre-condition
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff
   beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha,
-                       control = trendfilter.control.list(obj_tol = tol, max_iter = 1e3L))$beta
+                       control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))$beta
   samp.mym[1,] <- beta_current
   accept <- 0
   for (i in 2:iter) 
@@ -143,7 +144,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
   lambda <- lamb_coeff
   wts_is_est <- numeric(length = iter)
   beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha,
-                    control = trendfilter.control.list(obj_tol = tol, max_iter = 1e3L))$beta
+                    control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))$beta
   samp.mym[1,] <- beta_current
   g_val <- alpha*sum(abs(D_mat%*%beta_current)) + sum((y - beta_current)^2)/(2*sigma2)
   prox_start <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
