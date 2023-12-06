@@ -8,15 +8,15 @@ library(Matrix)
 library(spmrf)
 library(expm)
 
-set.seed(301297)
+set.seed(12345)
 alpha_hat <- 5   # obtained from the first dataset
 sigma2_hat <- 1  # obtained from the first dataset
 x <- seq(1,100,len=100)
  f <- Vectorize(function(x){if(x<=35){x} else if(x<=70){70-x} else{0.5*x-35}})
 fx_linear <- f(x)
 y <- fx_linear + rnorm(length(x), sd = 1)
-tol <- 1e-13
-max_iter <- 1e5L
+tol <- 1e-10
+max_iter <- 1e4L
 
 # function calculates the inside of the proximal function
 
@@ -91,6 +91,7 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta) #pre-condition
   lambda <- lamb_coeff
   beta_current <- trendfilter(grid,y, k=k,lambda = sigma2*alpha,
                        control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))$beta
+  prox_val.curr <- prox_func(beta_current, lambda, alpha,sigma2, k, grid)
   samp.mym[1,] <- beta_current
   accept <- 0
   for (i in 2:iter) 
@@ -99,7 +100,6 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta) #pre-condition
                          (delta / 2)*log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), 
                        sqrt(delta))   # proposal step
     prox_val.next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
-    prox_val.curr <- prox_func(beta_current, lambda, alpha,sigma2, k, grid)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
     q.next_to_curr <- sum(dnorm(beta_current, beta_next + 
@@ -113,6 +113,7 @@ mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta) #pre-condition
     if(log(runif(1)) <= mh.ratio)
     {
       samp.mym[i,] <- beta_next
+      prox_val.curr <- prox_val.next
       accept <- accept + 1
     }
     else
@@ -147,8 +148,8 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
                     control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))$beta
   samp.mym[1,] <- beta_current
   g_val <- alpha*sum(abs(D_mat%*%beta_current)) + sum((y - beta_current)^2)/(2*sigma2)
-  prox_start <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
-  g_lambda_val <- prox_arg(prox_start, beta_current, lambda=lambda, y, sigma2, alpha)
+  prox_val.curr <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
+  g_lambda_val <- prox_arg(prox_val.curr, beta_current, lambda=lambda, y, sigma2, alpha)
   wts_is_est[1] <- g_lambda_val - g_val
   U <- sqrtm(covmat)
   mat.inv <- solve(covmat)
@@ -158,7 +159,6 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     beta_next <- beta_current +  ((delta / 2)*covmat)%*%log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
       (sqrt(delta)*U) %*% rnorm(length(beta_current), 0, 1)   # proposal step
     prox_val.next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
-    prox_val.curr <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
     targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
@@ -170,6 +170,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.mym[i,] <- beta_next
+      prox_val.curr <- prox_val.next
       g_val <- alpha*sum(abs(D_mat%*%beta_next)) + sum((y - beta_next)^2)/(2*sigma2)
       g_lambda_val <- prox_arg(prox_val.next, beta_next, lambda=lambda, y, sigma2, alpha)
       wts_is_est[i] <- g_lambda_val - g_val

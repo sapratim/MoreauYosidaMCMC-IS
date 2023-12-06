@@ -1,15 +1,16 @@
 
 source("IS_trendf_Pereyra.R")
+load("covmat.Rdata")
 
-iter <- 1e4
-
+iter <- 1e5
 lamb_coeff <- 0.0005
+delta_samp <- .0005
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
-delta <- .0006
-prec_mat_chain <- mymala_cov_fn(y, alpha_hat, sigma2_hat, k=1, grid = x, iter, delta = delta)
-covmat <- prec_mat_chain[[2]]
-delta_samp <- .07
-mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter, delta = delta_samp, covmat)
+mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
+                                    delta = delta_samp, covmat = diag(1, length(y), length(y)))
+
+mala_chain <- mala.is[[1]]
+save(mala_chain, "mala_chain.Rdata")
 
 freq_mode <- trendfilter(x,y, k=1,lambda = sigma2_hat*alpha_hat,
                   control = trendfilter.control.list(obj_tol = tol, max_iter = 1e3L))$beta
