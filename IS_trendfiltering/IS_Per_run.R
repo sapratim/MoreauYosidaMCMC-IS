@@ -2,18 +2,21 @@
 source("IS_trendf_Pereyra.R")
 load("covmat.Rdata")
 
-iter <- 1e5
+iter <- 1e3
 lamb_coeff <- 0.0005
-delta_samp <- .0005
+delta_samp <- .04065
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
+
 mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
-                                    delta = delta_samp, covmat = diag(1, length(y), length(y)))
+                                    delta = delta_samp, covmat = covmat)
 
 mala_chain <- mala.is[[1]]
-save(mala_chain, "mala_chain.Rdata")
+weights <- mala.is[[2]]
+save(mala_chain, file = "mala_chain.Rdata")
+save(weights, file = "weights.Rdata")
 
 freq_mode <- trendfilter(x,y, k=1,lambda = sigma2_hat*alpha_hat,
-                  control = trendfilter.control.list(obj_tol = tol, max_iter = 1e3L))$beta
+                  control = trendfilter.control.list(obj_tol = tol, max_iter = 1e4L))$beta
 proxval <- prox_func(freq_mode, lamb_coeff,alpha_hat, sigma2_hat, k=1, grid = x)
 mode_diff <- abs(freq_mode-proxval)
 mode_diff   #   difference in modes

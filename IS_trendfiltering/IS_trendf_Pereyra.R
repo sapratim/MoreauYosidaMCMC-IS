@@ -15,8 +15,8 @@ x <- seq(1,100,len=100)
  f <- Vectorize(function(x){if(x<=35){x} else if(x<=70){70-x} else{0.5*x-35}})
 fx_linear <- f(x)
 y <- fx_linear + rnorm(length(x), sd = 1)
-tol <- 1e-10
-max_iter <- 1e4L
+tol <- 1e-20
+max_iter <- 1e5L
 
 # function calculates the inside of the proximal function
 
@@ -56,7 +56,7 @@ prox_func <- function(beta,lambda,alpha,sigma2,k,grid)
   betaval <- (beta*sigma2+(lambda*y))/(sigma2+lambda)
   lambdaval <- (alpha)/ ((lambda + sigma2)/ (lambda*sigma2) )
   temp = trendfilter(grid,betaval, k=k,lambda = lambdaval,
-                     control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))$beta
+                control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))$beta
   return(as.vector(temp))
 }
 
@@ -184,8 +184,9 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
       wts_is_est[i] <- g_lambda_val - g_val
     }
     beta_current <- samp.mym[i,]
-    if(i %% 1000 == 0){
-      print(i)
+    if(i %% 10 == 0){
+      j <- accept/iter
+      print(cat(i, j))
     }
   }
   print(accept/iter)
