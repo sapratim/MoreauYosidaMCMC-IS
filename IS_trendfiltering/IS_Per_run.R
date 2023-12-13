@@ -1,11 +1,67 @@
 
-source("IS_trendf_Pereyra.R")
+source("IS_trendf_functions_Pereyra.R")
 load("covmat.Rdata")
+load("MC_pcm.Rdata")
 
 iter <- 1e4
 lamb_coeff <- 0.0005
-delta_samp <- .042
+delta_samp <- .025
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
+
+mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
+{
+  samp.mym <- matrix(0, nrow = iter, ncol = length(y))
+  lambda <- lamb_coeff
+  wts_is_est <- numeric(length = iter)
+  beta_current <- markov_chain[1e4,]
+    samp.mym[1,] <- beta_current
+  g_val <- alpha*sum(abs(D_mat%*%beta_current)) + sum((y - beta_current)^2)/(2*sigma2)
+  prox_val.curr <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
+  g_lambda_val <- prox_arg(prox_val.curr, beta_current, lambda=lambda, y, sigma2, alpha)
+  wts_is_est[1] <- g_lambda_val - g_val
+  U <- sqrtm(covmat)
+  mat.inv <- solve(covmat)
+  accept <- 0
+  for (i in 2:iter) 
+  {
+    beta_next <- beta_current +  ((delta / 2)*covmat)%*%log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid) + 
+      (sqrt(delta)*U) %*% rnorm(length(beta_current), 0, 1)   # proposal step
+    prox_val.next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
+    targ_val.next <- log_target(prox_val.next,beta_next,lambda,y,sigma2,alpha)
+    targ_val.curr <- log_target(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
+    q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
+                                   ((delta / 2)*covmat)%*%log_gradpi(beta_next,lambda,y,sigma2,alpha,k,grid), mat.inv, delta)
+    q.curr_to_next <- dmvnorm_fn(beta_next, beta_current + 
+                                   ((delta / 2)*covmat)%*%log_gradpi(beta_current,lambda,y,sigma2,alpha,k,grid), mat.inv, delta) 
+    mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
+    # print(mh.ratio)
+    if(log(runif(1)) <= mh.ratio)
+    {
+      samp.mym[i,] <- beta_next
+      prox_val.curr <- prox_val.next
+      g_val <- alpha*sum(abs(D_mat%*%beta_next)) + sum((y - beta_next)^2)/(2*sigma2)
+      g_lambda_val <- prox_arg(prox_val.next, beta_next, lambda=lambda, y, sigma2, alpha)
+      wts_is_est[i] <- g_lambda_val - g_val
+      accept <- accept + 1
+    }
+    else
+    {
+      samp.mym[i,] <- beta_current
+      g_val <- alpha*sum(abs(D_mat%*%beta_current)) + sum((y - beta_current)^2)/(2*sigma2)
+      g_lambda_val <- prox_arg(prox_val.curr, beta_current, lambda=lambda, y, sigma2, alpha)
+      wts_is_est[i] <- g_lambda_val - g_val
+    }
+    beta_current <- samp.mym[i,]
+    if(i %% 10 == 0){
+      j <- accept/iter
+      print(cat(i, j))
+    }
+  }
+  print(accept/iter)
+  object <- list(samp.mym, wts_is_est)
+  return(object)
+}
+
 
 mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
                                     delta = delta_samp, covmat = covmat)
