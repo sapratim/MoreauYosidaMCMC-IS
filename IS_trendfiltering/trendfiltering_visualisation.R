@@ -6,7 +6,7 @@ load("output.Rdata")
 lamb_coeff <- 0.001
 
 #  Quantile visualisation
-pdf(file = "quantile_plot.pdf")
+pdf(file = "quantile_plot.pdf", width = 8, height = 5)
 run_iter <- 20
 post_mean <- output[[run_iter]][[1]]
 post_med <- output[[run_iter]][[2]]
@@ -16,7 +16,7 @@ dataset <- data.frame(x, y, lower_quant, upper_quant, post_med)
 plot <- ggplot(dataset, aes(x, y,group = )) + geom_point() +
                         geom_line(aes(x=c(1:100), y=post_med), col = "red")
 conf_bands <- plot + geom_ribbon(aes(ymin = lower_quant, ymax = upper_quant), alpha = 0.3) +
-                    ggtitle("Piecewise linear model") + labs(x = "argument") + labs(y = "data")
+                    ggtitle("Piecewise linear model") + labs(x = "variable") + labs(y = "data")
 conf_bands
 dev.off()
 # plot(y, col = "black", main = "95 % credible interval")
