@@ -1,6 +1,7 @@
   # R Code for Proximal of the Nuclear-Norm problem:
     # softthreshold(seq(-10, 10, length.out=10), 1) 
 
+rm(list = ls())
 library(mcmcse)
 library(coda)
 library(Matrix)
@@ -9,8 +10,9 @@ library(foreach)
 library(doParallel)
 library(ks)
 
-n <- 64
-a <- 8
+set.seed(11111)
+n <- 8
+a <- 2
 mat <- matrix(0, nrow = n, ncol = n)
 vec.mat <- rep(c(1, 0), each = a, times = n/(2*a))
 checker <- matrix(0, nrow = n, ncol = n)
@@ -39,7 +41,7 @@ y <- vec(image_mat)
 ######### Display the checkerboard matrix as an image
 
 # image(checker, col = gray.colors(4, start = 0, end = 1), axes = FALSE)
-# image(final_image, col = gray.colors(4, start = 0, end = 1), axes = FALSE)
+# image(image_mat, col = gray.colors(4, start = 0, end = 1), axes = FALSE)
 
 ##############------Functions------##################################
 
@@ -71,7 +73,7 @@ prox_func <- function(x,lambda,y,sigma2,alpha) {   #### input x and y as a vecto
   denom <- lambda + sigma2
   mat <- matrix(num/denom, nrow = n, ncol = n)
   svdsol <- svd(mat)
-  s <- softthreshold(svdsol$d, (alpha*sigma2)/denom)
+  s <- softthreshold(svdsol$d, (alpha*sigma2*lambda)/denom)
   output <- svdsol$u %*% (s*t(svdsol$v))  # Multiply each row of V’ by singular values
   return(vec(output))
 }
@@ -83,12 +85,12 @@ log_gradpi <- function(x,lambda,y,sigma2,alpha)  # gradient of log target
   return(-ans)
 }
 
-dmvnorm_fn <- function(point, mu, mat, delta)
-{
-  diff <- point - mu
-  exp_term <- (t(diff) %*% mat) %*% diff
-  den_value <- -(exp_term/(2*delta))
-}
+# dmvnorm_fn <- function(point, mu, mat, delta)
+# {
+#   diff <- point - mu
+#   exp_term <- (t(diff) %*% mat) %*% diff
+#   den_value <- -(exp_term/(2*delta))
+# }
 
 #### MYMALA sampling for covariance matrix estimation
 
@@ -367,16 +369,19 @@ pxhmc <- function(y, alpha, sigma2, iter, eps_hmc, L)
 
 
 iter <- 1e4
-lamb_coeff <- 0.1
+lamb_coeff <- 0.00001
 sigma2_hat <- 0.01
 alpha_hat <- 1.15/sigma2_hat
-step <- 0.0001
+step <- 0.0000001
+step_pxm <- 0.0000005
 
 result_is <- mymala(y=y, alpha = alpha_hat, sigma2 = sigma2_hat, iter = iter, delta = step)
-result_pxm <- px.mala(y=y, alpha = alpha_hat, sigma2 = sigma2_hat, iter = iter, delta = step)
+result_pxm <- px.mala(y=y, alpha = alpha_hat, sigma2 = sigma2_hat, iter = iter, delta = step_pxm)
 
-result_ishmc <- myhmc(y=y, alpha = alpha_hat, sigma2 = sigma2_hat, iter = iter, delta = step)
-result_pxhmc <- pxhmc(y=y, alpha = alpha_hat, sigma2 = sigma2_hat, iter = iter, delta = step)
+result_ishmc <- myhmc(y=y, alpha = alpha_hat, sigma2 = sigma2_hat, 
+                               iter = iter, eps_hmc = 0.0001, L=10)
+result_pxhmc <- pxhmc(y=y, alpha = alpha_hat, sigma2 = sigma2_hat, 
+                      iter = iter, eps_hmc = 0.0001, L=10)
 
 chain <- result_is[[1]]
 weights <- result_is[[2]]
@@ -395,5 +400,7 @@ post_mean <- num_sum/weights_sum
 
 
 ############ Image visualisation
-
+chain1 <- result_pxm
 image(matrix(post_mean, nrow = n, ncol = n), col = gray.colors(4, start = 0, end = 1), axes = FALSE)
+library(SimTools)
+traceplot(chain[, c(60:64)])
