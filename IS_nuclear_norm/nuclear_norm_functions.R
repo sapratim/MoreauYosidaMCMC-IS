@@ -1,7 +1,6 @@
   # R Code for Proximal of the Nuclear-Norm problem:
     # softthreshold(seq(-10, 10, length.out=10), 1) 
 
-rm(list = ls())
 library(mcmcse)
 library(coda)
 library(Matrix)
@@ -29,11 +28,10 @@ for(j in seq((n/2+1), n, by = a))
 {
   for(k in 1:a)
   {
-    checker[j+k-1, ] <- (vec.mat == 0)*(vec.mat + .25) + (vec.mat == 1)*(vec.mat - .25)
+    checker[j+k-1, ] <- (vec.mat == 0)*(vec.mat)  + (vec.mat == 1)*(vec.mat - .50)
   }
   vec.mat <- rev(vec.mat)
 }
-
 noise <- matrix(rnorm(n^2, 0, sqrt(0.01)), nrow = n, ncol = n)
 image_mat <- checker + noise
 
@@ -89,10 +87,9 @@ log_gradpi <- function(x,lambda,y,sigma2,alpha)  # gradient of log target
 
 #### MYMALA sampling for covariance matrix estimation
 
-mymala_cov_fn <- function(y, alpha, sigma2, iter, delta)  #pre-conditioned mala
+mymala_cov_fn <- function(y, alpha, lambda, sigma2, iter, delta)  #pre-conditioned mala
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
-  lambda <- lamb_coeff
   samp_current <- y
   prox_val.curr <- prox_func(y,lambda,y,sigma2,alpha)
   samp.mym[1,] <- samp_current
@@ -136,12 +133,11 @@ mymala_cov_fn <- function(y, alpha, sigma2, iter, delta)  #pre-conditioned mala
 
 ##### MYMALA samples function
 
-mymala <- function(y, alpha, sigma2, iter, delta)
+mymala <- function(y, alpha, lambda, sigma2, iter, delta, start)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
-  lambda <- lamb_coeff
   wts_is_est <- numeric(length = iter)
-  samp_current <- start_value
+  samp_current <- start
   samp.mym[1,] <- samp_current
   psi_val <- alpha*nucl_norm(samp_current) + sum((y - samp_current)^2)/(2*sigma2)
   prox_val.curr <- prox_func(samp_current, lambda, y, sigma2, alpha)
@@ -195,11 +191,10 @@ mymala <- function(y, alpha, sigma2, iter, delta)
 
 ##### PxMALA samples function
 
-px.mala <- function(y, alpha, sigma2, iter, delta)
+px.mala <- function(y, alpha, lambda, sigma2, iter, delta, start)
 {
   samp.pxm <- matrix(0, nrow = iter, ncol = length(y))
-  lambda <- lamb_coeff
-  samp_current <- start_value
+  samp_current <- start
   samp.pxm[1,] <- samp_current
   accept <- 0
   # U <- sqrtm(covmat)
@@ -240,12 +235,11 @@ px.mala <- function(y, alpha, sigma2, iter, delta)
 
 ##  myhmc samples
 
-myhmc <- function(y, alpha, sigma2, iter, eps_hmc, L)
+myhmc <- function(y, alpha, lambda, sigma2, iter, eps_hmc, L, start)
 {
   samp.hmc <- matrix(0, nrow = iter, ncol = length(y))
-  lambda <- lamb_coeff
   wts_is_est <- numeric(length = iter)
-  samp <- start_value
+  samp <- start
   samp.hmc[1,] <- samp
   psi_val <- alpha*nucl_norm(samp) + sum((y - samp)^2)/(2*sigma2)
   proxval_curr <- prox_func(samp, lambda, y, sigma2, alpha)
@@ -307,11 +301,10 @@ myhmc <- function(y, alpha, sigma2, iter, eps_hmc, L)
 
 ## pxhmc samples
 
-pxhmc <- function(y, alpha, sigma2, iter, eps_hmc, L)
+pxhmc <- function(y, alpha, lambda, sigma2, iter, eps_hmc, L, start)
 {
   samp.hmc <- matrix(0, nrow = iter, ncol = length(y))
-  lambda <- lamb_coeff
-  samp <- start_value
+  samp <- start
   samp.hmc[1,] <- samp
   mom_mat <- matrix(rnorm(iter*length(y)), nrow = iter, ncol = length(y))
   accept <- 0
