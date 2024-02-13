@@ -6,15 +6,6 @@ load("Px_MALA.Rdata")
 load("IS_HMC.Rdata")
 load("Px_HMC.Rdata")
 iter <- 1e5
-##  IS samples
-ismala_chain <- result_is[[1]]
-ismala_weights <- result_is[[2]]
-ishmc_chain <- result_ishmc[[1]]
-ishmc_weights <- result_ishmc[[2]]
-
-##  Px samples
-pxmala_chain <- result_pxm
-pxhmc_chain <- result_ishmc[[1]]
 
 ############# Posterior mean 
 
@@ -34,10 +25,8 @@ pxhmc_chain <- result_ishmc[[1]]
 
 ################################ ESS evaluation MALA
 
-mala_chain <- ismala_chain
-weights <- ismala_weights
-is_samp <- matrix(unlist(mala_chain), nrow = iter, ncol = length(y))
-is_wts <- as.numeric(unlist(weights))
+is_samp <- matrix(unlist(result_is[[1]]), nrow = iter, ncol = length(y))
+is_wts <- as.numeric(unlist(result_is[[2]]))
 wts_mean <- mean(exp(is_wts))
 asymp_var_is <- numeric(length = ncol(is_samp))
 asymp_var_pxm <- numeric(length = ncol(is_samp))
@@ -52,7 +41,7 @@ for (j in 1:ncol(is_samp))
    asymp_var_is[j] <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
 }
 #save(asymp_var_is, file = "asymp_var_is.Rdata")
-comp_var <- mcse.mat(pxmala_chain)
+comp_var <- mcse.mat(result_pxm)
 asymp_var_pxm <- iter*(comp_var[,2]^2)   # PxMALA asymptotic variance
 #save(asymp_var_pxm, file = "asymp_var_pxm.Rdata")
 #load("asymp_var_is.Rdata")
@@ -60,10 +49,8 @@ rel_ess_mala <- asymp_var_pxm/asymp_var_is
 
 ################################ ESS evaluation HMC
 
-hmc_chain <- ishmc_chain
-weights <- ishmc_weights
-is_samp <- matrix(unlist(hmc_chain), nrow = iter, ncol = length(y))
-is_wts <- as.numeric(unlist(weights))
+is_samp <- matrix(unlist(result_ishmc[[1]]), nrow = iter, ncol = length(y))
+is_wts <- as.numeric(unlist(result_ishmc[[1]]))
 wts_mean <- mean(exp(is_wts))
 asymp_var_ishmc <- numeric(length = ncol(is_samp))
 asymp_var_pxhmc <- numeric(length = ncol(is_samp))
@@ -78,7 +65,7 @@ for (j in 1:ncol(is_samp))
   asymp_var_ishmc[j] <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
 }
 #save(asymp_var_ishmc, file = "asymp_var_ishmc.Rdata")
-comp_var <- mcse.mat(pxhmc_chain)
+comp_var <- mcse.mat(result_pxhmc[[1]])
 asymp_var_pxhmc <- iter*(comp_var[,2]^2)   # PxMALA asymptotic variance
 #save(asymp_var_pxhmc, file = "asymp_var_pxhmc.Rdata")
 rel_ess_hmc <- asymp_var_pxhmc/asymp_var_ishmc
