@@ -90,8 +90,8 @@ proxfunc <- function(eta, mu, lambda, eta_initial, mu_initial, sigma)
 MY_env <- function(eta, mu, data, optima, lambda)
 {
   term <- rbind(eta, mu)
-  value <- true_target(eta, mu, data) + sum(term^2)/lambda
-  return(-value)
+  value <- true_target(eta, mu, data) - sum(term^2)/(2*lambda)
+  return(value)
 }
 
 log_gradpi <- function(eta, mu, lambda, eta_initial, mu_initial, sigma) #gradient of log target^lambda
@@ -114,14 +114,18 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = I+1)
   wts_is_est <- numeric(length = iter)
+ 
   samp_current <- c(eta_start, mu_start)
   samp.mym[1,] <- samp_current
+  
   psi_val <- true_target(eta_start, mu_start, data)
   prox_val.curr <- proxfunc(eta_start, mu_start, lambda, eta_start, mu_start, sigma)
-  psi_lambda_val <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) +
-    sum((prox_val.curr - c(eta_start, mu_start))^2)/lambda
-  wts_is_est[1] <- psi_lambda_val - psi_val
-  accept <- 0
+  psi_lambda_val <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) -
+    sum((prox_val.curr - c(eta_start, mu_start))^2)/(2*lambda)
+  
+  wts_is_est[1] <- psi_val - psi_lambda_val
+ 
+   accept <- 0
   for (i in 2:iter) 
   {
     samp_next <- rnorm(length(samp_current), samp_current + 
@@ -129,10 +133,12 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
                         lambda, eta_start, mu_start, sigma),  sqrt(delta))   # proposal step
     prox_val.next <- proxfunc(samp_next[1:I], samp_next[I+1],
                                lambda, eta_start, mu_start, sigma)
-    targ_val.next <- - (true_target(prox_val.next[1:I], prox_val.next[I+1], data) +
-                          sum((prox_val.next - c(eta_start, mu_start))^2)/lambda)
-    targ_val.curr <- - (true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) +
-                          sum((prox_val.curr - c(eta_start, mu_start))^2)/lambda)
+    
+    targ_val.next <- true_target(prox_val.next[1:I], prox_val.next[I+1], data) -
+                          sum((prox_val.next - c(eta_start, mu_start))^2)/(2*lambda)
+    targ_val.curr <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) -
+                          sum((prox_val.curr - c(eta_start, mu_start))^2)/(2*lambda)
+    
     q.next_to_curr <- sum(dnorm(samp_current, samp_next + 
                                   (delta / 2)*log_gradpi(samp_next[1:I], samp_next[I+1],
                                                          lambda, eta_start, mu_start, sigma),sqrt(delta), log = TRUE))
@@ -146,18 +152,18 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
       samp.mym[i,] <- samp_next
       prox_val.curr <- prox_val.next
       psi_val <- true_target(samp_next[1:I], samp_next[I+1], data)
-      psi_lambda_val <- true_target(prox_val.next[1:I], prox_val.next[I+1], data) +
-        sum((prox_val.next - samp_next)^2)/lambda
-      wts_is_est[i] <- psi_lambda_val - psi_val
+      psi_lambda_val <- true_target(prox_val.next[1:I], prox_val.next[I+1], data) -
+        sum((prox_val.next - samp_next)^2)/(2*lambda)
+      wts_is_est[i] <-  psi_val - psi_lambda_val
       accept <- accept + 1
     }
     else
     {
       samp.mym[i,] <- samp_current
       psi_val <- true_target(samp_next[1:I], samp_next[I+1], data)
-      psi_lambda_val <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) +
-        sum((prox_val.curr - samp_current)^2)/lambda
-      wts_is_est[i] <- psi_lambda_val - psi_val
+      psi_lambda_val <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) -
+        sum((prox_val.curr - samp_current)^2)/(2*lambda)
+      wts_is_est[i] <- psi_val - psi_lambda_val
     }
     samp_current <- samp.mym[i,]
     if(i %% (iter/10) == 0){
@@ -341,7 +347,44 @@ pxhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
   return(object)
 }
 
-t <- mymala(eta_start, mu_start, lambda,sigma_eta, iter = 1e3, delta = 7e-9, data)
-u <- px.mala(eta_start, mu_start, lambda,sigma_eta, iter = 1e3, delta = 7e-9, data)
+eta_start <- log(rowMeans(data))
+mu_start <- mean(eta_start)
+lambda <- 100
+t <- mymala(eta_start, mu_start, lambda,sigma_eta, iter = 1e4, delta = 1.5, data)
+u <- px.mala(eta_start, mu_start, lambda,sigma_eta, iter = 1e4, delta = 7e-7, data)
+plot.ts(t[[2]])
+library(SimTools)
+plot.ts(t[[1]][,1:10])
+plot.ts(t[[1]][,21:30])
+plot.ts(t[[1]][,31:40])
+plot.ts(t[[1]][,41:50])
+plot.ts(t[[1]][,51])
+
+acfplot(t[[1]][, 1:5])
+
+mala_chain <- t[[1]]
+weights <- t[[2]]
+is_samp <- matrix(unlist(mala_chain), nrow = 1e4, ncol = I+1)
+is_wts <- as.numeric(unlist(weights))
+wts_mean <- mean(exp(is_wts))
+num <- is_samp*exp(is_wts)
+sum_mat <- apply(num, 2, sum)
+is_est <- sum_mat / sum(exp(is_wts))
+input_mat <- cbind(num, exp(is_wts))  # input samples for mcse
+Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
+kappa_eta_mat <- cbind(diag(1/wts_mean, I+1), is_est/wts_mean) # derivative of kappa matrix
+
+asymp_covmat_is <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
+
+asymp_covmat_pxm <- mcse.multi(u)$cov   # PxMALA asymptotic variance
+
+rel_ess <- (det(asymp_covmat_pxm)/det(asymp_covmat_is))^(1/(I+1))
+
+diag(asymp_covmat_pxm)/diag(asymp_covmat_is)
+
+
 v <- myhmc(eta_start, mu_start,lambda, sigma_eta, iter = 1e3, data, eps_hmc=0.05, L=10)
 w <- pxhmc(eta_start, mu_start,lambda, sigma_eta, iter = 1e3, data, eps_hmc=0.05, L=10)
+
+
+
