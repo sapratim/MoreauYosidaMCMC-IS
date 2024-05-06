@@ -5,7 +5,7 @@ load("IS_MALA.Rdata")
 load("Px_MALA.Rdata")
 load("IS_HMC.Rdata")
 load("Px_HMC.Rdata")
-iter <- 1e5
+iter <- 1e4
 
 ############# Posterior mean 
 
@@ -50,7 +50,7 @@ rel_ess_mala <- asymp_var_pxm/asymp_var_is
 ################################ ESS evaluation HMC
 
 is_samp <- matrix(unlist(result_ishmc[[1]]), nrow = iter, ncol = length(y))
-is_wts <- as.numeric(unlist(result_ishmc[[1]]))
+is_wts <- as.numeric(unlist(result_ishmc[[2]]))
 wts_mean <- mean(exp(is_wts))
 asymp_var_ishmc <- numeric(length = ncol(is_samp))
 asymp_var_pxhmc <- numeric(length = ncol(is_samp))

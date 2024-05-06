@@ -2,13 +2,11 @@
     # softthreshold(seq(-10, 10, length.out=10), 1) 
 
 library(mcmcse)
-library(coda)
 library(Matrix)
 library(expm)
 library(foreach)
 library(doParallel)
 library(ks)
-library(SimTools)
 
 set.seed(11111)
 n <- 64
