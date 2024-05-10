@@ -160,10 +160,10 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
     else
     {
       samp.mym[i,] <- samp_current
-      psi_val <- true_target(samp_next[1:I], samp_next[I+1], data)
-      psi_lambda_val <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) -
-        sum((prox_val.curr - samp_current)^2)/(2*lambda)
-      wts_is_est[i] <- psi_val - psi_lambda_val
+     # psi_val <- true_target(samp_current[1:I], samp_current[I+1], data)
+      #psi_lambda_val <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) -
+       # sum((prox_val.curr - samp_current)^2)/(2*lambda)
+      wts_is_est[i] <- wts_is_est[i-1]#psi_val - psi_lambda_val
     }
     samp_current <- samp.mym[i,]
     if(i %% (iter/10) == 0){
@@ -349,38 +349,59 @@ pxhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
 
 eta_start <- log(rowMeans(data))
 mu_start <- mean(eta_start)
-lambda <- 100
-t <- mymala(eta_start, mu_start, lambda,sigma_eta, iter = 1e4, delta = 1.5, data)
-u <- px.mala(eta_start, mu_start, lambda,sigma_eta, iter = 1e4, delta = 7e-7, data)
+lambda <- .00001
+
+u <- px.mala(eta_start, mu_start, lambda,sigma_eta, iter = 1e5, delta = 1e-6, data)
+eta_start <- tail(u, 1)[1:I]
+mu_start <- tail(u, 1)[I+1]
+
+t <- mymala(eta_start, mu_start, lambda,sigma_eta, iter = 1e5, delta = 5e-7, data)
 plot.ts(t[[2]])
+
+mala_chain <- t[[1]]
+weights <- t[[2]]
+is_samp <- matrix(unlist(mala_chain), nrow = 1e5, ncol = I+1)
+is_wts <- as.numeric(unlist(weights))
+wts_mean <- mean(exp(is_wts))
+
+wts_mean^2/ mean(exp(is_wts)^2)
+
+
 library(SimTools)
+plot.ts(u[,1:10])
 plot.ts(t[[1]][,1:10])
 plot.ts(t[[1]][,21:30])
 plot.ts(t[[1]][,31:40])
 plot.ts(t[[1]][,41:50])
 plot.ts(t[[1]][,51])
 
-acfplot(t[[1]][, 1:5])
+acfplot(u[, 1:10], lag.max = 1e3)
+acfplot(t[[1]][, 1:10], lag.max = 1e3)
 
-mala_chain <- t[[1]]
-weights <- t[[2]]
-is_samp <- matrix(unlist(mala_chain), nrow = 1e4, ncol = I+1)
-is_wts <- as.numeric(unlist(weights))
-wts_mean <- mean(exp(is_wts))
+acfplot(u[, 42:51], lag.max = 1e3)
+acfplot(t[[1]][, 42:51], lag.max = 1e3)
+
+
+is_wts <- t[[2]] - max(t[[2]])
+library(mcmcse)
 num <- is_samp*exp(is_wts)
 sum_mat <- apply(num, 2, sum)
 is_est <- sum_mat / sum(exp(is_wts))
+cbind(is_est, colMeans(u))
 input_mat <- cbind(num, exp(is_wts))  # input samples for mcse
 Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
-kappa_eta_mat <- cbind(diag(1/wts_mean, I+1), is_est/wts_mean) # derivative of kappa matrix
+
+
+kappa_eta_mat <- cbind(diag(1/wts_mean, I+1), -is_est/wts_mean) # derivative of kappa matrix
 
 asymp_covmat_is <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
 
-asymp_covmat_pxm <- mcse.multi(u)$cov   # PxMALA asymptotic variance
+asymp_covmat_pxm <- mcse.initseq(u)$cov   # PxMALA asymptotic variance
 
 rel_ess <- (det(asymp_covmat_pxm)/det(asymp_covmat_is))^(1/(I+1))
 
-diag(asymp_covmat_pxm)/diag(asymp_covmat_is)
+uni_ess <- diag(asymp_covmat_pxm)/diag(asymp_covmat_is)
+summary(uni_ess)
 
 
 v <- myhmc(eta_start, mu_start,lambda, sigma_eta, iter = 1e3, data, eps_hmc=0.05, L=10)
