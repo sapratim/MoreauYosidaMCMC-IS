@@ -13,9 +13,9 @@ eps_px <-  0.004
 L <- 10
 
 parallel::detectCores()
-num_cores <- 10
+num_cores <- 20
 doParallel::registerDoParallel(cores = num_cores)
-reps <- 10
+reps <- 100
 
 output <- foreach(b = 1:reps) %dopar% {
 ######################### ESS evaluation MALA #########################
