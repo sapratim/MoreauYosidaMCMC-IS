@@ -14,9 +14,9 @@ output <- list()
 parallel::detectCores()
 num_cores <- 50
 doParallel::registerDoParallel(cores = num_cores)
+reps <- 100
 
-
-output <- foreach(b = 1:num_cores) %dopar% {
+output <- foreach(b = 1:reps) %dopar% {
 mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter_mala, 
                               delta = delta_samp_is, covmat = covmat)
 
@@ -33,7 +33,7 @@ sum_mat <- apply(num, 2, sum)
 is_est <- sum_mat / sum(exp(is_wts))
 input_mat <- cbind(num, exp(is_wts))  # input samples for mcse
 Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
-kappa_eta_mat <- cbind(diag(1/wts_mean, length(y)), is_est/wts_mean) # derivative of kappa matrix
+kappa_eta_mat <- cbind(diag(1/wts_mean, length(y)), -is_est/wts_mean) # derivative of kappa matrix
 
 asymp_covmat_is <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
 
@@ -74,14 +74,12 @@ for (i in 1:length(y))
   post_med[i] <- initial_mat[med_index,1]
 }
 
-list(post_mean, post_med, asymp_covmat_is, asymp_covmat_pxm, upper_quant, lower_quant, rel_ess)
+list(post_mean, post_med, Sigma_mat, 
+     asymp_covmat_is, asymp_covmat_pxm, upper_quant, lower_quant, rel_ess)
 }
 
-save(output, file = "output.Rdata")
-
-
+save(output, file = "output_mala.Rdata")
 
 # save(mala_chain, file = "mala_chain.Rdata")
 # save(weights, file = "weights.Rdata")
 # save(pxmala_chain, file = "pxmala_chain.Rdata")
-

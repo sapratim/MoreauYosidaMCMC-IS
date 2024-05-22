@@ -2,7 +2,6 @@
 ## Code for asymptotic variance comparison of weighted importance sampling estimator 
 ## for trend filtering example
 library(mcmcse)
-library(coda)
 library(glmgen)
 library(Matrix)
 library(expm)
@@ -121,7 +120,7 @@ quant <- function(j, mat)     ### function for quantile estimation
 
 #### MYMALA sampling for covariance matrix estimation
 
-mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta) #pre-conditioned mala
+mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta) # pre-conditioned mala
 {
   samp.mym <- matrix(0, nrow = iter, ncol = length(y))
   lambda <- lamb_coeff
@@ -212,7 +211,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
       wts_is_est[i] <- g_lambda_val - g_val
     }
     beta_current <- samp.mym[i,]
-    if(i %% 5000 == 0){
+    if(i %% (iter/10) == 0){
       j <- accept/iter
       print(cat(i, j))
     }
@@ -254,7 +253,7 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
       samp.pxm[i,] <- beta_current
     }
     beta_current <- samp.pxm[i,]
-    if(i %% 5000 == 0){
+    if(i %% (iter/10) == 0){
       j <- accept/iter
       print(cat(i, j))
     }
@@ -308,7 +307,7 @@ mybarker <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
       wts_is_est[i] <- g_lambda_val - g_val
     }
     beta_current <- samp.bark[i,]
-    if(i %% 5000 == 0){
+    if(i %% (iter/10) == 0){
       j <- accept/iter
       print(cat(i, j))
     }
@@ -348,7 +347,7 @@ px.barker <- function(y, alpha, sigma2, k, grid, iter, delta, covmat)
       samp.bark[i,] <- beta_current
     }
     beta_current <- samp.bark[i,]
-    if(i %% 5000 == 0){
+    if(i %% (iter/10) == 0){
       j <- accept/iter
       print(cat(i, j))
     }
@@ -416,7 +415,7 @@ myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L)
       wts_is_est[i] <- g_lambda_val - g_val
       beta <- q_current
     }
-    if(i %% 1000 == 0){
+    if(i %% (iter/10) == 0){
       j <- accept/iter
       print(cat(i, j))}
   } 
@@ -468,7 +467,7 @@ pxhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L)
       samp.hmc[i,] <- q_current
       beta <- q_current
     }
-    if(i %% 1000 == 0){
+    if(i %% (iter/10) == 0){
       j <- accept/iter
       print(cat(i, j))}
   } 
