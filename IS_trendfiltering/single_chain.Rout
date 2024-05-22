@@ -1,0 +1,99 @@
+
+R version 4.4.0 (2024-04-24) -- "Puppy Cup"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source("IS_trendf_functions_Pereyra.R")
+
+Attaching package: ‘expm’
+
+The following object is masked from ‘package:Matrix’:
+
+    expm
+
+Loading required package: iterators
+Loading required package: parallel
+> load("covmat.Rdata")
+> load("MC_pcm.Rdata")
+> 
+> iter <- 1e5
+> delta_samp_is <- 0.095
+> delta_samp_pxm <- 0.015
+> lamb_coeff <- 0.001
+> D_mat <- getD(k=1, n=1e2, x)   #  D matrix
+> 
+> mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
++                   delta = delta_samp_is, covmat = covmat)
+10000 0.05758NULL
+20000 0.11607NULL
+30000 0.17546NULL
+40000 0.23189NULL
+50000 0.2907NULL
+60000 0.34876NULL
+70000 0.4071NULL
+80000 0.46616NULL
+90000 0.52407NULL
+100000 0.58252NULL
+[1] 0.58252
+> 
+> pxmala.run <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
++                       delta = delta_samp_pxm, covmat = covmat)
+10000 0.0585NULL
+20000 0.11621NULL
+30000 0.17356NULL
+40000 0.23144NULL
+50000 0.28973NULL
+60000 0.34921NULL
+70000 0.40675NULL
+80000 0.46409NULL
+90000 0.52236NULL
+100000 0.58042NULL
+[1] 0.58042
+> 
+> my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
++                 eps_hmc = 0.015, L = 100)
+10000 0.06715NULL
+20000 0.13445NULL
+30000 0.20228NULL
+40000 0.26943NULL
+50000 0.33546NULL
+60000 0.40227NULL
+70000 0.46927NULL
+80000 0.53601NULL
+90000 0.60286NULL
+100000 0.66964NULL
+[1] 0.66964
+> 
+> px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
++                 eps_hmc = 0.0003, L = 100) 
+10000 0.06742NULL
+20000 0.13603NULL
+30000 0.205NULL
+40000 0.27307NULL
+50000 0.34206NULL
+60000 0.41057NULL
+70000 0.47897NULL
+80000 0.54771NULL
+90000 0.61606NULL
+100000 0.68597NULL
+[1] 0.68597
+> output_single_run <- list(mala.is[[1]], pxmala.run, my.hmc[[1]], px.hmc[[1]])
+> save(output_single_run, file = "single_chain.Rdata")
+> 
+> proc.time()
+     user    system   elapsed 
+23810.132    10.471 23822.187 
