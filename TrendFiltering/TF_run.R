@@ -1,8 +1,10 @@
 
-source("IS_trendf_functions_Pereyra.R")
+source("TF_functions.R")
 load("covmat.Rdata")
 load("MC_pcm.Rdata")
 
+
+#
 iter_mala <- 1e6
 lamb_coeff <- 0.001
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
@@ -18,10 +20,10 @@ reps <- 100
 
 output <- foreach(b = 1:reps) %dopar% {
 mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter_mala, 
-                              delta = delta_samp_is, covmat = covmat)
+                              delta = delta_samp_is, covmat = covmat, start = markov_chain[1e5,])
 
 pxmala.run <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter_mala, 
-                              delta = delta_samp_pxm, covmat = covmat)
+                              delta = delta_samp_pxm, covmat = covmat, start = markov_chain[1e5,])
 
 mala_chain <- mala.is[[1]]
 weights <- mala.is[[2]]
