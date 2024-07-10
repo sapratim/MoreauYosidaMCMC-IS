@@ -277,7 +277,7 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     
     U_betanext <- log_pi(beta_next, y, sigma2, alpha)
     q.next_to_curr <- dmvnorm_fn(beta_current, beta_next +
-                                   ((delta /  2)*covmat)%*%grad_logpiLam
+                                   (delta /  2)*grad_logpiLam
                                  (beta_next,lambda,y,sigma2,alpha,k,grid), 
                                  mat.inv, delta)
     q.curr_to_next <- dmvnorm_fn(beta_next, prop.mean, mat.inv, delta)
