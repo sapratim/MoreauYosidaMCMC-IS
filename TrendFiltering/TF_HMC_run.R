@@ -1,6 +1,5 @@
-source("IS_trendf_functions_Pereyra.R")
-load("covmat.Rdata")
-load("MC_pcm.Rdata")
+source("TF_functions.R")
+load("pcm_last_iter.Rdata")
 
 iter_hmc <- 1e5
 lamb_coeff <- 0.001
@@ -14,11 +13,11 @@ doParallel::registerDoParallel(cores = num_cores)
 reps <- 100
 
 output_hmc <- foreach(b = 1:reps) %dopar% {
-my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
-              eps_hmc = 0.015, L = 100)
-
-px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
-                                       eps_hmc = 0.0003, L = 100) 
+  my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
+                  eps_hmc = 0.015, L = 100, start = pcm_last_iter)
+  
+  px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
+                  eps_hmc = 0.0003, L = 100, start = pcm_last_iter) 
 
 hmc_chain <- my.hmc[[1]]
 weights <- my.hmc[[2]]

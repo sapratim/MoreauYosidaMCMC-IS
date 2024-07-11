@@ -97,7 +97,7 @@ bark.prop <- function(beta,lambda,y,sigma2,alpha,k,grid,delta)
 {
   aux_var <- rnorm(length(beta), 0, 1)
   y <- delta*aux_var
-  denom_prod <- y*log_gradpi(beta,lambda,y,sigma2,alpha,k,grid)
+  denom_prod <- y*grad_logpiLam(beta,lambda,y,sigma2,alpha,k,grid)
   prob <- 1 / (1 + exp(- sum(denom_prod)))
   ifelse(runif(1) <= prob, prop <- beta + y, prop <- beta - y)
   return(prop)
@@ -230,7 +230,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
       prox_val.curr <- prox_val.next
       
       # weights
-      g_val <- -log_pi(beta_current, y, sigma2,alpha)
+      g_val <- -log_pi(beta_next, y, sigma2,alpha)
       g_lambda_val <- - targ_val.curr
       wts_is_est[i] <- g_lambda_val - g_val
       accept <- accept + 1
@@ -386,7 +386,7 @@ px.barker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
   U_betacurr <- log_pi(beta_current, y, sigma2, alpha)
   
   # using pre conditioned mala covariance
-  mat.inv <- solve(covmat)
+  mat.inv <- diag(1, nvar, nvar)
   accept <- 0
   for (i in 2:iter)
   {
@@ -435,7 +435,7 @@ myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   samp.hmc[1,] <- beta
   
   # weights calculation
-  g_val <- log_pi(beta, y, sigma2, alpha)
+  g_val <- - log_pi(beta, y, sigma2, alpha)
   g_lambda_val <- - log_pilambda(proxval_curr, beta, lambda=lambda, y, sigma2, alpha)
   wts_is_est[1] <- g_lambda_val - g_val
   

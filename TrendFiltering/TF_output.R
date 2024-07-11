@@ -2,7 +2,7 @@
 ################## Trendfiltering example output visualisation #################
 ################################################################################
 rm(list = ls())
-source("IS_trendf_functions_Pereyra.R")
+source("TF_functions.R")
 load("output_mala.Rdata")
 load("output_hmc.Rdata")
 load("single_chain.Rdata")
