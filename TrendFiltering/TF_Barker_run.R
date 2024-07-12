@@ -20,24 +20,17 @@ output_bark <- foreach(b = 1:num_cores) %dopar% {
                       start = pcm_last_iter)
   mybark <- mybarker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_bark,delta = delta_bark_my,
                      start = pcm_last_iter)
-is_samp <- matrix(unlist(mybark[[1]]), nrow = iter_bark, ncol = length(y))
-is_wts <- as.numeric(unlist(mybark[[2]]))
-wts_mean <- mean(exp(is_wts))
-num <- is_samp*exp(is_wts)
-sum_mat <- apply(num, 2, sum)
-is_est <- sum_mat / sum(exp(is_wts))
-input_mat <- cbind(num, exp(is_wts))  # input samples for mcse
-Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
-kappa_eta_mat <- cbind(diag(1/wts_mean, length(y)), is_est/wts_mean) # derivative of kappa matrix
-
-asymp_covmat_is <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
-
-asymp_covmat_pxbark <- mcse.multi(pxbark[[1]])$cov   # PxMALA asymptotic variance
-
-rel_ess <- (det(asymp_covmat_pxbark)/det(asymp_covmat_is))^(1/length(y))
-
+  bark_chain <- matrix(unlist(mybark[[1]]), nrow = iter_bark, ncol = length(y))
+  weights <- exp(as.numeric(unlist(mybark[[2]])))
+  
+  # Asymptotic covariance matrix
+  asymp_covmat_is <- asymp_covmat_fn(bark_chain, weights) 
+  asymp_covmat_pxb <- mcse.multi(pxbark[[1]])$cov   
+  
+  # Relative ESS
+  rel_ess <- (det(asymp_covmat_pxb)/det(asymp_covmat_is))^(1/length(y))
+  
 ##  Posterior mean
-
 post_mean <- post_mean_fn(mybark[[1]],mybark[[2]])
 
 #  Quantile visualisation

@@ -76,7 +76,6 @@ prox_func <- function(beta,lambda,alpha,sigma2,k,grid)
   return(as.vector(temp))
 }
 
-
 # gradient of log target (pi-lambda)
 grad_logpiLam <- function(beta,lambda,y,sigma2,alpha,k,grid)  
 {
@@ -85,6 +84,7 @@ grad_logpiLam <- function(beta,lambda,y,sigma2,alpha,k,grid)
   return(-ans)
 }
 
+# function for barker proposal
 bark.prop <- function(beta,lambda,y,sigma2,alpha,k,grid,delta)
 {
   aux_var <- rnorm(length(beta), 0, 1)
@@ -95,7 +95,7 @@ bark.prop <- function(beta,lambda,y,sigma2,alpha,k,grid,delta)
   return(prop)
 }
 
-
+# barker log density
 log_bark.dens <- function(curr_point, prop_point, grad_curr_point)
 {
   rw_dens <- prod(dnorm(prop_point-curr_point, 0, 1))
@@ -105,7 +105,22 @@ log_bark.dens <- function(curr_point, prop_point, grad_curr_point)
   return(log(dens_val))
 }
 
-quant <- function(j, mat)     ### function for quantile estimation
+# to evaluate asymptotic covariance matrix
+asymp_covmat_fn <- function(chain, weights)
+{
+  wts_mean <- mean(weights)
+  num <- chain*weights
+  sum_mat <- apply(num, 2, sum)
+  is_est <- sum_mat / sum(weights)
+  input_mat <- cbind(num, weights)  # input samples for mcse
+  Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
+  kappa_eta_mat <- cbind(diag(1/wts_mean, ncol(chain)), -is_est/wts_mean) # derivative of kappa matrix
+  asymp_covmat <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
+  return(asymp_covmat)
+}
+
+# function for quantile estimation
+quant <- function(j, mat)     
 {
   mat_ordered <- mat[order(mat[,j], decreasing = FALSE), ]
   order_comp <- mat_ordered[,j]

@@ -5,8 +5,8 @@ load("pcm_last_iter.Rdata")
 iter_mala <- 1e5
 lamb_coeff <- 0.001
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
-delta_samp_is <- 0.0015
-delta_samp_pxm <- 0.0008
+delta_samp_is <- 0.00015
+delta_samp_pxm <- 0.00012
 
 output <- list()
 
@@ -21,24 +21,18 @@ output <- foreach(b = 1:reps) %dopar% {
   
   pxmala.run <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter_mala, 
                         delta = delta_samp_pxm, start = pcm_last_iter)
-is_samp <- matrix(unlist(mala.is[[1]]), nrow = iter_mala, ncol = length(y))
-is_wts <- as.numeric(unlist(mala.is[[2]]))
-wts_mean <- mean(exp(is_wts))
-num <- is_samp*exp(is_wts)
-sum_mat <- apply(num, 2, sum)
-is_est <- sum_mat / sum(exp(is_wts))
-input_mat <- cbind(num, exp(is_wts))  # input samples for mcse
-Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
-kappa_eta_mat <- cbind(diag(1/wts_mean, length(y)), -is_est/wts_mean) # derivative of kappa matrix
+ 
+mala_chain <- matrix(unlist(mala.is[[1]]), nrow = iter_mala, ncol = length(y))
+weights <- exp(as.numeric(unlist(mala.is[[2]])))
 
-asymp_covmat_is <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
+# Asymptotic covariance matrix
+asymp_covmat_is <- asymp_covmat_fn(mala_chain, weights) 
+asymp_covmat_pxm <- mcse.multi(pxmala.run)$cov   
 
-asymp_covmat_pxm <- mcse.multi(pxmala.run)$cov   # PxMALA asymptotic variance
-
+# Relative ESS
 rel_ess <- (det(asymp_covmat_pxm)/det(asymp_covmat_is))^(1/length(y))
 
 ##  Posterior mean
-
 post_mean <- post_mean_fn(mala.is[[1]], mala.is[[2]])
 
 #  Quantile visualisation
