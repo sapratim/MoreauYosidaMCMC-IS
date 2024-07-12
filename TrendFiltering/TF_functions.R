@@ -57,15 +57,6 @@ log_pi <- function(beta,y,sigma2,alpha)
   return(-dens_val)
 }
 
-
-# value of MY-envelope
-prox_arg <- function(eta,beta,lambda,y,sigma2,alpha)     
-{
-  MY_env <- alpha*(sum(abs(D_mat%*%eta))) + sum((beta-eta)^2)/(2*lambda) + 
-    sum((y-eta)^2)/(2*sigma2)    
-  return(MY_env)
-}
-
 # function calculates the value of the proximal function
 prox_func <- function(beta,lambda,alpha,sigma2,k,grid)
 {
@@ -88,7 +79,7 @@ grad_logpiLam <- function(beta,lambda,y,sigma2,alpha,k,grid)
 bark.prop <- function(beta,lambda,y,sigma2,alpha,k,grid,delta)
 {
   aux_var <- rnorm(length(beta), 0, 1)
-  y <- delta*aux_var
+  y <- sqrt(delta)*aux_var
   denom_prod <- y*grad_logpiLam(beta,lambda,y,sigma2,alpha,k,grid)
   prob <- 1 / (1 + exp(- sum(denom_prod)))
   ifelse(runif(1) <= prob, prop <- beta + y, prop <- beta - y)
@@ -119,7 +110,7 @@ asymp_covmat_fn <- function(chain, weights)
   return(asymp_covmat)
 }
 
-# function for quantile estimation
+# functions for quantile estimation
 quant <- function(j, mat)     
 {
   mat_ordered <- mat[order(mat[,j], decreasing = FALSE), ]
@@ -127,6 +118,30 @@ quant <- function(j, mat)
   weights_order <- mat_ordered[, length(y)+1]
   bound_mat <- cbind(order_comp, weights_order)
   return(bound_mat)
+}
+
+quantile_func <- function(chain, weights, signif_level)
+{
+  augm_mat <- cbind(chain,weights)
+  upper_quant <- numeric(length = ncol(chain))
+  lower_quant <- numeric(length = ncol(chain))
+  post_med <- numeric(length = ncol(chain))
+
+  for (i in 1:length(y)) 
+  {
+   initial_mat <- quant(i, augm_mat)
+   mat_sum <- apply(initial_mat, 2, sum)
+   wts_prop <- initial_mat[,2]/mat_sum[2]
+   final_mat <- cbind(initial_mat[1,], cumsum(wts_prop))
+   lower_index <- min(which(final_mat[,2] >= signif_level))
+   upper_index <- min(which(final_mat[,2] >= (1 - signif_level)))
+   med_index <- min(which(final_mat[,2] >= 0.5))
+   upper_quant[i] <- initial_mat[upper_index,1]
+   lower_quant[i] <- initial_mat[lower_index,1]
+   post_med[i] <- initial_mat[med_index,1]
+  }
+  quantiles <- list(upper_quant, lower_quant, post_med)
+  return(quantiles)
 }
 
 ##### Posterior mean
@@ -176,10 +191,10 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     prox_val.next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
     targ_val.next <- log_pilambda(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     
-    q.next_to_curr <- prod(dnorm(beta_current, beta_next + 
+    q.next_to_curr <- sum(dnorm(beta_current, beta_next + 
                                    (delta / 2)*grad_logpiLam(beta_next,lambda,y,sigma2,alpha,k,grid),
-                                  delta))
-    q.curr_to_next <- prod(dnorm(beta_next, prop.mean, delta)) 
+                                  sqrt(delta), log = TRUE))
+    q.curr_to_next <- sum(dnorm(beta_next, prop.mean, sqrt(delta), log = TRUE)) 
     
     mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
     # print(mh.ratio)
@@ -236,11 +251,11 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     beta_next <-  prop.mean + sqrt(delta)*rnorm(nvar, 0, 1) 
     
     U_betanext <- log_pi(beta_next, y, sigma2, alpha)
-    q.next_to_curr <- prod(dnorm(beta_current, beta_next +
+    q.next_to_curr <- sum(dnorm(beta_current, beta_next +
                                    (delta /  2)*grad_logpiLam
                                  (beta_next,lambda,y,sigma2,alpha,k,grid), 
-                                 delta))
-    q.curr_to_next <- prod(dnorm(beta_next, prop.mean, delta))
+                                 sqrt(delta), log = TRUE))
+    q.curr_to_next <- sum(dnorm(beta_next, prop.mean, sqrt(delta), log = TRUE))
     
     mh.ratio <- U_betanext + q.next_to_curr - (U_betacurr + q.curr_to_next) # mh ratio
     

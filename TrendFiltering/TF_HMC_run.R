@@ -25,39 +25,15 @@ weights <- as.numeric(unlist(my.hmc[[2]]))
 asymp_covmat_is <- asymp_covmat_fn(hmc_chain, weights) 
 asymp_covmat_pxhmc <- mcse.multi(px.hmc[[1]])$cov   # PxMALA asymptotic variance
 
-# Relative ESS
-rel_ess <- (det(asymp_covmat_pxhmc)/det(asymp_covmat_is))^(1/length(y))
-
 ##  Posterior mean
 post_mean <- post_mean_fn(my.hmc[[1]], my.hmc[[2]])
 
 #  Quantile visualisation
-
-augm_mat <- cbind(my.hmc[[1]],my.hmc[[2]])
-
-upper_quant <- numeric(length = length(y))
-lower_quant <- numeric(length = length(y))
-post_med <- numeric(length = length(y))
-signif_level <- 0.025
-
-for (i in 1:length(y)) 
-{
-  initial_mat <- quant(i, augm_mat)
-  mat_sum <- apply(initial_mat, 2, sum)
-  wts_prop <- initial_mat[,2]/mat_sum[2]
-  final_mat <- cbind(initial_mat[1,], cumsum(wts_prop))
-  lower_index <- min(which(final_mat[,2] >= signif_level))
-  upper_index <- min(which(final_mat[,2] >= (1 - signif_level)))
-  med_index <- min(which(final_mat[,2] >= 0.5))
-  upper_quant[i] <- initial_mat[upper_index,1]
-  lower_quant[i] <- initial_mat[lower_index,1]
-  post_med[i] <- initial_mat[med_index,1]
+level <- 0.025
+upper_quant <- quantile_func(hmc_chain, weights, level)[[1]]
+lower_quant <- quantile_func(hmc_chain, weights, level)[[2]]
+post_med <- quantile_func(hmc_chain, weights, level)[[3]]
+list(post_mean, post_med, asymp_covmat_is, 
+     asymp_covmat_pxhmc, upper_quant, lower_quant)
 }
-
-acc_rate_is <- my.hmc[[3]]
-acc_rate_pxhmc <- px.hmc[[2]]
-list(post_mean, post_med, Sigma_mat, asymp_covmat_is, asymp_covmat_pxhmc, 
-     upper_quant, lower_quant, rel_ess, acc_rate_is, acc_rate_pxhmc)
-}
-
 save(output_hmc, file = "output_hmc.Rdata")
