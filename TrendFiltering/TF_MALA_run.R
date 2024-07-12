@@ -21,10 +21,8 @@ output <- foreach(b = 1:reps) %dopar% {
   
   pxmala.run <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter_mala, 
                         delta = delta_samp_pxm, start = pcm_last_iter)
-mala_chain <- mala.is[[1]]
-weights <- mala.is[[2]]
-is_samp <- matrix(unlist(mala_chain), nrow = iter_mala, ncol = length(y))
-is_wts <- as.numeric(unlist(weights))
+is_samp <- matrix(unlist(mala.is[[1]]), nrow = iter_mala, ncol = length(y))
+is_wts <- as.numeric(unlist(mala.is[[2]]))
 wts_mean <- mean(exp(is_wts))
 num <- is_samp*exp(is_wts)
 sum_mat <- apply(num, 2, sum)
@@ -41,17 +39,11 @@ rel_ess <- (det(asymp_covmat_pxm)/det(asymp_covmat_is))^(1/length(y))
 
 ##  Posterior mean
 
-weight_mat <- matrix(0, nrow = iter_mala, ncol = length(y))
-for (i in 1:iter_mala) {
-  weight_mat[i,] <- mala_chain[i,]*exp(weights[i])
-}
-num_sum <- apply(weight_mat, 2, sum)
-weights_sum <- sum(exp(weights))
-post_mean <- num_sum/weights_sum
+post_mean <- post_mean_fn(mala.is[[1]], mala.is[[2]])
 
 #  Quantile visualisation
 
-augm_mat <- cbind(mala_chain,weights)
+augm_mat <- cbind(mala.is[[1]],mala.is[[2]])
 
 upper_quant <- numeric(length = length(y))
 lower_quant <- numeric(length = length(y))

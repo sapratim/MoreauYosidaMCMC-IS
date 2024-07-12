@@ -85,14 +85,6 @@ grad_logpiLam <- function(beta,lambda,y,sigma2,alpha,k,grid)
   return(-ans)
 }
 
-# evaluate dnorm for multivariate normal
-dmvnorm_fn <- function(point, mu, mat, delta)
-{
-  diff <- point - mu
-  exp_term <- (t(diff) %*% mat) %*% diff 
-  den_value <- -(exp_term/(2*delta))
-}
-
 bark.prop <- function(beta,lambda,y,sigma2,alpha,k,grid,delta)
 {
   aux_var <- rnorm(length(beta), 0, 1)
@@ -103,17 +95,14 @@ bark.prop <- function(beta,lambda,y,sigma2,alpha,k,grid,delta)
   return(prop)
 }
 
-log_q_ratio_barker<-function(x,y,grad_x,grad_y)
+
+log_bark.dens <- function(curr_point, prop_point, grad_curr_point)
 {
-  # x: current location (vector)
-  # y: proposed location (vector)
-  # grad_x: target log-posterior gradient at x (vector)
-  # grad_y: target log-posterior gradient at y (vector)
-  a1<-  c(-(x-y)*grad_y)
-  a2<-  c(-grad_x*(y-x))
-  return(sum(-(pmax(a1,0)+log1p(exp(-abs(a1))))+
-               (pmax(a2,0)+log1p(exp(-abs(a2))))
-  ))
+  rw_dens <- prod(dnorm(prop_point-curr_point, 0, 1))
+  exp_term <- - (grad_curr_point*(prop_point-curr_point))
+  denom <- prod(1 + exp(exp_term))
+  dens_val <- rw_dens/denom
+  return(log(dens_val))
 }
 
 quant <- function(j, mat)     ### function for quantile estimation
@@ -125,60 +114,18 @@ quant <- function(j, mat)     ### function for quantile estimation
   return(bound_mat)
 }
 
-
-#### MALA for pi-lambda without weights, for warm-up
-
-mymala_cov_fn <- function(y, alpha, sigma2, k, grid, iter, delta) # pre-conditioned mala
+##### Posterior mean
+post_mean_fn <- function(chain, weights)
 {
-  nvar <- length(y)
-  samp.mym <- matrix(0, nrow = iter, ncol = nvar)
-  lambda <- lamb_coeff
-  
-  # starting value computations
-  beta_current <- y
-  prox_val.curr <- prox_func(beta_current, lambda, alpha,sigma2, k, grid)
-  targ_val.curr <- log_pilambda(prox_val.curr,beta_current,lambda,y,sigma2,alpha)
-  samp.mym[1,] <- beta_current
-  accept <- 0
-  
-  # mcmc
-  for (i in 2:iter) 
-  {
-    
-    # proposal
-    prop.mean <- beta_current + (delta / 2)*grad_logpiLam(beta_current,lambda,y,sigma2,alpha,k,grid)
-    beta_next <- rnorm(nvar, prop.mean, sd = sqrt(delta))
-    
-    # Evaluating proximal map and target (pi-lambda)
-    prox_val.next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
-    targ_val.next <- log_pilambda(prox_val.next,beta_next,lambda,y,sigma2,alpha)
-    
-    other.mean <-  beta_next + (delta / 2)*grad_logpiLam(beta_next,lambda,y,sigma2,alpha,k,grid)
-    q.next_to_curr <- sum(dnorm(beta_current, other.mean, sd = sqrt(delta), log = TRUE))
-    q.curr_to_next <- sum(dnorm(beta_next, prop.mean, sd = sqrt(delta), log = TRUE))
-    
-    mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
-    # print(mh.ratio)
-    if(log(runif(1)) <= mh.ratio)
-    {
-      samp.mym[i,] <- beta_next
-      prox_val.curr <- prox_val.next
-      targ_val.curr <- targ_val.next
-      accept <- accept + 1
-    }
-    else
-    {
-      samp.mym[i,] <- beta_current
-    }
-    beta_current <- samp.mym[i,]
-    if(i %% 1000 == 0){
-      j <- accept/iter
-      print(cat(i, j))
-    }
+  chain_length <- nrow(chain)
+  weight_mat <- matrix(0, nrow = chain_length, ncol = ncol(chain))
+  for (i in 1:chain_length) {
+    weight_mat[i,] <- chain[i,]*exp(weights[i])
   }
-  print(accept/iter)
-  object <- samp.mym
-  return(object)
+  num_sum <- apply(weight_mat, 2, sum)
+  weights_sum <- sum(exp(weights))
+  post_mean <- num_sum/weights_sum
+  return(post_mean)
 }
 
 ##### MYMALA samples function
@@ -202,8 +149,7 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
   g_lambda_val <- -targ_val.curr
   wts_is_est[1] <- g_lambda_val - g_val
   
-  # for pre-conditioned MALA
-  mat.inv <- diag(1, nvar, nvar)
+  # for MALA
   accept <- 0
   for (i in 2:iter) 
   {
@@ -215,11 +161,10 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     prox_val.next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
     targ_val.next <- log_pilambda(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     
-    q.next_to_curr <- dmvnorm_fn(beta_current, beta_next + 
+    q.next_to_curr <- prod(dnorm(beta_current, beta_next + 
                                    (delta / 2)*grad_logpiLam(beta_next,lambda,y,sigma2,alpha,k,grid),
-                                 mat.inv, delta)
-    q.curr_to_next <- dmvnorm_fn(beta_next, prop.mean, mat.inv, delta) 
-    
+                                  delta))
+    q.curr_to_next <- prod(dnorm(beta_next, prop.mean, delta)) 
     
     mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
     # print(mh.ratio)
@@ -276,11 +221,11 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     beta_next <-  prop.mean + sqrt(delta)*rnorm(nvar, 0, 1) 
     
     U_betanext <- log_pi(beta_next, y, sigma2, alpha)
-    q.next_to_curr <- dmvnorm_fn(beta_current, beta_next +
+    q.next_to_curr <- prod(dnorm(beta_current, beta_next +
                                    (delta /  2)*grad_logpiLam
                                  (beta_next,lambda,y,sigma2,alpha,k,grid), 
-                                 mat.inv, delta)
-    q.curr_to_next <- dmvnorm_fn(beta_next, prop.mean, mat.inv, delta)
+                                 delta))
+    q.curr_to_next <- prod(dnorm(beta_next, prop.mean, delta))
     
     mh.ratio <- U_betanext + q.next_to_curr - (U_betacurr + q.curr_to_next) # mh ratio
     
@@ -325,9 +270,7 @@ mybarker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
   g_lambda_val <- - targ_val.curr
   wts_is_est[1] <- g_lambda_val - g_val
   
-  # using pre conditioned mala covariance
-  mat.inv <- diag(1, nvar, nvar)
-  
+  # For barker  
   for (i in 2:iter) 
   {
     # proposal step
@@ -339,9 +282,8 @@ mybarker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     grad_beta_curr <- grad_logpiLam(beta_current, lambda, y, sigma2, alpha, k, grid)
     grad_beta_next <- grad_logpiLam(beta_next, lambda, y, sigma2, alpha, k, grid)
     
-    mh.ratio <- targ_val.next - targ_val.curr + 
-      log_q_ratio_barker(beta_current,beta_next,grad_beta_curr,grad_beta_next)
-    
+    mh.ratio <- targ_val.next + log_bark.dens(beta_next, beta_current, grad_beta_next) - targ_val.curr - 
+               log_bark.dens(beta_current, beta_next, grad_beta_curr)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.bark[i,] <- beta_next
@@ -377,7 +319,7 @@ mybarker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
 px.barker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
 {
   nvar <- length(y)
-  samp.bark <- matrix(0, nrow = iter, ncol = length(y))
+  samp.bark <- matrix(0, nrow = iter, ncol = nvar)
   lambda <- lamb_coeff
   
   # starting value computations
@@ -385,8 +327,7 @@ px.barker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
   samp.bark[1,] <- beta_current
   U_betacurr <- log_pi(beta_current, y, sigma2, alpha)
   
-  # using pre conditioned mala covariance
-  mat.inv <- diag(1, nvar, nvar)
+  # For barker
   accept <- 0
   for (i in 2:iter)
   {
@@ -397,8 +338,8 @@ px.barker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     grad_beta_curr <- grad_logpiLam(beta_current, lambda, y, sigma2, alpha, k, grid)
     grad_beta_next <- grad_logpiLam(beta_next, lambda, y, sigma2, alpha, k, grid)
     
-    mh.ratio <- U_betanext - U_betacurr + 
-      log_q_ratio_barker(beta_current,beta_next,grad_beta_curr,grad_beta_next)
+    mh.ratio <- U_betanext + log_bark.dens(beta_next, beta_current, grad_beta_next) - U_betacurr - 
+              log_bark.dens(beta_current, beta_next, grad_beta_curr)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.bark[i,] <- beta_next
@@ -439,8 +380,8 @@ myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   g_lambda_val <- - log_pilambda(proxval_curr, beta, lambda=lambda, y, sigma2, alpha)
   wts_is_est[1] <- g_lambda_val - g_val
   
-  # proposal step
-  mom_mat <- matrix(rnorm(iter*length(y)), nrow = iter, ncol = length(y))
+  # For HMC
+  mom_mat <- matrix(rnorm(iter*nvar), nrow = iter, ncol = nvar)
   accept <- 0
   for (i in 2:iter) 
   {
@@ -473,16 +414,14 @@ myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
       
       # weights
       g_val <- -log_pi(beta, y, sigma2, alpha)
-      g_lambda_val <- - log_pilambda(proxval_prop, beta, lambda=lambda, y, sigma2, alpha)
-      wts_is_est[i] <- g_lambda_val - g_val
+      wts_is_est[i] <- U_prop - g_val
       accept <- accept + 1
     }
     else
     {
       samp.hmc[i,] <- q_current
       g_val <- -log_pi(q_current, y, sigma2, alpha)
-      g_lambda_val <- - log_pilambda(proxval_curr, q_current, lambda=lambda, y, sigma2, alpha)
-      wts_is_est[i] <- g_lambda_val - g_val
+      wts_is_est[i] <- U_curr - g_val
       beta <- q_current
     }
     if(i %% (iter/10) == 0){
@@ -506,8 +445,8 @@ pxhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   beta <- start
   samp.hmc[1,] <- beta
   
-  # proposal step
-  mom_mat <- matrix(rnorm(iter*length(y)), nrow = iter, ncol = length(y))
+  # For HMC
+  mom_mat <- matrix(rnorm(iter*nvar), nrow = iter, ncol = nvar)
   accept <- 0
   
   for (i in 2:iter) 

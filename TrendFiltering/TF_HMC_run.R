@@ -18,12 +18,8 @@ output_hmc <- foreach(b = 1:reps) %dopar% {
   
   px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
                   eps_hmc = 0.0003, L = 100, start = pcm_last_iter) 
-
-hmc_chain <- my.hmc[[1]]
-weights <- my.hmc[[2]]
-pxhmc_chain <- px.hmc[[1]]
-is_samp <- matrix(unlist(hmc_chain), nrow = iter_hmc, ncol = length(y))
-is_wts <- as.numeric(unlist(weights))
+is_samp <- matrix(unlist(my.hmc[[1]]), nrow = iter_hmc, ncol = length(y))
+is_wts <- as.numeric(unlist(my.hmc[[2]]))
 wts_mean <- mean(exp(is_wts))
 num <- is_samp*exp(is_wts)
 sum_mat <- apply(num, 2, sum)
@@ -34,23 +30,17 @@ kappa_eta_mat <- cbind(diag(1/wts_mean, length(y)), -is_est/wts_mean) # derivati
 
 asymp_covmat_is <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
 
-asymp_covmat_pxhmc <- mcse.multi(pxhmc_chain)$cov   # PxMALA asymptotic variance
+asymp_covmat_pxhmc <- mcse.multi(px.hmc[[1]])$cov   # PxMALA asymptotic variance
 
 rel_ess <- (det(asymp_covmat_pxhmc)/det(asymp_covmat_is))^(1/length(y))
 
 ##  Posterior mean
 
-weight_mat <- matrix(0, nrow = iter_hmc, ncol = length(y))
-for (i in 1:iter_hmc) {
-  weight_mat[i,] <- hmc_chain[i,]*exp(weights[i])
-}
-num_sum <- apply(weight_mat, 2, sum)
-weights_sum <- sum(exp(weights))
-post_mean <- num_sum/weights_sum
+post_mean <- post_mean_fn(my.hmc[[1]], my.hmc[[2]])
 
 #  Quantile visualisation
 
-augm_mat <- cbind(hmc_chain,weights)
+augm_mat <- cbind(my.hmc[[1]],my.hmc[[2]])
 
 upper_quant <- numeric(length = length(y))
 lower_quant <- numeric(length = length(y))
