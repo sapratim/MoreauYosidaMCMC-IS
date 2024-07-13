@@ -1,6 +1,6 @@
 
 source("TF_functions.R")
-load("pcm_last_iter.Rdata")
+load("warmup.Rdata")
 
 iter_bark <- 1e5
 lamb_coeff <- 0.001
@@ -17,9 +17,9 @@ doParallel::registerDoParallel(cores = num_cores)
 
 output_bark <- foreach(b = 1:num_cores) %dopar% {
   mybark <- mybarker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_bark,delta = delta_bark_my,
-                     start = pcm_last_iter)
+                     start = warmup_end_iter)
   pxbark <- px.barker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_bark,delta = delta_bark_px,
-                      start = pcm_last_iter)
+                      start = warmup_end_iter)
   bark_chain <- matrix(unlist(mybark[[1]]), nrow = iter_bark, ncol = length(y))
   weights <- exp(as.numeric(unlist(mybark[[2]])))
   imp_ess <- (mean(weights)^2)/mean(weights^2)

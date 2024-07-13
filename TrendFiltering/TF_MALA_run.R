@@ -1,6 +1,6 @@
 
 source("TF_functions.R")
-load("pcm_last_iter.Rdata")
+load("warmup.Rdata")
 
 iter_mala <- 1e5
 lamb_coeff <- 0.001
@@ -16,10 +16,10 @@ reps <- 100
 
 output <- foreach(b = 1:reps) %dopar% {
   mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter_mala, 
-                    delta = delta_samp_is, start = pcm_last_iter)
+                    delta = delta_samp_is, start = warmup_end_iter)
   
   pxmala.run <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter_mala, 
-                        delta = delta_samp_pxm, start = pcm_last_iter)
+                        delta = delta_samp_pxm, start = warmup_end_iter)
  
 mala_chain <- matrix(unlist(mala.is[[1]]), nrow = iter_mala, ncol = length(y))
 weights <- exp(as.numeric(unlist(mala.is[[2]])))

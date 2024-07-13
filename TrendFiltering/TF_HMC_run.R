@@ -1,5 +1,5 @@
 source("TF_functions.R")
-load("pcm_last_iter.Rdata")
+load("warmup.Rdata")
 
 iter_hmc <- 1e5
 lamb_coeff <- 0.001
@@ -14,10 +14,10 @@ reps <- 100
 
 output_hmc <- foreach(b = 1:reps) %dopar% {
   my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
-                  eps_hmc = 0.015, L = 100, start = pcm_last_iter)
+                  eps_hmc = 0.015, L = 100, start = warmup_end_iter)
   
   px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
-                  eps_hmc = 0.0003, L = 100, start = pcm_last_iter) 
+                  eps_hmc = 0.0003, L = 100, start = warmup_end_iter) 
 hmc_chain <- matrix(unlist(my.hmc[[1]]), nrow = iter_hmc, ncol = length(y))
 weights <- as.numeric(unlist(my.hmc[[2]]))
 imp_ess <- (mean(weights)^2)/mean(weights^2)

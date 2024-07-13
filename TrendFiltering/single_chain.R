@@ -1,6 +1,6 @@
 
 source("TF_functions.R")
-load("pcm_last_iter.Rdata")
+load("warmup.Rdata")
 
 iter <- 1e5
 lamb_coeff <- 0.001
@@ -23,22 +23,22 @@ wts_func <- function(beta,lambda,alpha,sigma2,k,grid)  # function for log of wei
 }
 
 mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
-                  delta = delta_samp_is, start = pcm_last_iter)
+                  delta = delta_samp_is, start = warmup_end_iter)
 
 pxmala.run <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
-                      delta = delta_samp_pxm, start = pcm_last_iter)
+                      delta = delta_samp_pxm, start = warmup_end_iter)
 
 mybark <- mybarker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_bark,
-                   delta = delta_bark_my, start = pcm_last_iter)
+                   delta = delta_bark_my, start = warmup_end_iter)
 
 pxbark <- px.barker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_bark,
-                   delta = delta_bark_px, start = pcm_last_iter)
+                   delta = delta_bark_px, start = warmup_end_iter)
 
 my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
-                eps_hmc = 0.015, L = 100, start = pcm_last_iter)
+                eps_hmc = 0.015, L = 100, start = warmup_end_iter)
 
 px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
-                eps_hmc = 0.0003, L = 100, start = pcm_last_iter) 
+                eps_hmc = 0.0003, L = 100, start = warmup_end_iter) 
 output_single_run <- list(mala.is[[1]], pxmala.run, mybark[[1]], 
                               pxbark[[1]], my.hmc[[1]], px.hmc[[1]])
 
