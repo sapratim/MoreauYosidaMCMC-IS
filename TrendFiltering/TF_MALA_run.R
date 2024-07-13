@@ -23,6 +23,7 @@ output <- foreach(b = 1:reps) %dopar% {
  
 mala_chain <- matrix(unlist(mala.is[[1]]), nrow = iter_mala, ncol = length(y))
 weights <- exp(as.numeric(unlist(mala.is[[2]])))
+imp_ess <- (mean(weights)^2)/mean(weights^2)
 
 # Asymptotic covariance matrix
 asymp_covmat_is <- asymp_covmat_fn(mala_chain, weights) 
@@ -37,6 +38,6 @@ upper_quant <- quantile_func(mala_chain, weights, level)[[1]]
 lower_quant <- quantile_func(mala_chain, weights, level)[[2]]
 post_med <- quantile_func(mala_chain, weights, level)[[3]]
 list(post_mean, post_med, asymp_covmat_is, 
-                asymp_covmat_pxm, upper_quant, lower_quant)
+                asymp_covmat_pxm, upper_quant, lower_quant, imp_ess)
 }
 save(output_mala, file = "output_mala.Rdata")

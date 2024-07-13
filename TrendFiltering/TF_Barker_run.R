@@ -22,6 +22,7 @@ output_bark <- foreach(b = 1:num_cores) %dopar% {
                       start = pcm_last_iter)
   bark_chain <- matrix(unlist(mybark[[1]]), nrow = iter_bark, ncol = length(y))
   weights <- exp(as.numeric(unlist(mybark[[2]])))
+  imp_ess <- (mean(weights)^2)/mean(weights^2)
   
 # Asymptotic covariance matrix
 asymp_covmat_is <- asymp_covmat_fn(bark_chain, weights) 
@@ -36,6 +37,6 @@ upper_quant <- quantile_func(bark_chain, weights, level)[[1]]
 lower_quant <- quantile_func(bark_chain, weights, level)[[2]]
 post_med <- quantile_func(bark_chain, weights, level)[[3]]
 list(post_mean, post_med, asymp_covmat_is, 
-     asymp_covmat_pxb, upper_quant, lower_quant)
+     asymp_covmat_pxb, upper_quant, lower_quant, imp_ess)
 }
 save(output_bark, file = "output_bark.Rdata")

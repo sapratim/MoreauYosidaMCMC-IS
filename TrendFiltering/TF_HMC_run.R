@@ -20,6 +20,7 @@ output_hmc <- foreach(b = 1:reps) %dopar% {
                   eps_hmc = 0.0003, L = 100, start = pcm_last_iter) 
 hmc_chain <- matrix(unlist(my.hmc[[1]]), nrow = iter_hmc, ncol = length(y))
 weights <- as.numeric(unlist(my.hmc[[2]]))
+imp_ess <- (mean(weights)^2)/mean(weights^2)
 
 # Asymptotic covariance matrix
 asymp_covmat_is <- asymp_covmat_fn(hmc_chain, weights) 
@@ -34,6 +35,6 @@ upper_quant <- quantile_func(hmc_chain, weights, level)[[1]]
 lower_quant <- quantile_func(hmc_chain, weights, level)[[2]]
 post_med <- quantile_func(hmc_chain, weights, level)[[3]]
 list(post_mean, post_med, asymp_covmat_is, 
-     asymp_covmat_pxhmc, upper_quant, lower_quant)
+     asymp_covmat_pxhmc, upper_quant, lower_quant, imp_ess)
 }
 save(output_hmc, file = "output_hmc.Rdata")
