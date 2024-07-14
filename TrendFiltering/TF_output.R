@@ -98,11 +98,11 @@ for (i in 1:100)
   asympmat_pxb <- matrix(unlist(output_bark[[i]][[4]]), nrow = dim, ncol = dim, byrow = T)
   for (j in 1:dim)
   {
-    margvar_isb[i,j] <- asympmat_ism[j,j]
-    margvar_pxb[i,j] <- asympmat_pxm[j,j]
+    margvar_isb[i,j] <- asympmat_isb[j,j]
+    margvar_pxb[i,j] <- asympmat_pxb[j,j]
   }
 }
-rel_eff_mat_bark <- margvar_pxm/margvar_ism
+rel_eff_mat_bark <- margvar_pxb/margvar_isb
 
 #### Marginal variance comparison for IS vs PxHMC
 dim <- 100 
