@@ -79,10 +79,10 @@ grad_logpiLam <- function(beta,lambda,y,sigma2,alpha,k,grid)
 bark.prop <- function(beta,lambda,y,sigma2,alpha,k,grid,delta)
 {
   aux_var <- rnorm(length(beta), 0, 1)
-  y <- sqrt(delta)*aux_var
-  denom_prod <- y*grad_logpiLam(beta,lambda,y,sigma2,alpha,k,grid)
+  z <- sqrt(delta)*aux_var
+  denom_prod <- z*grad_logpiLam(beta,lambda,y,sigma2,alpha,k,grid)
   prob <- 1 / (1 + exp(- denom_prod))
-  ifelse(runif(1) <= prob, prop <- beta + y, prop <- beta - y)
+  ifelse(runif(1) <= prob, prop <- beta + z, prop <- beta - z)
   return(prop)
 }
 
