@@ -81,7 +81,7 @@ bark.prop <- function(beta,lambda,y,sigma2,alpha,k,grid,delta)
   aux_var <- rnorm(length(beta), 0, 1)
   y <- sqrt(delta)*aux_var
   denom_prod <- y*grad_logpiLam(beta,lambda,y,sigma2,alpha,k,grid)
-  prob <- 1 / (1 + exp(-denom_prod))
+  prob <- 1 / (1 + exp(- denom_prod))
   ifelse(runif(1) <= prob, prop <- beta + y, prop <- beta - y)
   return(prop)
 }
@@ -242,7 +242,6 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
   U_betacurr <- log_pi(beta_current, y, sigma2, alpha)
   accept <- 0
   
-  mat.inv <- diag(1, nvar, nvar)
   for (i in 2:iter)
   {
     # proposal step
@@ -519,143 +518,3 @@ pxhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   object <- list(samp.hmc, acc_rate)
   return(object)
 }
-
-
-
-
-
-
-##### MYMALA samples function
-
-mymala <- function(y, alpha, lambda, sigma2, iter, delta, start)
-{
-  nvar <- length(y)
-  samp.mym <- matrix(0, nrow = iter, ncol = nvar)
-  wts_is_est <- numeric(length = iter)
-  
-  # starting value computations
-  samp_current <- start
-  samp.mym[1,] <- samp_current
-  prox_val.curr <- prox_func(samp_current, lambda, y, sigma2, alpha)
-  targ_val.curr <- log_pilambda(prox_val.curr,samp_current,lambda,y,sigma2,alpha)
-  
-  # weights calculation
-  psi_val <- - log_pi(samp_current,y,sigma2,alpha)
-  psi_lambda_val <- - log_pilambda(prox_val.curr,samp_current,lambda,y,sigma2,alpha)
-  wts_is_est[1] <- psi_lambda_val - psi_val
-
-  accept <- 0
-  for (i in 2:iter)
-  {
-    # proposal step
-    prop.mean <- samp_current +
-                   (delta / 2)*grad_logpiLam(samp_current,lambda,y,sigma2,alpha)
-    samp_next <- prop.mean + sqrt(delta)*rnorm(nvar, 0, 1)
-      
-    # calculating prox
-    prox_val.next <- prox_func(samp_next,lambda,y,sigma2,alpha)
-    targ_val.next <- log_pilambda(prox_val.next,samp_next,lambda,y,sigma2,alpha)
-    
-    q.next_to_curr <- sum(dnorm(samp_current, samp_next +
-                           (delta / 2)*grad_logpiLam(samp_next,lambda,y,sigma2,alpha),
-                                sqrt(delta), log = TRUE))
-    q.curr_to_next <- sum(dnorm(samp_next, prop.mean,
-                                sqrt(delta), log = TRUE))
-    mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
-    
-    if(log(runif(1)) <= mh.ratio)
-    {
-      samp.mym[i,] <- samp_next
-      prox_val.curr <- prox_val.next
-      targ_val.curr <- targ_val.next
-      
-      # weights
-      psi_val <- - log_pi(samp_next,y,sigma2,alpha)
-      psi_lambda_val <- - targ_val.curr
-      wts_is_est[i] <- psi_lambda_val - psi_val
-      accept <- accept + 1
-    }
-    else
-    {
-      samp.mym[i,] <- samp_current
-      psi_val <- - log_pi(samp_current,y,sigma2,alpha)
-      psi_lambda_val <- - log_pilambda(prox_val.curr,samp_current,lambda,y,sigma2,alpha)
-      wts_is_est[i] <- psi_lambda_val - psi_val
-    }
-    samp_current <- samp.mym[i,]
-    if(i %% (iter/10) == 0){
-      j <- accept/iter
-      print(cat(i, j))
-    }
-  }
-  print(accept/iter)
-  object <- list(samp.mym, wts_is_est)
-  return(object)
-}
-
-
-
-
-
-mybarker <- function(y, alpha, lambda, sigma2, iter, delta, start)
-{
-  nvar <- length(y)
-  samp.bark <- matrix(0, nrow = iter, ncol = nvar)
-  wts_is_est <- numeric(length = iter)
-  
-  # starting value computations
-  samp_current <- start
-  samp.bark[1,] <- beta_current
-  prox_val.curr <- prox_func(samp_current, lambda, y, sigma2, alpha)
-  targ_val.curr <- log_pilambda(prox_val.curr,samp_current,lambda,y,sigma2,alpha)
-  accept <- 0
-  
-  # weights calculation
-  psi_val <- - log_pi(samp_current,y,sigma2,alpha)
-  psi_lambda_val <- - log_pilambda(prox_val.curr,samp_current,lambda,y,sigma2,alpha)
-  wts_is_est[1] <- psi_lambda_val - psi_val
-  
-  # For barker
-  for (i in 2:iter)
-  {
-    # proposal step
-    samp_next <- bark.prop(samp_current, alpha, lambda, y, sigma2, delta)
-    
-    prox_val.next <- prox_func(samp_next,lambda,y,sigma2,alpha)
-    targ_val.next <- log_pilambda(prox_val.next,samp_next,lambda,y,sigma2,alpha)
-    
-    grad_samp_curr <- grad_logpiLam(samp_current,lambda,y,sigma2,alpha)
-    grad_samp_next <- grad_logpiLam(samp_next,lambda,y,sigma2,alpha)
-    
-    mh.ratio <- targ_val.next + log_bark.dens(samp_next, samp_current, grad_samp_next) - targ_val.curr -
-      log_bark.dens(samp_current, samp_next, grad_samp_curr)
-    if(log(runif(1)) <= mh.ratio)
-    {
-      samp.bark[i,] <- samp_next
-      prox_val.curr <- prox_val.next
-      targ_val.curr <- targ_val.next
-      
-      # weights
-      psi_val <- - log_pi(samp_next, y, sigma2,alpha)
-      psi_lambda_val <- - targ_val.curr
-      wts_is_est[i] <- psi_lambda_val - psi_val
-      accept <- accept + 1
-    }
-    else
-    {
-      samp.bark[i,] <- samp_current
-      psi_val <- - log_pi(samp_current, y, sigma2,alpha)
-      g_lambda_val <- - targ_val.curr
-      wts_is_est[i] <- psi_lambda_val - psi_val
-    }
-    samp_current <- samp.bark[i,]
-    if(i %% (iter/10) == 0){
-      j <- accept/iter
-      print(cat(i, j))
-    }
-  }
-  print(acc_rate <- accept/iter)
-  object <- list(samp.bark, wts_is_est, acc_rate)
-  return(object)
-}
-

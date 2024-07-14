@@ -5,17 +5,18 @@ load("warmup.Rdata")
 iter_bark <- 1e5
 lamb_coeff <- 0.001
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
-delta_bark_my <- 0.0035
-delta_bark_px <- 0.0025
+delta_bark_my <- 0.032
+delta_bark_px <- 0.023
 
 output_bark <- list()
 
 parallel::detectCores()
 num_cores <- 50
 doParallel::registerDoParallel(cores = num_cores)
+reps <- 100
 
-
-output_bark <- foreach(b = 1:num_cores) %dopar% {
+output_bark <- foreach(b = 1:reps) %dopar% {
+  
   mybark <- mybarker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_bark,delta = delta_bark_my,
                      start = warmup_end_iter)
   pxbark <- px.barker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_bark,delta = delta_bark_px,
