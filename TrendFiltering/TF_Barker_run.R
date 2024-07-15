@@ -5,8 +5,8 @@ load("warmup.Rdata")
 iter_bark <- 1e5
 lamb_coeff <- 0.001
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
-delta_bark_my <- 0.032
-delta_bark_px <- 0.023
+delta_bark_my <- 0.03
+delta_bark_px <- 0.0235
 
 output_bark <- list()
 

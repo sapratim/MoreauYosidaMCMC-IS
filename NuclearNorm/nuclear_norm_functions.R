@@ -95,7 +95,7 @@ bark.prop <- function(x, alpha, lambda, y, sigma2, delta)
   aux_var <- rnorm(length(x), 0, 1)
   z <- sqrt(delta)*aux_var
   denom_prod <- z*grad_logpiLam(x,lambda,y,sigma2,alpha)
-  prob <- 1 / (1 + exp(- sum(denom_prod)))
+  prob <- 1 / (1 + exp(- denom_prod))
   ifelse(runif(1) <= prob, prop <- x + z, prop <- x - z)
   return(prop)
 }
@@ -103,11 +103,11 @@ bark.prop <- function(x, alpha, lambda, y, sigma2, delta)
 # barker log density
 log_bark.dens <- function(curr_point, prop_point, grad_curr_point)
 {
-  rw_dens <- prod(dnorm(prop_point-curr_point, 0, 1))
+  rw_dens <- sum(dnorm(prop_point-curr_point, 0, 1, log = TRUE))
   exp_term <- - (grad_curr_point*(prop_point-curr_point))
-  denom <- prod(1 + exp(exp_term))
-  dens_val <- rw_dens/denom
-  return(log(dens_val))
+  denom <- sum(log1p(exp(exp_term)))
+  dens_val <- rw_dens - denom
+  return(dens_val)
 }
 
 # Asymptotic covariance matrix
