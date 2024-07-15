@@ -6,8 +6,8 @@ iter <- 1e5
 lamb_coeff <- 0.001
 delta_samp_is <- 0.0015
 delta_samp_pxm <- 0.0008
-delta_bark_my <- 0.0015
-delta_bark_px <- 0.0008
+delta_bark_my <- 0.0014
+delta_bark_px <- 0.0009
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
 alpha_hat <- 5   # obtained from the first dataset
 sigma2_hat <- 9  # obtained from the first dataset

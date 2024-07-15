@@ -96,14 +96,15 @@ bark.prop <- function(x, alpha, lambda, y, sigma2, delta)
   z <- sqrt(delta)*aux_var
   denom_prod <- z*grad_logpiLam(x,lambda,y,sigma2,alpha)
   prob <- 1 / (1 + exp(- denom_prod))
-  ifelse(runif(1) <= prob, prop <- x + z, prop <- x - z)
+  unifs <- runif(length(x))
+  prop <- (x + z)*(unifs <= prob) + (x - z)*(unifs > prob)
   return(prop)
 }
 
 # barker log density
-log_bark.dens <- function(curr_point, prop_point, grad_curr_point)
+log_bark.dens <- function(curr_point, prop_point, grad_curr_point, delta)
 {
-  rw_dens <- sum(dnorm(prop_point-curr_point, 0, 1, log = TRUE))
+  rw_dens <- sum(dnorm(prop_point-curr_point, 0, sqrt(delta), log = TRUE))
   exp_term <- - (grad_curr_point*(prop_point-curr_point))
   denom <- sum(log1p(exp(exp_term)))
   dens_val <- rw_dens - denom
@@ -128,6 +129,20 @@ asymp_cov_func <- function(chain, weights)
     asymp_var[j] <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
   }
   return(asymp_var)
+}
+
+##### Posterior mean
+post_mean_fn <- function(chain, weights)
+{
+  chain_length <- nrow(chain)
+  weight_mat <- matrix(0, nrow = chain_length, ncol = ncol(chain))
+  for (i in 1:chain_length) {
+    weight_mat[i,] <- chain[i,]*exp(weights[i])
+  }
+  num_sum <- apply(weight_mat, 2, sum)
+  weights_sum <- sum(exp(weights))
+  post_mean <- num_sum/weights_sum
+  return(post_mean)
 }
 
 
@@ -278,8 +293,8 @@ mybarker <- function(y, alpha, lambda, sigma2, iter, delta, start)
     grad_samp_curr <- grad_logpiLam(samp_current,lambda,y,sigma2,alpha)
     grad_samp_next <- grad_logpiLam(samp_next,lambda,y,sigma2,alpha)
     
-    mh.ratio <- targ_val.next + log_bark.dens(samp_next, samp_current, grad_samp_next) - targ_val.curr - 
-      log_bark.dens(samp_current, samp_next, grad_samp_curr)
+    mh.ratio <- targ_val.next + log_bark.dens(samp_next, samp_current, grad_samp_next, delta) - targ_val.curr - 
+      log_bark.dens(samp_current, samp_next, grad_samp_curr, delta)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.bark[i,] <- samp_next
@@ -333,8 +348,8 @@ px.barker <- function(y, alpha, lambda, sigma2, iter, delta, start)
     grad_samp_curr <- grad_logpiLam(samp_current,lambda,y,sigma2,alpha)
     grad_samp_next <- grad_logpiLam(samp_next,lambda,y,sigma2,alpha)
     
-    mh.ratio <- U_sampnext + log_bark.dens(samp_next, samp_current, grad_samp_next) - U_sampcurr - 
-      log_bark.dens(samp_current, samp_next, grad_samp_curr)
+    mh.ratio <- U_sampnext + log_bark.dens(samp_next, samp_current, grad_samp_next, delta) - U_sampcurr - 
+      log_bark.dens(samp_current, samp_next, grad_samp_curr, delta)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.bark[i,] <- samp_next

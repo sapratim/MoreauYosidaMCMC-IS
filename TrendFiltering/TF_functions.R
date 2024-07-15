@@ -84,7 +84,6 @@ bark.prop <- function(beta,lambda,y,sigma2,alpha,k,grid,delta)
   prob <- 1 / (1 + exp(- denom_prod))
   unifs <- runif(length(beta))
   prop <- (beta + z)*(unifs <= prob) + (beta - z)*(unifs > prob)
-  #ifelse(runif(length(beta)) <= prob, prop <- beta + z, prop <- beta - z)
   return(prop)
 }
 

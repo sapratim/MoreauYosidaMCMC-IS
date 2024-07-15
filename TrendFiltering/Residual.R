@@ -233,6 +233,53 @@ D_mat <- getD(k=1, n=1e2, x)   #  D matrix
   
   
   
+  pdf("plots/acf_tf_bark.pdf", height = 6, width = 12)
+  ### Barker
+  acf_isb <- acf(output_bark[,1], plot = FALSE)$acf
+  acf_pxb <- acf(output_bark[,1], plot = FALSE)$acf
+  
+  plot(1:length(acf_isb), acf_isb, col = "blue", type = "l",
+       xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
+  lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
+  legend("bottomright", c("MYBarker", "PxBarker"), lty = 1,
+         col = c("blue", "red"), cex = 0.75, bty = "n")
+  
+  for (i in 2:100) 
+  {
+    acf_isb <- acf(output_bark[,i], plot = FALSE)$acf
+    acf_pxb <- acf(output_bark[,i], plot = FALSE)$acf
+    lines(1:length(acf_isb), acf_isb, col = "blue", type = "l")
+    lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
+  }
+  dev.off()
+  
+  
+  
+  
+  pdf("plots/acf_tf_bark.pdf", height = 6, width = 10)
+  ### Barker
+  acf_isb <- acf(mybark[[1]][,1], plot = FALSE)$acf
+  acf_pxb <- acf(pxbark[[1]][,1], plot = FALSE)$acf
+  
+  plot(1:length(acf_isb), acf_isb, col = "blue", type = "l",
+       xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
+  lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
+  legend("bottomright", c("MYBarker", "PxBarker"), lty = 1,
+         col = c("blue", "red"), cex = 0.75, bty = "n")
+  
+  for (i in 2:100) 
+  {
+    acf_isb <- acf(mybark[[1]][,i], plot = FALSE)$acf
+    acf_pxb <- acf(pxbark[[1]][,i], plot = FALSE)$acf
+    lines(1:length(acf_isb), acf_isb, col = "blue", type = "l")
+    lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
+  }
+  dev.off()
+  
+  
+  
+  
+  
   # log_q_ratio_barker<-function(x,y,grad_x,grad_y)
   # {
   #   # x: current location (vector)
