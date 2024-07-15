@@ -2,15 +2,15 @@
 source("nuclear_norm_functions.R")
 load("warmup_chain.Rdata")
 iter <- 1e5
-lamb_coeff <- 5e-5
+lamb_coeff <- 1e-4
 sigma2_hat <- 0.01
 alpha_hat <- 1.15/sigma2_hat
-step_ismala <- 8.5e-5
-step_pxmala <- 1e-4
-step_isb <- 8e-5
-step_pxb <- 8e-5
-eps_is <- 0.0045
-eps_px <-  0.005
+step_ismala <- 0.00012
+step_pxmala <- 0.0001
+step_isb <- 0.0001
+step_pxb <- 0.0001
+eps_is <- 0.008
+eps_px <-  0.004
 L <- 10
 
 parallel::detectCores()
@@ -29,7 +29,8 @@ rm(result_pxm)
 
 result_ism <- mymala(y=y, alpha = alpha_hat, lambda = lamb_coeff, sigma2 = sigma2_hat,
                       iter = iter, delta = step_ismala, start = warmup_end_iter)
-wts_mala <- exp(result_ism[[2]])
+# adding a constant doesn't change anything
+wts_mala <- exp(result_ism[[2]] + 60)  
 asymp_var_ism <- asymp_cov_func(result_ism[[1]], wts_mala)
 n_eff_mala <- (mean(wts_mala)^2)/mean(wts_mala^2)
 rm(result_ism)
@@ -48,7 +49,7 @@ rm(result_pxb)
 
 result_isb <- mybarker(y=y, alpha = alpha_hat, lambda = lamb_coeff, sigma2 = sigma2_hat,
                     iter = iter, delta = step_isb, start = warmup_end_iter)
-wts_bark <- exp(result_isb[[2]])
+wts_bark <- exp(result_isb[[2]] + 60)
 asymp_var_isb <- asymp_cov_func(result_isb[[1]], wts_bark)
 n_eff_bark <- (mean(wts_bark)^2)/mean(wts_bark^2)
 rm(result_isb)
@@ -66,7 +67,7 @@ rm(result_pxhmc)
 
 result_ishmc <- myhmc(y=y, alpha = alpha_hat,lambda = lamb_coeff, sigma2 = sigma2_hat, 
                       iter = iter, eps_hmc = eps_is, L=L, start = warmup_end_iter)
-wts_hmc <- exp(result_ishmc[[2]])
+wts_hmc <- exp(result_ishmc[[2]] + 60)
 asymp_var_ishmc <- asymp_cov_func(result_ishmc[[1]], wts_hmc)
 n_eff_hmc <- ((mean(wts_hmc))^2/mean(wts_hmc^2))
 rm(result_ishmc)
