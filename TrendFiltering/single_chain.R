@@ -6,8 +6,8 @@ iter <- 1e5
 lamb_coeff <- 0.001
 delta_samp_is <- 0.0015
 delta_samp_pxm <- 0.0008
-delta_bark_my <- 0.0035
-delta_bark_px <- 0.0025
+delta_bark_my <- 0.0015
+delta_bark_px <- 0.0008
 D_mat <- getD(k=1, n=1e2, x)   #  D matrix
 alpha_hat <- 5   # obtained from the first dataset
 sigma2_hat <- 9  # obtained from the first dataset
@@ -28,10 +28,10 @@ mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter,
 pxmala.run <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
                       delta = delta_samp_pxm, start = warmup_end_iter)
 
-mybark <- mybarker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_bark,
+mybark <- mybarker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
                    delta = delta_bark_my, start = warmup_end_iter)
 
-pxbark <- px.barker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_bark,
+pxbark <- px.barker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
                    delta = delta_bark_px, start = warmup_end_iter)
 
 my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
