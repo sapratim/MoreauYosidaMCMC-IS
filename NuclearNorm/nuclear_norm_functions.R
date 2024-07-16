@@ -131,20 +131,6 @@ asymp_cov_func <- function(chain, weights)
   return(asymp_var)
 }
 
-##### Posterior mean
-post_mean_fn <- function(chain, weights)
-{
-  chain_length <- nrow(chain)
-  weight_mat <- matrix(0, nrow = chain_length, ncol = ncol(chain))
-  for (i in 1:chain_length) {
-    weight_mat[i,] <- chain[i,]*exp(weights[i])
-  }
-  num_sum <- apply(weight_mat, 2, sum)
-  weights_sum <- sum(exp(weights))
-  post_mean <- num_sum/weights_sum
-  return(post_mean)
-}
-
 
 ##### MYMALA samples function
 

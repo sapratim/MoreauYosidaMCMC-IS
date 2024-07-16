@@ -35,10 +35,6 @@ asymp_var_ism <- asymp_cov_func(result_ism[[1]], wts_mala)
 n_eff_mala <- (mean(wts_mala)^2)/mean(wts_mala^2)
 rm(result_ism)
 
-# post_mean.mala <- post_mean_fn(result_ism[[1]], wts_mala)
-# px_mean.mala <- apply(result_ism[[1]], 2, mean)
-# max(post_mean.mala - px_mean.mala)
-
 ######################### Covariance matrix Barker #########################
 
 result_pxb <- px.barker(y=y, alpha = alpha_hat, lambda = lamb_coeff, sigma2 = sigma2_hat,
@@ -54,9 +50,6 @@ asymp_var_isb <- asymp_cov_func(result_isb[[1]], wts_bark)
 n_eff_bark <- (mean(wts_bark)^2)/mean(wts_bark^2)
 rm(result_isb)
 
-# post_mean <- post_mean_fn(result_isb[[1]], wts_bark)
-# px_mean.bark <- apply(result_isb[[1]], 2, mean)
-# max(post_mean - px_mean.bark)
 ######################### Covariance matrix HMC #########################
 
 result_pxhmc <- pxhmc(y=y, alpha = alpha_hat, lambda = lamb_coeff, sigma2 = sigma2_hat, 
