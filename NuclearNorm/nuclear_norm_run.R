@@ -43,7 +43,7 @@ rm(result_ism)
 
 result_pxb <- px.barker(y=y, alpha = alpha_hat, lambda = lamb_coeff, sigma2 = sigma2_hat,
                       iter = iter, delta = step_pxb, start = warmup_end_iter)
-comp_var <- mcse.mat(result_pxb)
+comp_var <- mcse.mat(result_pxb[[1]])
 asymp_var_pxb <- iter*(comp_var[,2]^2)   # PxBarker asymptotic variance
 rm(result_pxb)
 
