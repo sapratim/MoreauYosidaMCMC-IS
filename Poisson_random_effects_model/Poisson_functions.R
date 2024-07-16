@@ -1,9 +1,9 @@
-####  Poisson random effects model
-#### The function evaluated below of targets and the derivatives are omitting constant
-#### of proportionality.
+####################################################
+## Main functions for Poisson random effects example
+## Plus data generation
+####################################################
 
-library(SimTools)
-set.seed(12345)
+set.seed(8024248)
 ni_s <- 5
 I <- 50
 c <- 10
@@ -15,21 +15,34 @@ lambda <- 0.001
 mu <- rnorm(1, 0, c)
 eta_vec <- rnorm(I, mu, sigma_eta)
 tol_nr <- 1e-8
-for (j in 1:ni_s)       # data generation
+
+# data generation
+
+for (j in 1:ni_s)       
   {
   data[,j] <- rpois(I, exp(eta_vec))
 }
 data
 
-true_target <- function(eta, mu, data)   # log of true target i.e. log(p(eta, mu|y))
+# log of true target i.e. log(p(eta, mu|y))
+
+log_p <- function(eta, mu, data)   
 {
   densval <- sum(eta^2)/(2*sigma_eta^2) - mu*sum(eta)/(sigma_eta^2) + 
                       ni_s*sum(exp(eta)) - sum(eta*apply(data, 1, sum)) +
-                              (mu^2*I/2)*(1/(sigma_eta^2) + 1/(c^2))
+                              (mu^2/2)*(I/(sigma_eta^2) + 1/(c^2))
   return(-densval)
 }
 
-true_grad_vec <- function(mu, sigma, eta)  # function evaluates gradient of log target
+log_plam <- function(eta, mu, data, lambda, y)   
+{
+  densval <- sum(eta^2)/(2*sigma_eta^2) - mu*sum(eta)/(sigma_eta^2) + 
+    ni_s*sum(exp(eta)) - sum(eta*apply(data, 1, sum)) +
+    (mu^2/2)*(I/(sigma_eta^2) + 1/(c^2)) + sum((y-c(eta, mu))^2)/(2*lambda)
+  return(-densval)
+}
+
+grad_logp <- function(mu, sigma, eta)  # function evaluates gradient of log target
 {
   term_exp_eta <- (ni_s)*exp(eta)
   term_y <- apply(data, 1, sum)
@@ -43,127 +56,130 @@ true_grad_vec <- function(mu, sigma, eta)  # function evaluates gradient of log 
 true_hessian <- function(sigma, eta)  # function evaluates hessian of log target
 {
   term_eta_diag <- 1/(sigma^2) + (ni_s)*exp(eta)
-  # mu_term <- -(I/(sigma^2) + 1/(c^2))
-  # mat_term_eta <- - diag(term_eta_diag, I, I)
-  # vect <- -rep(1/(sigma^2), I)
-  # vect_aug <- c(vect, mu_term)
-  # mat_term_2 <- rbind(mat_term_eta, vect)
-  # mat_final <- cbind(mat_term_2, vect_aug)
-
   return(-term_eta_diag)
 }
 
 proxfunc <- function(eta, mu, lambda, eta_initial, mu_initial, sigma)
 {
-  #  For starting values
-
+  # For starting values
   iter <- 0
   eta_next <- eta_initial
   mu_next <- mu_initial
 
-  grad_vec <- true_grad_vec(mu_next, sigma, eta_next) - (c(eta_next, mu_next) - c(eta, mu))/lambda
+  grad_vec <- grad_logp(mu_next, sigma, eta_next) - (c(eta_next, mu_next) - c(eta, mu))/lambda
   while (sqrt(sum(grad_vec^2)) > tol_nr) 
   {
-     ## For eta's
+   # For eta's
     iter <- iter + 1
 
     # calculating hessian
     eta_hessian <- true_hessian(sigma, eta_next) - 1/lambda
     eta_grad <- grad_vec[1:I]    
 
-    # defining the current state and the update 
-    # current <- c(eta_next, mu_next)
+    # defining the update 
     eta_next <- eta_next - eta_grad/eta_hessian
-
 
     mu.num <- (sum(eta_next)/sigma^2 + mu/lambda)
     mu.den <- I/(sigma^2) + 1/(c^2) + 1/lambda
     mu_next <- mu.num/mu.den
-    # mu_next <- mu_initial - mu_grad/mu_hessian
-    grad_vec <- true_grad_vec(mu_next, sigma, eta_next) - (c(eta_next, mu_next) - c(eta, mu))/lambda
+    grad_vec <- grad_logp(mu_next, sigma, eta_next) - (c(eta_next, mu_next) - c(eta, mu))/lambda
   }
-  #print(iter)
   optima <- c(eta_next, mu_next)
   return(optima)
 }
 
-MY_env <- function(eta, mu, data, optima, lambda)
-{
-  term <- rbind(eta, mu)
-  value <- true_target(eta, mu, data) - sum(term^2)/(2*lambda)
-  return(value)
-}
+#gradient of log target^lambda
 
-log_gradpi <- function(eta, mu, lambda, eta_initial, mu_initial, sigma) #gradient of log target^lambda
-{
+ grad_logplam <- function(eta, mu, lambda, eta_initial, mu_initial, sigma) 
+  {
   term_prox <- proxfunc(eta, mu, lambda, eta_initial, mu_initial, sigma)
   term <- c(eta, mu)
   ans <-  (term-term_prox)/lambda
   return(-ans)
-}
-eta_start <- eta_vec + rnorm(I, 0, 2)
-mu_start <- 5
-check <- proxfunc(eta_vec, mu, lambda = lambda, eta_initial = eta_vec, 
-         mu_initial = mu, sigma = sigma_eta)
-
-cbind(check, c(eta_vec,mu))
-
+ }
+ 
+ # function for barker proposal
+ bark.prop <- function(eta, mu, lambda, eta_initial, mu_initial, sigma, delta)
+ {
+   aux_var <- rnorm(length(eta)+1, 0, 1)
+   z <- sqrt(delta)*aux_var
+   denom_prod <- z*grad_logplam(eta, mu, lambda, eta_initial, mu_initial, sigma)
+   prob <- 1 / (1 + exp(- denom_prod))
+   unifs <- runif(length(eta)+1)
+   prop <- (c(eta,mu) + z)*(unifs <= prob) + (c(eta,mu) - z)*(unifs > prob)
+   return(prop)
+ }
+ 
+ # barker log density
+ log_bark.dens <- function(curr_point, prop_point, grad_curr_point, delta)
+ {
+   rw_dens <- sum(dnorm(prop_point-curr_point, 0, sqrt(delta), log = TRUE))
+   exp_term <- - (grad_curr_point*(prop_point-curr_point))
+   denom <- sum(log1p(exp(exp_term)))
+   dens_val <- rw_dens - denom
+   return(dens_val)
+ }
+ 
 ##### MYMALA samples function
 
 mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
 {
   samp.mym <- matrix(0, nrow = iter, ncol = I+1)
   wts_is_est <- numeric(length = iter)
- 
+  
+  # starting values
   samp_current <- c(eta_start, mu_start)
   samp.mym[1,] <- samp_current
+  prox_val.curr <- proxfunc(eta_start, mu_start, lambda, 
+                                eta_start, mu_start, sigma)
+  targ_val.curr <- log_plam(eta_start, mu_start, data, lambda,
+                                prox_val.curr)
   
-  psi_val <- true_target(eta_start, mu_start, data)
-  prox_val.curr <- proxfunc(eta_start, mu_start, lambda, eta_start, mu_start, sigma)
-  psi_lambda_val <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) -
-    sum((prox_val.curr - c(eta_start, mu_start))^2)/(2*lambda)
+  # weights calculation
+  psi_val <- - log_p(eta_start, mu_start, data)
+  psi_lambda_val <- - targ_val.curr
+  wts_is_est[1] <-  psi_lambda_val -  psi_val
   
-  wts_is_est[1] <- psi_val - psi_lambda_val
- 
    accept <- 0
   for (i in 2:iter) 
   {
-    samp_next <- rnorm(length(samp_current), samp_current + 
-                       (delta / 2)*log_gradpi(samp_current[1:I], samp_current[I+1],
-                        lambda, eta_start, mu_start, sigma),  sqrt(delta))   # proposal step
+    # proposal step
+     prop.mean <- samp_current + 
+           (delta / 2)*grad_logplam(samp_current[1:I], samp_current[I+1],
+                                lambda, eta_start, mu_start, sigma)
+    samp_next <- sqrt(delta)* rnorm(length(samp_current), prop.mean, 1)   
+    
+    # calculating prox values
     prox_val.next <- proxfunc(samp_next[1:I], samp_next[I+1],
                                lambda, eta_start, mu_start, sigma)
     
-    targ_val.next <- true_target(prox_val.next[1:I], prox_val.next[I+1], data) -
-                          sum((prox_val.next - c(eta_start, mu_start))^2)/(2*lambda)
-    targ_val.curr <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) -
-                          sum((prox_val.curr - c(eta_start, mu_start))^2)/(2*lambda)
+    targ_val.next <- log_plam(samp_next[1:I], samp_next[I+1], data, lambda,
+                              prox_val.next)
     
     q.next_to_curr <- sum(dnorm(samp_current, samp_next + 
-                                  (delta / 2)*log_gradpi(samp_next[1:I], samp_next[I+1],
-                                                         lambda, eta_start, mu_start, sigma),sqrt(delta), log = TRUE))
-    q.curr_to_next <- sum(dnorm(samp_next, samp_current + 
-                                  (delta / 2)*log_gradpi(samp_current[1:I], samp_current[I+1],
-                                                         lambda, eta_start, mu_start, sigma),  sqrt(delta), log = TRUE))
+                       (delta / 2)*grad_logplam(samp_next[1:I], samp_next[I+1],
+                         lambda, eta_start, mu_start, sigma),sqrt(delta), log = TRUE))
+   
+     q.curr_to_next <- sum(dnorm(samp_next, prop.mean,  sqrt(delta), log = TRUE))
+    
     mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
     
     if(log(runif(1)) <= mh.ratio)
     {
       samp.mym[i,] <- samp_next
       prox_val.curr <- prox_val.next
-      psi_val <- true_target(samp_next[1:I], samp_next[I+1], data)
-      psi_lambda_val <- true_target(prox_val.next[1:I], prox_val.next[I+1], data) -
-        sum((prox_val.next - samp_next)^2)/(2*lambda)
-      wts_is_est[i] <-  psi_val - psi_lambda_val
+      targ_val.curr <- targ_val.next
+      
+      # weights
+      psi_val <- - log_p(samp_next[1:I], samp_next[I+1], data)
+      psi_lambda_val <- - targ_val.curr
+      wts_is_est[i] <- psi_lambda_val - psi_val
       accept <- accept + 1
     }
     else
     {
       samp.mym[i,] <- samp_current
-     # psi_val <- true_target(samp_current[1:I], samp_current[I+1], data)
-      #psi_lambda_val <- true_target(prox_val.curr[1:I], prox_val.curr[I+1], data) -
-       # sum((prox_val.curr - samp_current)^2)/(2*lambda)
-      wts_is_est[i] <- wts_is_est[i-1]#psi_val - psi_lambda_val
+      wts_is_est[i] <- wts_is_est[i-1]
     }
     samp_current <- samp.mym[i,]
     if(i %% (iter/10) == 0){
@@ -181,27 +197,35 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
 px.mala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
 {
   samp.pxm <- matrix(0, nrow = iter, ncol = I+1)
+  
+  #  starting values
   samp_current <- c(eta_start, mu_start)
   samp.pxm[1,] <- samp_current
+  U_sampcurr <- log_p(samp_current[1:I], samp_current[I+1], data)
   accept <- 0
   
   for (i in 2:iter)
   {
-    samp_next <- rnorm(length(samp_current), samp_current + 
-                     (delta / 2)*log_gradpi(samp_current[1:I], samp_current[I+1],
-                         lambda, eta_start, mu_start, sigma),  sqrt(delta))   # proposal step
-    U_sampnext <- true_target(samp_next[1:I], samp_next[I+1], data)
-    U_sampcurr <- true_target(samp_current[1:I], samp_current[I+1], data)
+    # proposal step
+    prop.mean <- samp_current + 
+           (delta / 2)*grad_logplam(samp_current[1:I], samp_current[I+1],
+                               lambda, eta_start, mu_start, sigma)
+    samp_next <- rnorm(length(samp_current), prop.mean,  sqrt(delta))   
+    
+    U_sampnext <- log_p(samp_next[1:I], samp_next[I+1], data)
+    
     q.next_to_curr <- sum(dnorm(samp_current, samp_next + 
-                         (delta / 2)*log_gradpi(samp_next[1:I], samp_next[I+1],
-                             lambda, eta_start, mu_start, sigma),sqrt(delta), log = TRUE))
-    q.curr_to_next <- sum(dnorm(samp_next, samp_current + 
-                        (delta / 2)*log_gradpi(samp_current[1:I], samp_current[I+1],
-                             lambda, eta_start, mu_start, sigma),  sqrt(delta), log = TRUE))
+                       (delta / 2)*grad_logplam(samp_next[1:I], samp_next[I+1],
+                         lambda, eta_start, mu_start, sigma),sqrt(delta), log = TRUE))
+    
+    q.curr_to_next <- sum(dnorm(samp_next, prop.mean,  sqrt(delta), log = TRUE))
+   
     mh.ratio <- U_sampnext + q.next_to_curr - (U_sampcurr + q.curr_to_next)
+    
     if(log(runif(1)) <= mh.ratio)
     {
       samp.pxm[i,] <- samp_next
+      U_sampcurr <- U_sampnext
       accept <- accept + 1
     }
     else
@@ -218,6 +242,124 @@ px.mala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
   return(samp.pxm)
 }
 
+#### MyBarker samples function  
+
+mybarker <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
+{
+  samp.bark <- matrix(0, nrow = iter, ncol = I+1)
+  wts_is_est <- numeric(length = iter)
+  
+  # starting value computations
+  samp_current <- c(eta_start, mu_start)
+  samp.bark[1,] <- samp_current
+  prox_val.curr <- proxfunc(eta_start, mu_start, lambda, eta_start, mu_start, sigma)
+  targ_val.curr <- log_plam(eta_start, mu_start, data, lambda,
+                            c(prox_val.curr[1:I], prox_val.curr[I+1]))
+  
+  # weights calculation
+  psi_val <- - log_p(eta_start, mu_start, data)
+  psi_lambda_val <- - targ_val.curr
+  wts_is_est[1] <-  psi_lambda_val -  psi_val
+  
+  accept <- 0
+  # For barker  
+  for (i in 2:iter) 
+  {
+    # proposal step
+    samp_next <- bark.prop(samp_current[1:I], samp_current[I], lambda, 
+                                  eta_start, mu_start, sigma, delta)
+    
+    prox_val.next <- prox_val.next <- proxfunc(samp_next[1:I], samp_next[I+1],
+                                               lambda, eta_start, mu_start, sigma)
+    targ_val.next <- log_plam(samp_next[1:I], samp_next[I+1], data, lambda,
+                              c(prox_val.next[1:I], prox_val.next[I+1]))
+    
+    grad_samp_curr <- grad_logplam(samp_current[1:I], samp_current[I+1], lambda,
+                                   eta_start, mu_start, sigma)
+    grad_samp_next <- grad_logplam(samp_next[1:I], samp_next[I+1], lambda,
+                                   eta_start, mu_start, sigma)
+    
+    mh.ratio <- targ_val.next + log_bark.dens(samp_next, samp_current, grad_samp_next, delta) - 
+                  targ_val.curr - log_bark.dens(samp_current, samp_next, grad_samp_curr, delta)
+    
+    if(log(runif(1)) <= mh.ratio)
+    {
+      samp.bark[i,] <- samp_next
+      prox_val.curr <- prox_val.next
+      targ_val.curr <- targ_val.next
+      
+      # weights
+      psi_val <- - log_p(samp_next[1:I], samp_next[I+1], data)
+      psi_lambda_val <- - targ_val.curr
+      wts_is_est[i] <- psi_lambda_val - psi_val
+      accept <- accept + 1
+    }
+    else
+    {
+      samp.bark[i,] <- samp_current
+      wts_is_est[i] <- wts_is_est[i-1]
+    }
+    samp_current <- samp.bark[i,]
+    if(i %% (iter/10) == 0){
+      j <- accept/iter
+      print(cat(i, j))
+    }
+  }
+  print(acc_rate <- accept/iter)
+  object <- list(samp.bark, wts_is_est, acc_rate)
+  return(object)
+}
+
+## PxBarker samples
+
+px.barker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
+{
+  samp.bark <- matrix(0, nrow = iter, ncol = I+1)
+  
+  #  starting values
+  samp_current <- c(eta_start, mu_start)
+  samp.bark[1,] <- samp_current
+  U_sampcurr <- log_p(samp_current[1:I], samp_current[I+1], data)
+  accept <- 0
+  
+  # For barker
+  accept <- 0
+  for (i in 2:iter)
+  {
+    # proposal step
+    samp_next <- bark.prop(samp_current[1:I], samp_current[I], lambda, 
+                                        eta_start, mu_start, sigma, delta)
+    
+    U_sampnext <- log_pi(samp_next, y, sigma2, alpha)
+    
+    grad_samp_curr <- grad_logplam(samp_current[1:I], samp_current[I+1], lambda,
+                                   eta_start, mu_start, sigma)
+    grad_samp_next <- grad_logplam(samp_next[1:I], samp_next[I+1], lambda,
+                                   eta_start, mu_start, sigma)
+    
+    mh.ratio <- U_sampnext + log_bark.dens(samp_next, samp_current, grad_samp_next, delta) - 
+                  U_sampcurr - log_bark.dens(samp_current, samp_next, grad_samp_curr, delta)
+    
+    if(log(runif(1)) <= mh.ratio)
+    {
+      samp.bark[i,] <- samp_next
+      U_sampcurr <- U_sampnext
+      accept <- accept + 1
+    }
+    else
+    {
+      samp.bark[i,] <- samp_current
+    }
+    samp_current <- samp.bark[i,]
+    if(i %% (iter/10) == 0){
+      j <- accept/iter
+      print(cat(i, j))
+    }
+  }
+  print(acc_rate <- accept/iter)
+  object <- list(samp.bark, acc_rate)
+  return(object)
+}
 
 ##  myhmc samples
 
@@ -225,27 +367,31 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
 {
   samp.hmc <- matrix(0, nrow = iter, ncol = I+1)
   wts_is_est <- numeric(length = iter)
+  
+  # starting value computations
   samp <- c(eta_start, mu_start)
-  samp.hmc[1,] <- samp
-  psi_val <- true_target(eta_start, mu_start, data)
   proxval_curr <- proxfunc(eta_start, mu_start, lambda, eta_start, mu_start, sigma)
-  psi_lambda_val <- true_target(proxval_curr[1:I], proxval_curr[I+1], data) +
-    sum((proxval_curr - c(eta_start, mu_start))^2)/lambda
+  samp.hmc[1,] <- samp
+  
+  # weights
+  psi_val <- - log_p(eta_start, mu_start, data)
+  psi_lambda_val <- - log_plam(eta_start, mu_start, data, lambda, proxval_curr)
   wts_is_est[1] <- psi_lambda_val - psi_val
+  
+  # For HMC
   mom_mat <- matrix(rnorm(iter*(I+1)), nrow = iter, ncol = I+1)
   accept <- 0
-  
   for (i in 2:iter) 
   {
     p_prop <- mom_mat[i,]
-    U_samp <- -log_gradpi(samp[1:I], samp[I+1],
+    U_samp <- -grad_logplam(samp[1:I], samp[I+1],
                           lambda, eta_start, mu_start, sigma)
     p_current <- p_prop - eps_hmc*U_samp /2  # half step for momentum
     q_current <- samp
     for (j in 1:L)
     {
       samp <- samp + eps_hmc*p_current   # full step for position
-      U_samp <- -log_gradpi(samp[1:I], samp[I+1],
+      U_samp <- -grad_logplam(samp[1:I], samp[I+1],
                             lambda, eta_start, mu_start, sigma)
       if(j!=L) p_current <- p_current - eps_hmc*U_samp  # full step for momentum
     }
@@ -255,10 +401,9 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
     #  proximal values
     proxval_prop <-  proxfunc(samp[1:I], samp[I+1], lambda, eta_start, mu_start, sigma)
     
-    U_curr <- - (true_target(proxval_curr[1:I], proxval_curr[I+1], data) +
-                   sum((proxval_curr - q_current)^2)/lambda)
-    U_prop <- - (true_target(proxval_prop[1:I], proxval_prop[I+1], data) +
-                   sum((proxval_curr - samp)^2)/lambda)
+    U_curr <- - log_plam(q_current[1:I], q_current[I+1], data, lambda,
+                         proxval_curr)
+    U_prop <- - log_plam(samp[1:I], samp[I+1], data, lambda, proxval_prop)
     K_curr <-  sum((p_prop^2)/2)
     K_prop <-  sum((p_current^2)/2)
     
@@ -268,19 +413,17 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
     {
       samp.hmc[i,] <- samp
       proxval_curr <- proxval_prop
-      psi_val <- true_target(samp[1:I], samp[I+1], data)
-      psi_lambda_val <- - (true_target(proxval_prop[1:I], proxval_prop[I+1], data) +
-                             sum((proxval_prop - samp)^2)/lambda)
-      wts_is_est[i] <- psi_lambda_val - psi_val
+      
+      # weights
+      psi_val <- - log_p(samp[1:I], samp[I+1], data)
+      wts_is_est[i] <- U_prop - psi_val
       accept <- accept + 1
     }
     else
     {
       samp.hmc[i,] <- q_current
-      psi_val <- true_target(q_current[1:I], q_current[I+1], data)
-      psi_lambda_val <- - (true_target(proxval_curr[1:I], proxval_curr[I+1], data) +
-                             sum((proxval_curr - q_current)^2)/lambda)
-      wts_is_est[i] <- psi_lambda_val - psi_val
+      psi_val <- - log_p(q_current[1:I], q_current[I+1], data)
+      wts_is_est[i] <- U_curr - psi_val
       samp <- q_current
     }
     if(i %% (iter/10) == 0){
@@ -298,30 +441,34 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
 pxhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
 {
   samp.hmc <- matrix(0, nrow = iter, ncol = I+1)
+  
+  # starting value computations
   samp <- c(eta_start, mu_start)
   samp.hmc[1,] <- samp
+  
+  # For HMC
   mom_mat <- matrix(rnorm(iter*(I+1)), nrow = iter, ncol = I+1)
   accept <- 0
   
   for (i in 2:iter) 
   {
     p_prop <- mom_mat[i,]
-    U_samp <- -log_gradpi(samp[1:I], samp[I+1],
+    U_samp <- -grad_logplam(samp[1:I], samp[I+1],
                           lambda, eta_start, mu_start, sigma)
     p_current <- p_prop - eps_hmc*U_samp /2  # half step for momentum
     q_current <- samp
     for (j in 1:L)
     {
       samp <- samp + eps_hmc*p_current   # full step for position
-      U_samp <- -log_gradpi(samp[1:I], samp[I+1],
+      U_samp <- -grad_logplam(samp[1:I], samp[I+1],
                             lambda, eta_start, mu_start, sigma)
       if(j!=L) p_current <- p_current - eps_hmc*U_samp  # full step for momentum
     }
     p_current <- p_current - eps_hmc*U_samp/2
     p_current <- - p_current  # negation to make proposal symmetric
     
-    U_curr <- - true_target(q_current[1:I], q_current[I+1], data)
-    U_prop <- - true_target(samp[1:I], samp[I+1], data)
+    U_curr <- - log_p(q_current[1:I], q_current[I+1], data)
+    U_prop <- - log_p(samp[1:I], samp[I+1], data)
     K_curr <-  sum((p_prop^2)/2)
     K_prop <-  sum((p_current^2)/2)
     
@@ -346,66 +493,3 @@ pxhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
   object <- list(samp.hmc, acc_rate)
   return(object)
 }
-
-eta_start <- log(rowMeans(data))
-mu_start <- mean(eta_start)
-lambda <- .00001
-
-u <- px.mala(eta_start, mu_start, lambda,sigma_eta, iter = 1e5, delta = 1e-6, data)
-eta_start <- tail(u, 1)[1:I]
-mu_start <- tail(u, 1)[I+1]
-
-t <- mymala(eta_start, mu_start, lambda,sigma_eta, iter = 1e5, delta = 5e-7, data)
-plot.ts(t[[2]])
-
-mala_chain <- t[[1]]
-weights <- t[[2]]
-is_samp <- matrix(unlist(mala_chain), nrow = 1e5, ncol = I+1)
-is_wts <- as.numeric(unlist(weights))
-wts_mean <- mean(exp(is_wts))
-
-wts_mean^2/ mean(exp(is_wts)^2)
-
-
-library(SimTools)
-plot.ts(u[,1:10])
-plot.ts(t[[1]][,1:10])
-plot.ts(t[[1]][,21:30])
-plot.ts(t[[1]][,31:40])
-plot.ts(t[[1]][,41:50])
-plot.ts(t[[1]][,51])
-
-acfplot(u[, 1:10], lag.max = 1e3)
-acfplot(t[[1]][, 1:10], lag.max = 1e3)
-
-acfplot(u[, 42:51], lag.max = 1e3)
-acfplot(t[[1]][, 42:51], lag.max = 1e3)
-
-
-is_wts <- t[[2]] - max(t[[2]])
-library(mcmcse)
-num <- is_samp*exp(is_wts)
-sum_mat <- apply(num, 2, sum)
-is_est <- sum_mat / sum(exp(is_wts))
-cbind(is_est, colMeans(u))
-input_mat <- cbind(num, exp(is_wts))  # input samples for mcse
-Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
-
-
-kappa_eta_mat <- cbind(diag(1/wts_mean, I+1), -is_est/wts_mean) # derivative of kappa matrix
-
-asymp_covmat_is <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
-
-asymp_covmat_pxm <- mcse.initseq(u)$cov   # PxMALA asymptotic variance
-
-rel_ess <- (det(asymp_covmat_pxm)/det(asymp_covmat_is))^(1/(I+1))
-
-uni_ess <- diag(asymp_covmat_pxm)/diag(asymp_covmat_is)
-summary(uni_ess)
-
-
-v <- myhmc(eta_start, mu_start,lambda, sigma_eta, iter = 1e3, data, eps_hmc=0.05, L=10)
-w <- pxhmc(eta_start, mu_start,lambda, sigma_eta, iter = 1e3, data, eps_hmc=0.05, L=10)
-
-
-
