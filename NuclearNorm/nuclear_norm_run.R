@@ -1,3 +1,7 @@
+###############################
+# File runs the Nuclear Norm
+# example, all samplers
+###############################
 
 source("nuclear_norm_functions.R")
 load("warmup_chain.Rdata")
@@ -19,7 +23,7 @@ doParallel::registerDoParallel(cores = num_cores)
 reps <- 100
 
 output <- foreach(b = 1:reps) %dopar% {
-######################### Covariance matrix MALA #########################
+######################### Running MALA #########################
   
 result_pxm <- px.mala(y=y, alpha = alpha_hat, lambda = lamb_coeff, sigma2 = sigma2_hat,
                         iter = iter, delta = step_pxmala, start = warmup_end_iter)
@@ -35,7 +39,7 @@ asymp_var_ism <- asymp_cov_func(result_ism[[1]], wts_mala)
 n_eff_mala <- (mean(wts_mala)^2)/mean(wts_mala^2)
 rm(result_ism)
 
-######################### Covariance matrix Barker #########################
+######################### Running Barker #########################
 
 result_pxb <- px.barker(y=y, alpha = alpha_hat, lambda = lamb_coeff, sigma2 = sigma2_hat,
                       iter = iter, delta = step_pxb, start = warmup_end_iter)
@@ -50,7 +54,7 @@ asymp_var_isb <- asymp_cov_func(result_isb[[1]], wts_bark)
 n_eff_bark <- (mean(wts_bark)^2)/mean(wts_bark^2)
 rm(result_isb)
 
-######################### Covariance matrix HMC #########################
+######################### Running HMC #########################
 
 result_pxhmc <- pxhmc(y=y, alpha = alpha_hat, lambda = lamb_coeff, sigma2 = sigma2_hat, 
                       iter = iter, eps_hmc = eps_px, L=L, start = warmup_end_iter)

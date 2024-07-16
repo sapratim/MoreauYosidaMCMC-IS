@@ -1,5 +1,7 @@
-# R Code for Proximal of the Nuclear-Norm problem:
-# softthreshold(seq(-10, 10, length.out=10), 1) 
+###############################
+# File contains main functions
+# for Nuclear Norm Example
+###############################
 
 library(mcmcse)
 library(Matrix)
@@ -8,6 +10,9 @@ library(foreach)
 library(doParallel)
 library(ks)
 
+
+# Data generation
+# Generating the CheckerBoard Image
 set.seed(8024248)
 n <- 64
 a <- 8
