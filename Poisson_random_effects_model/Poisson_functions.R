@@ -266,7 +266,7 @@ mybarker <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
   for (i in 2:iter) 
   {
     # proposal step
-    samp_next <- bark.prop(samp_current[1:I], samp_current[I], lambda, 
+    samp_next <- bark.prop(samp_current[1:I], samp_current[I+1], lambda, 
                                   eta_start, mu_start, sigma, delta)
     
     prox_val.next <- prox_val.next <- proxfunc(samp_next[1:I], samp_next[I+1],
@@ -312,7 +312,7 @@ mybarker <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
 
 ## PxBarker samples
 
-px.barker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
+px.barker <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
 {
   samp.bark <- matrix(0, nrow = iter, ncol = I+1)
   
@@ -327,10 +327,10 @@ px.barker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
   for (i in 2:iter)
   {
     # proposal step
-    samp_next <- bark.prop(samp_current[1:I], samp_current[I], lambda, 
+    samp_next <- bark.prop(samp_current[1:I], samp_current[I+1], lambda, 
                                         eta_start, mu_start, sigma, delta)
     
-    U_sampnext <- log_pi(samp_next, y, sigma2, alpha)
+    U_sampnext <- log_p(samp_next[1:I], samp_next[I+1], data)
     
     grad_samp_curr <- grad_logplam(samp_current[1:I], samp_current[I+1], lambda,
                                    eta_start, mu_start, sigma)
