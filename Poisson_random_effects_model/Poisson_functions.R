@@ -133,7 +133,7 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
   prox_val.curr <- proxfunc(eta_start, mu_start, lambda, 
                                 eta_start, mu_start, sigma)
   targ_val.curr <- log_plam(prox_val.curr[1:I], prox_val.curr[I+1], data, lambda,
-                             c(eta_start, mu_start))
+                             samp_current)
   
   # weights calculation
   psi_val <- - log_p(eta_start, mu_start, data)
@@ -147,14 +147,14 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
      prop.mean <- samp_current + 
            (delta / 2)*grad_logplam(samp_current[1:I], samp_current[I+1],
                                 lambda, eta_start, mu_start, sigma)
-    samp_next <- sqrt(delta)* rnorm(length(samp_current), prop.mean, 1)   
+     samp_next <- rnorm(I + 1, prop.mean, sqrt(delta))   
     
     # calculating prox values
     prox_val.next <- proxfunc(samp_next[1:I], samp_next[I+1],
                                lambda, eta_start, mu_start, sigma)
     
     targ_val.next <- log_plam(prox_val.next[1:I], prox_val.next[I+1],data, lambda,
-                              c(samp_next[1:I], samp_next[I+1]))
+                              samp_next)
     
     q.next_to_curr <- sum(dnorm(samp_current, samp_next + 
                        (delta / 2)*grad_logplam(samp_next[1:I], samp_next[I+1],
