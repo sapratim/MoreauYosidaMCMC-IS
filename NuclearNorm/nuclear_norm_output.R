@@ -9,7 +9,7 @@ rand <- sample(c(1:length(y)), subset)
 
 #### MALA
 
-pdf("acf_nnorm.pdf", height = 8, width = 15)
+pdf("plots/acf_nnorm.pdf", height = 8, width = 15)
 par(mfrow = c(1,3))
 
 acf_ism <- acf(output_single[[1]][,rand[1]], plot = FALSE)$acf
@@ -79,15 +79,15 @@ for (i in 1:subset) {
   mar_eff_hmc[i,] <- as.numeric(unlist(output[[i]][6]))/as.numeric(unlist(output[[i]][5]))
 }
 
-pdf(file = "boxplot_nnorm_mala.pdf", width = 10, height = 8)
+pdf(file = "plots/boxplot_nnorm_mala.pdf", width = 10, height = 8)
 boxplot(mar_eff_mala[,rand], use.cols = TRUE, xlab = "Coordinate", 
         ylab = "Average relative efficiency")
 dev.off()
-pdf(file = "boxplot_nnorm_bark.pdf", width = 10, height = 8)
+pdf(file = "plots/boxplot_nnorm_bark.pdf", width = 10, height = 8)
 boxplot(mar_eff_bark[,rand], use.cols = TRUE, xlab = "Coordinate", 
         ylab = "Average relative efficiency")
 dev.off()
-pdf(file = "boxplot_nnorm_hmc.pdf", width = 10, height = 8)
+pdf(file = "plots/boxplot_nnorm_hmc.pdf", width = 10, height = 8)
 boxplot(mar_eff_hmc[,rand], use.cols = TRUE, xlab = "Coordinate", 
         ylab = "Average relative efficiency")
 dev.off()
@@ -98,15 +98,15 @@ avg_rel_eff_mala <- apply(mar_eff_mala, 2, mean)
 avg_rel_eff_bark <- apply(mar_eff_bark, 2, mean)
 avg_rel_eff_hmc <- apply(mar_eff_hmc, 2, mean)
 
-pdf(file = "hist_nnorm_mala.pdf", width = 8, height = 6)
+pdf(file = "plots/hist_nnorm_mala.pdf", width = 8, height = 6)
 hist(avg_rel_eff_mala, breaks = 30, xlab = "Average relative efficiency", main = NULL)
 dev.off()
 
-pdf(file = "hist_nnorm_bark.pdf", width = 8, height = 6)
+pdf(file = "plots/hist_nnorm_bark.pdf", width = 8, height = 6)
 hist(avg_rel_eff_bark, breaks = 30, xlab = "Average relative efficiency", main = NULL)
 dev.off()
 
-pdf(file = "hist_nnorm_hmc.pdf", width = 8, height = 6)
+pdf(file = "plots/hist_nnorm_hmc.pdf", width = 8, height = 6)
 hist(avg_rel_eff_hmc, breaks = 30, xlab = "Average relative efficiency", main = NULL)
 dev.off()
 

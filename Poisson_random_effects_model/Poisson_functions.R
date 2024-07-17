@@ -42,7 +42,7 @@ log_plam <- function(eta, mu, data, lambda, y)
   return(-densval)
 }
 
-grad_logp <- function(mu, sigma, eta)  # function evaluates gradient of log target
+grad_logp <- function(mu, sigma, eta)  # function evaluates gradient of log target 
 {
   term_exp_eta <- (ni_s)*exp(eta)
   term_y <- apply(data, 1, sum)
@@ -53,7 +53,7 @@ grad_logp <- function(mu, sigma, eta)  # function evaluates gradient of log targ
   return(grad_value)
 }
 
-true_hessian <- function(sigma, eta)  # function evaluates hessian of log target
+true_hessian <- function(sigma, eta)  # function evaluates hessian of eta's
 {
   term_eta_diag <- 1/(sigma^2) + (ni_s)*exp(eta)
   return(-term_eta_diag)
@@ -132,8 +132,8 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
   samp.mym[1,] <- samp_current
   prox_val.curr <- proxfunc(eta_start, mu_start, lambda, 
                                 eta_start, mu_start, sigma)
-  targ_val.curr <- log_plam(eta_start, mu_start, data, lambda,
-                                prox_val.curr)
+  targ_val.curr <- log_plam(prox_val.curr[1:I], prox_val.curr[I+1], data, lambda,
+                             c(eta_start, mu_start))
   
   # weights calculation
   psi_val <- - log_p(eta_start, mu_start, data)
@@ -153,8 +153,8 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
     prox_val.next <- proxfunc(samp_next[1:I], samp_next[I+1],
                                lambda, eta_start, mu_start, sigma)
     
-    targ_val.next <- log_plam(samp_next[1:I], samp_next[I+1], data, lambda,
-                              prox_val.next)
+    targ_val.next <- log_plam(prox_val.next[1:I], prox_val.next[I+1],data, lambda,
+                              c(samp_next[1:I], samp_next[I+1]))
     
     q.next_to_curr <- sum(dnorm(samp_current, samp_next + 
                        (delta / 2)*grad_logplam(samp_next[1:I], samp_next[I+1],
@@ -253,8 +253,8 @@ mybarker <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
   samp_current <- c(eta_start, mu_start)
   samp.bark[1,] <- samp_current
   prox_val.curr <- proxfunc(eta_start, mu_start, lambda, eta_start, mu_start, sigma)
-  targ_val.curr <- log_plam(eta_start, mu_start, data, lambda,
-                            c(prox_val.curr[1:I], prox_val.curr[I+1]))
+  targ_val.curr <- log_plam(prox_val.curr[1:I], prox_val.curr[I+1], data, lambda,
+                            c(eta_start, mu_start))
   
   # weights calculation
   psi_val <- - log_p(eta_start, mu_start, data)
@@ -271,8 +271,8 @@ mybarker <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
     
     prox_val.next <- prox_val.next <- proxfunc(samp_next[1:I], samp_next[I+1],
                                                lambda, eta_start, mu_start, sigma)
-    targ_val.next <- log_plam(samp_next[1:I], samp_next[I+1], data, lambda,
-                              c(prox_val.next[1:I], prox_val.next[I+1]))
+    targ_val.next <- log_plam(prox_val.next[1:I], prox_val.next[I+1],data, lambda,
+                              c(samp_next[1:I], samp_next[I+1]))
     
     grad_samp_curr <- grad_logplam(samp_current[1:I], samp_current[I+1], lambda,
                                    eta_start, mu_start, sigma)
@@ -375,7 +375,8 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
   
   # weights
   psi_val <- - log_p(eta_start, mu_start, data)
-  psi_lambda_val <- - log_plam(eta_start, mu_start, data, lambda, proxval_curr)
+  psi_lambda_val <- - log_plam(proxval_curr[1:I], proxval_curr[I+1], data, lambda, 
+                               c(eta_start, mu_start))
   wts_is_est[1] <- psi_lambda_val - psi_val
   
   # For HMC
@@ -401,9 +402,10 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
     #  proximal values
     proxval_prop <-  proxfunc(samp[1:I], samp[I+1], lambda, eta_start, mu_start, sigma)
     
-    U_curr <- - log_plam(q_current[1:I], q_current[I+1], data, lambda,
-                         proxval_curr)
-    U_prop <- - log_plam(samp[1:I], samp[I+1], data, lambda, proxval_prop)
+    U_curr <- - log_plam(proxval_curr[1:I], proxval_curr[I+1], data, lambda,
+                         c(q_current[1:I], q_current[I+1]))
+    U_prop <- - log_plam(proxval_prop[1:I], proxval_prop[I+1], data, lambda, 
+                         c(samp[1:I], samp[I+1]))
     K_curr <-  sum((p_prop^2)/2)
     K_prop <-  sum((p_current^2)/2)
     
