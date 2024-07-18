@@ -6,66 +6,93 @@ source("TF_functions.R")
 load("output_mala.Rdata")
 load("output_bark.Rdata")
 load("output_hmc.Rdata")
-load("single_chain.Rdata")
+load("single_chain_mala.Rdata")
+load("single_chain_bark.Rdata")
+load("single_chain_hmc.Rdata")
 load("single_chain_log_weights.Rdata")
 
 ################ ACF plots ################
-
+dim <- 100
 pdf("plots/acf_tf.pdf", height = 6, width = 12)
 par(mfrow = c(1,3))
 
 ### MALA
-acf_ism <- acf(output_single_run[[1]][,1], plot = FALSE)$acf
-acf_pxm <- acf(output_single_run[[2]][,1], plot = FALSE)$acf
+lag.max <- 50
+acf_ism <- acf(output_single_run_mala[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
+acf_pxm <- acf(output_single_run_mala[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
 
-plot(1:length(acf_ism), acf_ism, col = "blue", type = "l",
-     xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
-lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
-legend("bottomright", c("MYMALA", "PxMALA"), lty = 1,
-       col = c("blue", "red"), cex = 0.75, bty = "n")
+diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+diff.acf[,1] <- acf_ism - acf_pxm
+
+# plot(1:length(acf_ism), acf_ism, col = "blue", type = "l",
+#      xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
+# lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
+# legend("bottomright", c("MYMALA", "PxMALA"), lty = 1,
+#        col = c("blue", "red"), cex = 0.75, bty = "n")
 
 for (i in 2:100) 
 {
-  acf_ism <- acf(output_single_run[[1]][,i], plot = FALSE)$acf
-  acf_pxm <- acf(output_single_run[[2]][,i], plot = FALSE)$acf
-  lines(1:length(acf_ism), acf_ism, col = "blue", type = "l")
-  lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
+  acf_ism <- acf(output_single_run_mala[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
+  acf_pxm <- acf(output_single_run_mala[[2]][,i], plot = FALSE, lag.max = lag.max)$acf
+  diff.acf[,i] <- acf_ism - acf_pxm
+  # lines(1:length(acf_ism), acf_ism, col = "blue", type = "l")
+  # lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
 }
+
+# Make boxplot of ACFs
+boxplot(t(diff.acf),
+        xlab = "Lags", ylab = "Difference in ACF (MYMala - PxMala)",ylim = c(-.6, .1))
 
 ### Barker
-acf_isb <- acf(output_single_run[[3]][,1], plot = FALSE)$acf
-acf_pxb <- acf(output_single_run[[4]][,1], plot = FALSE)$acf
+acf_isb <- acf(output_single_run_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
+acf_pxb <- acf(output_single_run_bark[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
 
-plot(1:length(acf_isb), acf_isb, col = "blue", type = "l",
-     xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
-lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
-legend("bottomright", c("MYBarker", "PxBarker"), lty = 1,
-       col = c("blue", "red"), cex = 0.75, bty = "n")
+diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+diff.acf[,1] <- acf_isb - acf_pxb
+
+# plot(1:length(acf_isb), acf_isb, col = "blue", type = "l",
+#      xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
+# lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
+# legend("bottomright", c("MYBarker", "PxBarker"), lty = 1,
+#        col = c("blue", "red"), cex = 0.75, bty = "n")
 
 for (i in 2:100) 
 {
-  acf_isb <- acf(output_single_run[[3]][,i], plot = FALSE)$acf
-  acf_pxb <- acf(output_single_run[[4]][,i], plot = FALSE)$acf
-  lines(1:length(acf_isb), acf_isb, col = "blue", type = "l")
-  lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
+  acf_isb <- acf(output_single_run_bark[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
+  acf_pxb <- acf(output_single_run_bark[[2]][,i], plot = FALSE, lag.max = lag.max)$acf
+  diff.acf[,i] <- acf_isb - acf_pxb
+  # lines(1:length(acf_isb), acf_isb, col = "blue", type = "l")
+  # lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
 }
+
+# Make boxplot of ACFs
+boxplot(t(diff.acf),
+        xlab = "Lags", ylab = "Difference in ACF (MYBarker - PxBarker)",ylim = c(-.6, .1))
 
 ### HMC
-acf_is_hmc <- acf(output_single_run[[5]][,1], plot = FALSE)$acf
-acf_pxhmc <- acf(output_single_run[[6]][,1], plot = FALSE)$acf
+acf_is_hmc <- acf(output_single_run_hmc[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
+acf_pxhmc <- acf(output_single_run_hmc[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
 
-plot(1:length(acf_is_hmc), acf_is_hmc, col = "blue", type = "l",
-     xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
-lines(1:length(acf_pxhmc), acf_pxhmc, col = "red", type = "l")
-legend("bottomright", c("MYHMC", "PxHMC"), lty = 1,
-       col = c("blue", "red"), cex = 0.75, bty = "n")
+diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+diff.acf[,1] <- acf_is_hmc - acf_pxhmc
+
+# plot(1:length(acf_is_hmc), acf_is_hmc, col = "blue", type = "l",
+#      xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
+# lines(1:length(acf_pxhmc), acf_pxhmc, col = "red", type = "l")
+# legend("bottomright", c("MYHMC", "PxHMC"), lty = 1,
+#        col = c("blue", "red"), cex = 0.75, bty = "n")
 for (i in 2:100) 
 {
-  acf_is_hmc <- acf(output_single_run[[3]][,i], plot = FALSE)$acf
-  acf_pxhmc <- acf(output_single_run[[4]][,i], plot = FALSE)$acf
-  lines(1:length(acf_is_hmc), acf_is_hmc, col = "blue", type = "l")
-  lines(1:length(acf_pxhmc), acf_pxhmc, col = "red", type = "l")
+  acf_is_hmc <- acf(output_single_run_hmc[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
+  acf_pxhmc <- acf(output_single_run_hmc[[2]][,i], plot = FALSE, lag.max = lag.max)$acf
+  diff.acf[,i] <- acf_is_hmc - acf_pxhmc
+  # lines(1:length(acf_is_hmc), acf_is_hmc, col = "blue", type = "l")
+  # lines(1:length(acf_pxhmc), acf_pxhmc, col = "red", type = "l")
 }
+
+# Make boxplot of ACFs
+boxplot(t(diff.acf),
+        xlab = "Lags", ylab = "Difference in ACF (MYHMC - PxHMC)",ylim = c(-.6, .1))
 dev.off()
 
 ##################  Boxplots of marginal efficiency ##################

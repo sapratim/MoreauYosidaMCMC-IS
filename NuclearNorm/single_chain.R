@@ -31,7 +31,11 @@ result_pxhmc <- pxhmc(y=y, alpha = alpha_hat, lambda = lamb_coeff, sigma2 = sigm
 result_ishmc <- myhmc(y=y, alpha = alpha_hat,lambda = lamb_coeff, sigma2 = sigma2_hat, 
                       iter = iter, eps_hmc = eps_is, L=L, start = warmup_end_iter)
 
-output_single <- list(result_ism[[1]], result_pxm, result_isb[[1]], 
-                          result_pxb[[1]], result_ishmc[[1]], result_pxhmc[[1]])
+output_single_mala <- list(result_ism[[1]], result_pxm)
+output_single_bark <- list(result_isb[[1]], result_pxb[[1]])
+output_single_hmc <- list(result_ishmc[[1]], result_pxhmc[[1]])
 
-save(output_single, file = "output_single_chain.Rdata")
+save(output_single_mala, file = "output_single_chain_mala.Rdata")
+save(output_single_bark, file = "output_single_chain_bark.Rdata")
+save(output_single_hmc, file = "output_single_chain_hmc.Rdata")
+

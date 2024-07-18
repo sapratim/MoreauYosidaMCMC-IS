@@ -39,8 +39,10 @@ my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
 
 px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
                 eps_hmc = 0.0003, L = 100, start = warmup_end_iter) 
-output_single_run <- list(mala.is[[1]], pxmala.run, mybark[[1]], 
-                              pxbark[[1]], my.hmc[[1]], px.hmc[[1]])
+
+output_single_run_mala <- list(mala.is[[1]], pxmala.run)
+output_single_run_bark <- list(mybark[[1]],  pxbark[[1]])
+output_single_run_hmc <- list(my.hmc[[1]], px.hmc[[1]])
 
 #######   Evaluation of log weights
 wts_is_mala <- numeric(length = iter)
@@ -55,5 +57,7 @@ for (i in 1:iter) {
                             alpha_hat, sigma2_hat, k = k, grid = x)
 }
 log_wts <- list(wts_is_mala, wts_is_bark, wts_is_hmc)
-save(output_single_run, file = "single_chain.Rdata")
+save(output_single_run_mala, file = "single_chain_mala.Rdata")
+save(output_single_run_bark, file = "single_chain_bark.Rdata")
+save(output_single_run_hmc, file = "single_chain_hmc.Rdata")
 save(log_wts, file = "single_chain_log_weights.Rdata")

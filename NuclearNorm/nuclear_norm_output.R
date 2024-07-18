@@ -1,6 +1,8 @@
 
 source("nuclear_norm_functions.R")
-load("output_single chain.Rdata")
+load("output_single_chain_mala.Rdata")
+load("output_single_chain_bark.Rdata")
+load("output_single_chain_hmc.Rdata")
 load("output_nucl_norm.Rdata")
 
 subset <- 100
@@ -13,16 +15,16 @@ pdf("plots/acf_nnorm.pdf", height = 8, width = 15)
 par(mfrow = c(1,3))
 
 lag.max <- 50
-acf_ism <- acf(output_single[[1]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
-acf_pxm <- acf(output_single[[2]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+acf_ism <- acf(output_single_mala[[1]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+acf_pxm <- acf(output_single_mala[[2]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 
 diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
 diff.acf[,1] <- acf_ism - acf_pxm
 
 for (i in 2:100) 
 {
-  acf_ism <- acf(output_single[[1]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
-  acf_pxm <- acf(output_single[[2]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
+  acf_ism <- acf(output_single_mala[[1]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
+  acf_pxm <- acf(output_single_mala[[2]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
   diff.acf[,i] <- acf_ism - acf_pxm
  }
 
@@ -32,16 +34,16 @@ boxplot(t(diff.acf),
 
 #### Barker
 
-acf_isb <- acf(output_single[[3]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
-acf_pxb <- acf(output_single[[4]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+acf_isb <- acf(output_single_bark[[1]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+acf_pxb <- acf(output_single_bark[[2]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 
 diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
 diff.acf[,1] <- acf_isb - acf_pxb
 
 for (i in 2:100) 
 {
-  acf_isb <- acf(output_single[[3]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
-  acf_pxb <- acf(output_single[[4]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
+  acf_isb <- acf(output_single_bark[[1]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
+  acf_pxb <- acf(output_single_bark[[2]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
   diff.acf[,i] <- acf_isb - acf_pxb
 }
 
@@ -51,16 +53,16 @@ boxplot(t(diff.acf),
 
 ########################  HMC  #############################
 
-acf_is_hmc <- acf(output_single[[5]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
-acf_pxhmc <- acf(output_single[[6]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+acf_is_hmc <- acf(output_single_hmc[[1]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+acf_pxhmc <- acf(output_single_hmc[[2]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 
 diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
-diff.acf[,1] <- acf_isb - acf_pxb
+diff.acf[,1] <- acf_is_hmc - acf_pxhmc
 
 for (i in 2:100) 
 {
-  acf_is_hmc <- acf(output_single[[5]][,rand[i]], plot = FALSE)$acf
-  acf_pxhmc <- acf(output_single[[6]][,rand[i]], plot = FALSE)$acf
+  acf_is_hmc <- acf(output_single_hmc[[1]][,rand[i]], plot = FALSE)$acf
+  acf_pxhmc <- acf(output_single_hmc[[2]][,rand[i]], plot = FALSE)$acf
   diff.acf[,i] <- acf_is_hmc - acf_pxhmc
 }
 dev.off()
