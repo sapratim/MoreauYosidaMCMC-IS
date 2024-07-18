@@ -8,64 +8,66 @@ rand <- sample(c(1:length(y)), subset)
 ################ ACF plots ################
 
 #### MALA
-
+dim <- 100
 pdf("plots/acf_nnorm.pdf", height = 8, width = 15)
 par(mfrow = c(1,3))
 
-acf_ism <- acf(output_single[[1]][,rand[1]], plot = FALSE)$acf
-acf_pxm <- acf(output_single[[2]][,rand[1]], plot = FALSE)$acf
+lag.max <- 50
+acf_ism <- acf(output_single[[1]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+acf_pxm <- acf(output_single[[2]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 
-plot(1:length(acf_ism), acf_ism, col = "blue", type = "l",
-     xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1), main = "MALA")
-lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
-legend("bottomright", c("MYMALA", "PxMALA"), lty = 1,
-       col = c("blue", "red"), cex = 0.75, bty = "n")
+diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+diff.acf[,1] <- acf_ism - acf_pxm
 
 for (i in 2:100) 
 {
-  acf_ism <- acf(output_single[[1]][,rand[i]], plot = FALSE)$acf
-  acf_pxm <- acf(output_single[[2]][,rand[i]], plot = FALSE)$acf
-  lines(1:length(acf_ism), acf_ism, col = "blue", type = "l")
-  lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
-}
+  acf_ism <- acf(output_single[[1]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
+  acf_pxm <- acf(output_single[[2]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
+  diff.acf[,i] <- acf_ism - acf_pxm
+ }
+
+# Make boxplot of ACFs
+boxplot(t(diff.acf),
+        xlab = "Lags", ylab = "Difference in ACF (MYMala - PxMala)",ylim = c(-.6, .1))
 
 #### Barker
 
-acf_isb <- acf(output_single[[3]][,rand[1]], plot = FALSE)$acf
-acf_pxb <- acf(output_single[[4]][,rand[1]], plot = FALSE)$acf
+acf_isb <- acf(output_single[[3]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+acf_pxb <- acf(output_single[[4]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 
-plot(1:length(acf_isb), acf_isb, col = "blue", type = "l",
-     xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1), main = "Barker")
-lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
-legend("bottomright", c("MYMALA", "PxMALA"), lty = 1,
-       col = c("blue", "red"), cex = 0.75, bty = "n")
+diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+diff.acf[,1] <- acf_isb - acf_pxb
 
 for (i in 2:100) 
 {
-  acf_isb <- acf(output_single[[3]][,rand[i]], plot = FALSE)$acf
-  acf_pxb <- acf(output_single[[4]][,rand[i]], plot = FALSE)$acf
-  lines(1:length(acf_isb), acf_isb, col = "blue", type = "l")
-  lines(1:length(acf_pxb), acf_pxb, col = "red", type = "l")
+  acf_isb <- acf(output_single[[3]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
+  acf_pxb <- acf(output_single[[4]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
+  diff.acf[,i] <- acf_isb - acf_pxb
 }
 
-####  HMC
+# Make boxplot of ACFs
+boxplot(t(diff.acf),
+        xlab = "Lags", ylab = "Difference in ACF (MYMala - PxMala)",ylim = c(-.6, .1))
 
-acf_is_hmc <- acf(output_single[[5]][,rand[1]], plot = FALSE)$acf
-acf_pxhmc <- acf(output[[6]][,rand[1]], plot = FALSE)$acf
+########################  HMC  #############################
 
-plot(1:length(acf_is_hmc), acf_is_hmc, col = "blue", type = "l",
-     xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1), main = "HMC")
-lines(1:length(acf_pxhmc), acf_pxhmc, col = "red", type = "l")
-legend("bottomright", c("MYHMC", "PxHMC"), lty = 1,
-       col = c("blue", "red"), cex = 0.75, bty = "n")
+acf_is_hmc <- acf(output_single[[5]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+acf_pxhmc <- acf(output_single[[6]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
+
+diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+diff.acf[,1] <- acf_isb - acf_pxb
+
 for (i in 2:100) 
 {
   acf_is_hmc <- acf(output_single[[5]][,rand[i]], plot = FALSE)$acf
   acf_pxhmc <- acf(output_single[[6]][,rand[i]], plot = FALSE)$acf
-  lines(1:length(acf_is_hmc), acf_is_hmc, col = "blue", type = "l")
-  lines(1:length(acf_pxhmc), acf_pxhmc, col = "red", type = "l")
+  diff.acf[,i] <- acf_is_hmc - acf_pxhmc
 }
 dev.off()
+
+# Make boxplot of ACFs
+boxplot(t(diff.acf),
+        xlab = "Lags", ylab = "Difference in ACF (MYMala - PxMala)",ylim = c(-.6, .1))
 
 ################  Boxplots visualisation  ################
 
