@@ -13,22 +13,31 @@ pdf("plots/acf_poisson.pdf", height = 6, width = 12)
 par(mfrow = c(1,3))
 
 ### MALA
-acf_ism <- acf(output_chain[[1]][,1], plot = FALSE)$acf
-acf_pxm <- acf(output_chain[[2]][,1], plot = FALSE)$acf
+lag.max <- 50
+acf_ism <- acf(output_chain[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
+acf_pxm <- acf(output_chain[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
 
-plot(1:length(acf_ism), acf_ism, col = "blue", type = "l",
-     xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.2, 1))
-lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
-legend("bottomright", c("MYMALA", "PxMALA"), lty = 1,
-       col = c("blue", "red"), cex = 0.75, bty = "n")
+diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+diff.acf[,1] <- acf_ism - acf_pxm
+
+# plot(1:length(acf_ism), acf_ism - acf_pxm, col = "blue", type = "l",
+#      xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.8, .3))
+# # lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
+# legend("bottomright", c("MYMALA", "PxMALA"), lty = 1,
+#        col = c("blue", "red"), cex = 0.75, bty = "n")
 
 for (i in 2:dim) 
 {
-  acf_ism <- acf(output_chain[[1]][,i], plot = FALSE)$acf
-  acf_pxm <- acf(output_chain[[2]][,i], plot = FALSE)$acf
-  lines(1:length(acf_ism), acf_ism, col = "blue", type = "l")
-  lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
+  acf_ism <- acf(output_chain[[1]][,i], plot = FALSE,lag.max = lag.max)$acf
+  acf_pxm <- acf(output_chain[[2]][,i], plot = FALSE,lag.max = lag.max)$acf
+  diff.acf[,i] <- acf_ism - acf_pxm
+  #lines(1:length(acf_ism), acf_ism - acf_pxm, col = "blue", type = "l")
+  #lines(1:length(acf_pxm), acf_pxm, col = "red", type = "l")
 }
+
+# Make boxplot of ACFs
+boxplot(t(diff.acf),
+  xlab = "Lags", ylab = "Difference in ACF (MYMala - PxMala)",ylim = c(-.6, .1))
 
 ### Barker
 acf_isb <- acf(output_chain[[3]][,1], plot = FALSE)$acf
