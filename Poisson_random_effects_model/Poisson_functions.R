@@ -3,6 +3,10 @@
 ## Plus data generation
 ####################################################
 
+library(mcmcse)
+library(foreach)
+library(doParallel)
+
 set.seed(8024248)
 ni_s <- 5
 I <- 50
@@ -11,7 +15,6 @@ sigma_eta <- 3
 one_mat <- rep(1, I)
 data <- matrix(0, nrow = I, ncol = ni_s)
 identity_mat <- diag(1, I, I)
-lambda <- 0.001
 mu <- rnorm(1, 0, c)
 eta_vec <- rnorm(I, mu, sigma_eta)
 tol_nr <- 1e-8
@@ -98,12 +101,24 @@ proxfunc <- function(eta, mu, lambda, eta_initial, mu_initial, sigma)
   return(-ans)
  }
  
- # function for barker proposal
+ # pxbarker and mybarker proposal
  bark.prop <- function(eta, mu, lambda, eta_initial, mu_initial, sigma, delta)
  {
    aux_var <- rnorm(length(eta)+1, 0, 1)
    z <- sqrt(delta)*aux_var
    denom_prod <- z*grad_logplam(eta, mu, lambda, eta_initial, mu_initial, sigma)
+   prob <- 1 / (1 + exp(- denom_prod))
+   unifs <- runif(length(eta)+1)
+   prop <- (c(eta,mu) + z)*(unifs <= prob) + (c(eta,mu) - z)*(unifs > prob)
+   return(prop)
+ }
+ 
+ # true barker proposal
+ bark.prop_true <- function(eta, mu, sigma, delta)
+ {
+   aux_var <- rnorm(length(eta)+1, 0, 1)
+   z <- sqrt(delta)*aux_var
+   denom_prod <- z*grad_logp(mu, sigma, eta)
    prob <- 1 / (1 + exp(- denom_prod))
    unifs <- runif(length(eta)+1)
    prop <- (c(eta,mu) + z)*(unifs <= prob) + (c(eta,mu) - z)*(unifs > prob)
@@ -118,6 +133,20 @@ proxfunc <- function(eta, mu, lambda, eta_initial, mu_initial, sigma)
    denom <- sum(log1p(exp(exp_term)))
    dens_val <- rw_dens - denom
    return(dens_val)
+ }
+ 
+ # to evaluate asymptotic covariance matrix
+ asymp_covmat_fn <- function(chain, weights)
+ {
+   wts_mean <- mean(weights)
+   num <- chain*weights
+   sum_mat <- apply(num, 2, sum)
+   is_est <- sum_mat / sum(weights)
+   input_mat <- cbind(num, weights)  # input samples for mcse
+   Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
+   kappa_eta_mat <- cbind(diag(1/wts_mean, ncol(chain)), -is_est/wts_mean) # derivative of kappa matrix
+   asymp_covmat <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
+   return(asymp_covmat)
  }
  
 ##### MYMALA samples function
@@ -360,6 +389,59 @@ px.barker <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
   object <- list(samp.bark, acc_rate)
   return(object)
 }
+
+## Barker samples
+
+barker <- function(eta_start, mu_start, sigma, iter, delta, data)
+{
+  samp.bark <- matrix(0, nrow = iter, ncol = I+1)
+  
+  #  starting values
+  samp_current <- c(eta_start, mu_start)
+  samp.bark[1,] <- samp_current
+  U_sampcurr <- log_p(samp_current[1:I], samp_current[I+1], data)
+  accept <- 0
+  
+  # For barker
+  accept <- 0
+  for (i in 2:iter)
+  {
+    # proposal step
+    samp_next <- bark.prop_true(samp_current[1:I], samp_current[I+1], sigma, delta)
+    
+    U_sampnext <- log_p(samp_next[1:I], samp_next[I+1], data)
+    
+    grad_samp_curr <- grad_logp(samp_current[I+1], sigma, samp_current[1:I])
+    grad_samp_next <- grad_logp(samp_next[I+1], sigma, samp_next[1:I])
+    
+    mh.ratio <- U_sampnext + log_bark.dens(samp_next, samp_current, grad_samp_next, delta) - 
+      U_sampcurr - log_bark.dens(samp_current, samp_next, grad_samp_curr, delta)
+    
+    if(log(runif(1)) <= mh.ratio)
+    {
+      samp.bark[i,] <- samp_next
+      U_sampcurr <- U_sampnext
+      accept <- accept + 1
+    }
+    else
+    {
+      samp.bark[i,] <- samp_current
+    }
+    samp_current <- samp.bark[i,]
+    if(i %% (iter/10) == 0){
+      j <- accept/iter
+      print(cat(i, j))
+    }
+  }
+  print(acc_rate <- accept/iter)
+  object <- list(samp.bark, acc_rate)
+  return(object)
+}
+
+
+
+
+
 
 ##  myhmc samples
 
