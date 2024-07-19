@@ -11,8 +11,8 @@ load("output_poisson.Rdata")
 
 ################ ACF plots ################
 dim <- 51
-pdf("plots/acf_poisson.pdf", height = 6, width = 12)
-par(mfrow = c(1,3))
+pdf("plots/acf_poisson.pdf", height = 12, width = 12)
+par(mfrow = c(2,2))
 
 ################## MALA  #####################
 lag.max <- 50
@@ -50,6 +50,25 @@ for (i in 2:dim)
 # Make boxplot of ACFs
 boxplot(t(diff.acf),
         xlab = "Lags", ylab = "Difference in ACF (MYBarker - PxBarker)",ylim = c(-.6, .1))
+
+################## True Barker  #####################
+
+acf_isb <- acf(output_chain_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
+acf_trub <- acf(output_chain_bark[[3]][,1], plot = FALSE, lag.max = lag.max)$acf
+
+diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+diff.acf[,1] <- acf_isb - acf_trub
+
+for (i in 2:dim) 
+{
+  acf_isb <- acf(output_chain_bark[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
+  acf_trub <- acf(output_chain_bark[[3]][,i], plot = FALSE, lag.max = lag.max)$acf
+  diff.acf[,i] <- acf_isb - acf_trub
+}
+
+# Make boxplot of ACFs
+boxplot(t(diff.acf),
+        xlab = "Lags", ylab = "Difference in ACF (MYBarker - Barker)",ylim = c(-.6, .1))
 
 ######################## HMC ########################
 
@@ -117,8 +136,8 @@ margvar_ish <- matrix(0, nrow = 100, ncol = dim)
 margvar_pxh <- matrix(0, nrow = 100, ncol = dim)
 for (i in 1:100)
 {
-  asympmat_ish <- matrix(unlist(output_poisson[[i]][5]), nrow = dim, ncol = dim, byrow = T)
-  asympmat_pxh <- matrix(unlist(output_poisson[[i]][6]), nrow = dim, ncol = dim, byrow = T)
+  asympmat_ish <- matrix(unlist(output_poisson[[i]][6]), nrow = dim, ncol = dim, byrow = T)
+  asympmat_pxh <- matrix(unlist(output_poisson[[i]][7]), nrow = dim, ncol = dim, byrow = T)
   for (j in 1:dim)
   {
     margvar_ish[i,j] <- asympmat_ish[j,j]

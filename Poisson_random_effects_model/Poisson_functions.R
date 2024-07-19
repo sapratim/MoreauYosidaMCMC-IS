@@ -438,11 +438,6 @@ barker <- function(eta_start, mu_start, sigma, iter, delta, data)
   return(object)
 }
 
-
-
-
-
-
 ##  myhmc samples
 
 myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
@@ -485,9 +480,9 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
     proxval_prop <-  proxfunc(samp[1:I], samp[I+1], lambda, eta_start, mu_start, sigma)
     
     U_curr <- - log_plam(proxval_curr[1:I], proxval_curr[I+1], data, lambda,
-                         c(q_current[1:I], q_current[I+1]))
+                         q_current)
     U_prop <- - log_plam(proxval_prop[1:I], proxval_prop[I+1], data, lambda, 
-                         c(samp[1:I], samp[I+1]))
+                         samp)
     K_curr <-  sum((p_prop^2)/2)
     K_prop <-  sum((p_current^2)/2)
     
