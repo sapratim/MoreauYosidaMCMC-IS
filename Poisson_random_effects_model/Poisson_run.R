@@ -5,7 +5,7 @@ source("Poisson_functions.R")
 lambda <- 0.001
 eta_start <- log(rowMeans(data)+1)
 mu_start <- mean(eta_start)
-iter <- 1e5
+iter <- 1e6
 delta_mym <- 0.0032
 delta_pxm <- 0.00065
 delta_mybark <- 0.003
