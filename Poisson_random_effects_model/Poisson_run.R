@@ -54,7 +54,7 @@ output_poisson <- foreach(b = 1:reps) %dopar% {
   px.hmc <- pxhmc(eta_start, mu_start,lambda, sigma_eta, iter = iter, data, eps_hmc=0.002, L=10) 
   
   hmc_chain <- matrix(unlist(my.hmc[[1]]), nrow = iter, ncol = I+1)
-  weights_hmc <- as.numeric(unlist(my.hmc[[2]]))
+  weights_hmc <- exp(as.numeric(unlist(my.hmc[[2]])))
   n_eff_hmc <- (mean(weights_hmc)^2)/mean(weights_hmc^2)
   
   # Asymptotic covariance matrix

@@ -8,7 +8,7 @@ library(SimTools)
 # function calculates the inside of the proximal function
 prox_arg <- function(x, y, mu)     # x is the current value
 {
-  z_x <-  y^4 + ((x-y)^2)/2*mu  
+  z_x <-  y^4 + ((x-y)^2)/(2*mu)  
   return(z_x)
 }
 
@@ -58,12 +58,12 @@ mymala <- function(curr_val, iter, lambda, delta)
       targ_val.curr <- targ_val.next
       
       # weights
-      wts_is[i] <- prox_arg(propval, proxval_next, lambda) - propval^4
+      wts_is[i] <- - targ_val.curr - propval^4
     }
     else
     {
       samp.mym[i] <- curr_val
-      wts_is[i] <-  prox_arg(curr_val, proxval_curr, lambda) - curr_val^4 
+      wts_is[i] <-  - targ_val.curr - curr_val^4 
     }
     curr_val <- samp.mym[i]
   }
@@ -118,84 +118,25 @@ opt_lambda_func <- function(curr_val, iter, lambda, delta)
   return(ratio)
 }
 
-################################################################################
-##############################   Visualisations ################################
-################################################################################
-
-
-iter <- 1e5
-curr_val <- 1
-lambda.val <- 1
-delta_is <- 4
-delta_px <- 0.7
-
-##########  opt lambda visualisation  ######################
-lamb <- seq(0.0001, 100, length = 200)
-ratio_vals <- numeric(length = length(lamb))
-for(i in 1:length(lamb))
+opt_lambda_func <- function(log_weights)
 {
-  ratio_vals[i] <- opt_lambda_func(curr_val <- 1, iter <- 1e5, lambda <- lamb[i], delta <- 4)
+  true_wts <- exp(log_weights)
+  ratio <- (mean(true_wts)^2)/mean(true_wts^2)
+  return(ratio)
 }
-pdf(file = "ess_plot.pdf", height = 8, width = 10)
-plot(lamb, ratio_vals, type = 'l', xlab = "lambda", ylab = "imp_ess", 
-     main = "ESS for different lambda")
-lines(abline(h=c(0.4,0.6), col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
-dev.off()
-############################################################
 
-#  MYMALA samples 
-mala.is <- mymala(curr_val, iter, lambda.val, delta_is)
-mala.px <- pxmala(curr_val, iter, lambda.val, delta_px)
-mala_isdens <- mymala(curr_val, iter, lambda.val <- 1e-4, delta_is <- 0.75)  ##  for density plots
-
-# Actual density shape
-sam <- seq(-4, 4, length = iter)
-den <- exp(-(sam^4)) / (2 * gamma(5/4))
-
-# Density plots
-pdf("density_trial.pdf", height = 6, width = 12)
-par(mfrow=c(1,2))
-
-plot(sam, den, type = 'l', xlab = "values", ylab = "density",
-        col = "black")
-lines(density(as.numeric(unlist(mala_isdens[1]))) ,col = "blue")
-legend("topright", c("Truth", "MYMALA"), lty = 1,
-       col = c("black", "blue"), cex = 1, bty = "n")
-  
-plot(sam, den, type = 'l', xlab = "values", ylab = "density",
-       col = "black")
-lines(density(mala.px) ,col = "blue")
-legend("topright", c("Truth", "PxMALA"), lty = 1,
-       col = c("black", "blue"), cex = 1, bty = "n")
-dev.off()
-
-# acf plots
-pdf("acf_trial.pdf", height = 8, width = 10)
-
-  acf.ism <- acf(as.numeric(unlist(mala.is[1])), plot = FALSE)$acf
-  acf.pxm <- acf(mala.px, plot = FALSE)$acf
-  plot(1:length(acf.ism), acf.ism, col = "blue", type = 'l',
-       xlab = "Lag", ylab = "Autocorrelation", ylim = c(-0.25, 1))
-  lines(1:length(acf.pxm), acf.pxm, col = "red", type = 'l')
-  legend("topright", c("MYMALA", "PxMALA"), lty = 1,
-         col = c("blue", "red"), cex = 1, bty = "n")
-dev.off()
-
-# Trace plots
-pdf("trace_trial.pdf", height = 8, width = 10)
-traceplot(list(mala.is[[1]], mala.px), col = c("blue", "red"))
-dev.off()
-
-#################  Boxplots of weights ################# 
-wt_mat <- matrix(0, nrow = 1e4, ncol = length(lamb))
-
-for (j in 1:length(lamb)) {
-  wt_mat[,j] <- mymala(curr_val, iter<-1e4, lamb[j], delta <- 2)[[2]]
+# to evaluate asymptotic covariance matrix
+asymp_covmat_fn <- function(chain, weights)
+{
+  wts_mean <- mean(weights)
+  num <- chain*weights
+  is_est <- sum(num) / sum(weights)
+  input_mat <- cbind(num, weights)  # input samples for mcse
+  Sigma_mat <- mcse.multi(input_mat)$cov  # estimated covariance matrix of the tuple
+  kappa_eta_mat <- cbind(1/wts_mean, -is_est/wts_mean) # derivative of kappa matrix
+  asymp_covmat <- (kappa_eta_mat %*% Sigma_mat) %*% t(kappa_eta_mat) # IS asymptotic variance
+  return(asymp_covmat)
 }
-pdf(file = "boxplots_wts_trial.pdf", width = 12, height = 8)
-boxplot(exp(wt_mat), use.cols = TRUE, xlab = "Coordinate", 
-        ylab = "Average relative efficiency")
-dev.off()
 
 ###########################################################################
 ##################  Barker and other old visualisations ###################
