@@ -1,0 +1,140 @@
+
+R version 4.4.0 (2024-04-24) -- "Puppy Cup"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> source("TF_functions.R")
+
+Attaching package: ‘expm’
+
+The following object is masked from ‘package:Matrix’:
+
+    expm
+
+Loading required package: iterators
+Loading required package: parallel
+> load("warmup.Rdata")
+> 
+> iter <- 1e5
+> lamb_coeff <- 0.001
+> delta_samp_is <- 0.0015
+> delta_samp_pxm <- 0.0008
+> delta_bark_my <- 0.0014
+> delta_bark_px <- 0.0009
+> D_mat <- getD(k=1, n=1e2, x)   #  D matrix
+> alpha_hat <- 5   # obtained from the first dataset
+> sigma2_hat <- 9  # obtained from the first dataset
+> k <- 1
+> 
+> mala.is <- mymala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
++                   delta = delta_samp_is, start = warmup_end_iter)
+10000 0.0569NULL
+20000 0.11387NULL
+30000 0.16915NULL
+40000 0.22559NULL
+50000 0.28142NULL
+60000 0.3378NULL
+70000 0.39337NULL
+80000 0.44811NULL
+90000 0.50321NULL
+100000 0.5596NULL
+[1] 0.5596
+> 
+> pxmala.run <- px.mala(y, alpha_hat, sigma2_hat, k=1, grid=x, iter = iter, 
++                       delta = delta_samp_pxm, start = warmup_end_iter)
+10000 0.0587NULL
+20000 0.11802NULL
+30000 0.17563NULL
+40000 0.23416NULL
+50000 0.29413NULL
+60000 0.35331NULL
+70000 0.41238NULL
+80000 0.47111NULL
+90000 0.53045NULL
+100000 0.59221NULL
+[1] 0.59221
+> 
+> mybark <- mybarker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
++                    delta = delta_bark_my, start = warmup_end_iter)
+10000 0.05588NULL
+20000 0.11056NULL
+30000 0.16628NULL
+40000 0.22261NULL
+50000 0.28031NULL
+60000 0.33675NULL
+70000 0.39209NULL
+80000 0.44863NULL
+90000 0.5052NULL
+100000 0.56073NULL
+[1] 0.56073
+> 
+> pxbark <- px.barker(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
++                    delta = delta_bark_px, start = warmup_end_iter)
+10000 0.05649NULL
+20000 0.11024NULL
+30000 0.16378NULL
+40000 0.21835NULL
+50000 0.27174NULL
+60000 0.3247NULL
+70000 0.37897NULL
+80000 0.43497NULL
+90000 0.48881NULL
+100000 0.54435NULL
+[1] 0.54435
+> 
+> my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
++                 eps_hmc = 0.015, L = 100, start = warmup_end_iter)
+10000 0.06686NULL
+20000 0.13311NULL
+30000 0.19951NULL
+40000 0.2657NULL
+50000 0.33252NULL
+60000 0.39887NULL
+70000 0.46477NULL
+80000 0.53202NULL
+90000 0.59731NULL
+100000 0.66467NULL
+[1] 0.66467
+> 
+> px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter,
++                 eps_hmc = 0.0003, L = 100, start = warmup_end_iter) 
+10000 0.06847NULL
+20000 0.13491NULL
+30000 0.2038NULL
+40000 0.27309NULL
+50000 0.34209NULL
+60000 0.41043NULL
+70000 0.47803NULL
+80000 0.54692NULL
+90000 0.61602NULL
+100000 0.68452NULL
+[1] 0.68452
+> 
+> output_single_run_mala <- list(mala.is[[1]], pxmala.run)
+> output_single_run_bark <- list(mybark[[1]],  pxbark[[1]])
+> output_single_run_hmc <- list(my.hmc[[1]], px.hmc[[1]])
+> log_wts <- list(mala.is[[2]], mybark[[2]], my.hmc[[2]])
+> 
+> save(output_single_run_mala, file = "single_chain_mala.Rdata")
+> save(output_single_run_bark, file = "single_chain_bark.Rdata")
+> save(output_single_run_hmc, file = "single_chain_hmc.Rdata")
+> save(log_wts, file = "single_chain_log_weights.Rdata")
+> 
+> proc.time()
+     user    system   elapsed 
+35342.132    20.716 35365.286 
