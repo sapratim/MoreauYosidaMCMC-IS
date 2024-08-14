@@ -167,6 +167,17 @@ pxmala <- function(beta, start, lambda, iter, delta)
   return(samp.pxm)
 }
 
+dimen_func <- function(d, lambda, iter, delta_is, delta_px)
+{
+  beta <- seq(1, d, by = 1)
+  start <- rep(0.5, d)
+  
+  mym.output <- mymala(beta, start, lambda, iter, delta_is)
+  pxm.output <- pxmala(beta, start, lambda, iter, delta_px)
+  output <- list(mym.output, pxm.output)
+  return(output)
+}
+
 ############### myhmc #################
 
 # myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)

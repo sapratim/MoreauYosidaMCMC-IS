@@ -1,64 +1,73 @@
-#####################################################################
-########### Anisotropic Laplace output visualisation ################
-#####################################################################
 
-source("ani_laplace_functions.R")
+
 library(mcmcse)
+pdf(file = "ani_plot_d5.pdf", height = 8, width = 10)
+par(mfrow = c(2,2))
 
-lambda <- 1e-5
-iter <- 1e4
-######################  dimension = 5  ##############################
-d <- 5
-beta <- seq(1, d, by = 1)
-start <- rep(0.5, d)
+plot(lamb_d5, ess_ism_d5, type = 'l', xlab = "lambda", ylab = "imp_ess", 
+     main = "ESS for different lambda")
+lines(abline(h=c(0.4,0.6), col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
+lines(abline(v=c(max(lamb_d5[which(ess_ism_d5 >= 0.4)]), min(lamb_d5[which(ess_ism_d5 <= 0.6)])), 
+             col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
 
-mym.output <- mymala(beta, start, lambda, iter, delta <- 0.003)
-pxm.output <- pxmala(beta, start, lambda, iter, delta <- 0.0025)
+plot(lamb_d5, asymp_var_pilam, type = 'l', xlab = "lambda", ylab = "asymptotic variance", 
+     main = paste("Asymptotic variance  for pi^{lambda}"))
+lines(abline(v=c(max(lamb_d5[which(ess_ism_d5 >= 0.4)]), min(lamb_d5[which(ess_ism_d5 <= 0.6)])), 
+             col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
 
-asymp_cov_ism_5 <- asymp_covmat_fn(mym.output[[1]], exp(mym.output[[2]]))
-asymp_cov_pxm_5 <- mcse.multi(pxm.output)$cov
+plot(lamb_d5, asymp_margvar_ism_d5, type = 'l', xlab = "lambda", ylab = "asymptotic variance", 
+     main = "Asymptotic variance for pi based on IS estimator")
+lines(abline(v=c(max(lamb_d5[which(ess_ism_d5 >= 0.4)]), min(lamb_d5[which(ess_ism_d5 <= 0.6)])), 
+             col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
+dev.off()
 
-rel_eff_matrix_5 <- asymp_cov_pxm_5/asymp_cov_ism_5
-avg_rel_eff_5 <- mean(diag(rel_eff_matrix_5))
 
-######################  dimension = 10  ##############################
-d <- 10
-beta <- seq(1, d, by = 1)
-start <- rep(0.5, d)
 
-mym.output <- mymala(beta, start, lambda, iter, delta <- 0.0025)
-pxm.output <- pxmala(beta, start, lambda, iter, delta <- 0.0025)
 
-asymp_cov_ism_10 <- asymp_covmat_fn(mym.output[[1]], exp(mym.output[[2]]))
-asymp_cov_pxm_10 <- mcse.multi(pxm.output)$cov
 
-rel_eff_matrix_10 <- asymp_cov_pxm_10/asymp_cov_ism_10
-avg_rel_eff_10 <- mean(diag(rel_eff_matrix_10))
 
-######################  dimension = 20  ##############################
-d <- 20
-beta <- seq(1, d, by = 1)
-start <- rep(0.5, d)
+pdf(file = "ani_plot_d10.pdf", height = 8, width = 10)
+par(mfrow = c(2,2))
 
-mym.output <- mymala(beta, start, lambda, iter, delta <- 0.00025)
-pxm.output <- pxmala(beta, start, lambda, iter, delta <- 0.00025)
+plot(lamb, ess_ism_d10, type = 'l', xlab = "lambda", ylab = "imp_ess", 
+     main = "ESS for different lambda")
+lines(abline(h=c(0.4,0.6), col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
+lines(abline(v=c(max(lamb[which(ess_ism_d10 >= 0.4)]), min(lamb[which(ess_ism_d10 <= 0.6)])), 
+             col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
 
-asymp_cov_ism_20 <- asymp_covmat_fn(mym.output[[1]], exp(mym.output[[2]]))
-asymp_cov_pxm_20 <- mcse.multi(pxm.output)$cov
+plot(lamb, asymp_margvar_ism_d10, type = 'l', xlab = "lambda", ylab = "asymptotic variance", 
+     main = "Asymptotic variance for different lambda")
+lines(abline(v=c(max(lamb[which(ess_ism_d10 >= 0.4)]), min(lamb[which(ess_ism_d10 <= 0.6)])), 
+             col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
 
-rel_eff_matrix_20 <- asymp_cov_pxm_20/asymp_cov_ism_20
-avg_rel_eff_20 <- mean(diag(rel_eff_matrix_20))
+plot(lamb, avg_rel_eff_10, type = 'l', xlab = "lambda", ylab = "relative efficiency", 
+     main = "Relative efficiency for different lambda")
+lines(abline(v=c(max(lamb[which(ess_ism_d10 >= 0.4)]), min(lamb[which(ess_ism_d10 <= 0.6)])), 
+             col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
+dev.off()
 
-######################  dimension = 50  ##############################
-d <- 50
-beta <- seq(1, d, by = 1)
-start <- rep(0.5, d)
 
-mym.output <- mymala(beta, start, lambda, iter, delta <- 0.00005)
-pxm.output <- pxmala(beta, start, lambda, iter, delta <- 0.00005)
 
-asymp_cov_ism_50 <- asymp_covmat_fn(mym.output[[1]], exp(mym.output[[2]]))
-asymp_cov_pxm_50 <- mcse.multi(pxm.output)$cov
 
-rel_eff_matrix_50 <- asymp_cov_pxm_50/asymp_cov_ism_50
-avg_rel_eff_50 <- mean(diag(rel_eff_matrix_50))
+
+
+pdf(file = "ani_plot_d50.pdf", height = 8, width = 10)
+par(mfrow = c(2,2))
+
+plot(lamb_d50, ess_ism_d50, type = 'l', xlab = "lambda", ylab = "imp_ess", 
+     main = "ESS for different lambda")
+lines(abline(h=c(0.4,0.6), col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
+lines(abline(v=c(max(lamb_d50[which(ess_ism_d50 >= 0.4)]), min(lamb_d50[which(ess_ism_d50 <= 0.6)])), 
+             col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
+
+plot(lamb_d50, asymp_var_pilam_d50, type = 'l', xlab = "lambda", ylab = "asymptotic variance", 
+     main = "Asymptotic variance for pi^{lambda}")
+lines(abline(v=c(max(lamb_d50[which(ess_ism_d50 >= 0.4)]), min(lamb_d50[which(ess_ism_d50 <= 0.6)])), 
+             col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
+
+plot(lamb_d50, asymp_margvar_ism_d50, type = 'l', xlab = "lambda", ylab = "asymptotic variance", 
+     main = "Asymptotic variance for pi based on IS estimator")
+lines(abline(v=c(max(lamb_d50[which(ess_ism_d50 >= 0.4)]), min(lamb_d50[which(ess_ism_d50 <= 0.6)])), 
+             col=c("blue", "red"), lty=c(2,2), lwd=c(1, 1)))
+dev.off()
+
