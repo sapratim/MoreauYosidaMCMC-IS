@@ -18,7 +18,7 @@ log_pilambda <- function(eta,beta,x)
 #########  Soft threshold function
 
 softthreshold <- function(beta, u, lambda) {       ####  u is a vector
-  return(sign(u)*sapply(u, FUN=function(x) {max(abs(x)-beta*lambda,0)}))
+  return(sign(u)* pmax(abs(u)-beta*lambda,0))
 }
 
 # function calculates the value of the proximal function
