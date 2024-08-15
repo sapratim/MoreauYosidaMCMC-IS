@@ -9,7 +9,7 @@ log_pi <- function(beta, x)
 }
 
 # log target of pi-lambda
-log_pilambda <- function(eta,beta,x)
+log_pilambda <- function(eta,beta,x,lambda)
 {
   dens_val <- sum(beta*abs(eta)) + sum((eta-x)^2)/(2*lambda)
   return(-dens_val)
@@ -61,7 +61,7 @@ mymala <- function(beta, start, lambda, iter, delta)
   # starting value computations
   curr_val <- start
   prox_val.curr <- prox_func(beta, curr_val, lambda)
-  targ_val.curr <- log_pilambda(prox_val.curr,beta,curr_val)
+  targ_val.curr <- log_pilambda(prox_val.curr,beta,curr_val,lambda)
   samp.mym[1,] <- curr_val
   accept <- 0
   
@@ -79,7 +79,7 @@ mymala <- function(beta, start, lambda, iter, delta)
     
     # calculating prox
     prox_val.next <- prox_func(beta, propval, lambda)
-    targ_val.next <- log_pilambda(prox_val.next,beta,propval)
+    targ_val.next <- log_pilambda(prox_val.next,beta,propval,lambda)
     
     q.next_to_curr <- sum(dnorm(curr_val, propval + 
                                   (delta / 2)*grad_logpiLam(beta, propval, lambda),
