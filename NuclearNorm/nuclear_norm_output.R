@@ -1,28 +1,36 @@
 
-source("nuclear_norm_functions.R")
-load("output_single_chain_mala.Rdata")
-load("output_single_chain_bark.Rdata")
-load("output_single_chain_hmc.Rdata")
-load("output_nucl_norm.Rdata")
+################################################################################
+################## Nuclear Norm example output visualisation #################
+################################################################################
 
-subset <- 100
-rand <- sample(c(1:length(y)), subset)
+source("nuclear_norm_functions.R")
+
+# Files below are too big to be on GitHub. Please run
+# source("single_chain.R")
+# to generate the files. Run time roughly 10 hours
+load("output_single_chain_mala.Rdata")
+load("output_single_chain_hmc.Rdata")
+
+
+# subset <- 100
+rand <- 1:length(y) #sample(c(1:length(y)), subset)
+dim <- length(y)
 ################ ACF plots ################
 
 #### MALA
-dim <- 100
-pdf("plots/acf_nnorm.pdf", height = 8, width = 15)
-par(mfrow = c(1,3))
+pdf("plots/nn_acf_MALA.pdf", height = 6, width = 6)
+par(mfrow = c(1,1))
 
-lag.max <- 50
+lag.max <- 100
 acf_ism <- acf(output_single_mala[[1]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 acf_pxm <- acf(output_single_mala[[2]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 
 diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
 diff.acf[,1] <- acf_ism - acf_pxm
 
-for (i in 2:100) 
+for (i in 2:dim) 
 {
+  if(i %% 1000 == 0) print(i)
   acf_ism <- acf(output_single_mala[[1]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
   acf_pxm <- acf(output_single_mala[[2]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
   diff.acf[,i] <- acf_ism - acf_pxm
@@ -30,87 +38,67 @@ for (i in 2:100)
 
 # Make boxplot of ACFs
 boxplot(t(diff.acf),
-        xlab = "Lags", ylab = "Difference in ACF (MYMala - PxMala)",ylim = c(-.6, .1))
+        xlab = "Lags", col = "pink",
+        ylab = "Difference in ACFs of MALAs",ylim = c(-.25, .07),
+        names = 0:lag.max, show.names = TRUE, range = 3)
+dev.off()
 
-#### Barker
-
-acf_isb <- acf(output_single_bark[[1]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
-acf_pxb <- acf(output_single_bark[[2]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
-
-diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
-diff.acf[,1] <- acf_isb - acf_pxb
-
-for (i in 2:100) 
-{
-  acf_isb <- acf(output_single_bark[[1]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
-  acf_pxb <- acf(output_single_bark[[2]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
-  diff.acf[,i] <- acf_isb - acf_pxb
-}
-
-# Make boxplot of ACFs
-boxplot(t(diff.acf),
-        xlab = "Lags", ylab = "Difference in ACF (MYMala - PxMala)",ylim = c(-.6, .1))
 
 ########################  HMC  #############################
 
+pdf("plots/nn_acf_HMC.pdf", height = 6, width = 6)
 acf_is_hmc <- acf(output_single_hmc[[1]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 acf_pxhmc <- acf(output_single_hmc[[2]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 
 diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
 diff.acf[,1] <- acf_is_hmc - acf_pxhmc
 
-for (i in 2:100) 
+for (i in 2:dim) 
 {
-  acf_is_hmc <- acf(output_single_hmc[[1]][,rand[i]], plot = FALSE)$acf
-  acf_pxhmc <- acf(output_single_hmc[[2]][,rand[i]], plot = FALSE)$acf
+  if(i %% 1000 == 0) print(i)
+  acf_is_hmc <- acf(output_single_hmc[[1]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
+  acf_pxhmc <- acf(output_single_hmc[[2]][,rand[i]], plot = FALSE, lag.max = lag.max)$acf
   diff.acf[,i] <- acf_is_hmc - acf_pxhmc
 }
-dev.off()
+
 
 # Make boxplot of ACFs
 boxplot(t(diff.acf),
-        xlab = "Lags", ylab = "Difference in ACF (MYMala - PxMala)",ylim = c(-.6, .1))
+        xlab = "Lags", col = "pink",
+        ylab = "Difference in ACFs of HMCs",ylim = range(diff.acf),
+        names = 0:lag.max, show.names = TRUE, range = 3)
+dev.off()
+
+
 
 ################  Boxplots visualisation  ################
+####### Replications experiment  #####
+load("output_nucl_norm.Rdata")
 
-mar_eff_mala <- matrix(0, nrow = subset, ncol = length(y))
-mar_eff_bark <- matrix(0, nrow = subset, ncol = length(y))
-mar_eff_hmc <- matrix(0, nrow = subset, ncol = length(y))
 
-for (i in 1:subset) {
+mar_eff_mala <- matrix(0, nrow = 100, ncol = length(y))
+mar_eff_hmc <- matrix(0, nrow = 100, ncol = length(y))
+
+for (i in 1:100) {
   mar_eff_mala[i,] <- as.numeric(unlist(output[[i]][2]))/as.numeric(unlist(output[[i]][1]))
-  mar_eff_bark[i,] <- as.numeric(unlist(output[[i]][4]))/as.numeric(unlist(output[[i]][3]))
   mar_eff_hmc[i,] <- as.numeric(unlist(output[[i]][6]))/as.numeric(unlist(output[[i]][5]))
 }
 
-pdf(file = "plots/boxplot_nnorm_mala.pdf", width = 10, height = 8)
-boxplot(mar_eff_mala[,rand], use.cols = TRUE, xlab = "Coordinate", 
-        ylab = "Average relative efficiency")
-dev.off()
-pdf(file = "plots/boxplot_nnorm_bark.pdf", width = 10, height = 8)
-boxplot(mar_eff_bark[,rand], use.cols = TRUE, xlab = "Coordinate", 
-        ylab = "Average relative efficiency")
-dev.off()
-pdf(file = "plots/boxplot_nnorm_hmc.pdf", width = 10, height = 8)
-boxplot(mar_eff_hmc[,rand], use.cols = TRUE, xlab = "Coordinate", 
-        ylab = "Average relative efficiency")
-dev.off()
+
 
 #############  Histogram
 
 avg_rel_eff_mala <- apply(mar_eff_mala, 2, mean)
-avg_rel_eff_bark <- apply(mar_eff_bark, 2, mean)
+# avg_rel_eff_bark <- apply(mar_eff_bark, 2, mean)
 avg_rel_eff_hmc <- apply(mar_eff_hmc, 2, mean)
 
-pdf(file = "plots/hist_nnorm_mala.pdf", width = 8, height = 6)
-hist(avg_rel_eff_mala, breaks = 30, xlab = "Average relative efficiency", main = NULL)
-dev.off()
+avg_eff <- cbind(avg_rel_eff_mala, avg_rel_eff_hmc)
+colnames(avg_eff) <- c("MALA", "HMC")
 
-pdf(file = "plots/hist_nnorm_bark.pdf", width = 8, height = 6)
-hist(avg_rel_eff_bark, breaks = 30, xlab = "Average relative efficiency", main = NULL)
-dev.off()
 
-pdf(file = "plots/hist_nnorm_hmc.pdf", width = 8, height = 6)
-hist(avg_rel_eff_hmc, breaks = 30, xlab = "Average relative efficiency", main = NULL)
+pdf("plots/nn_boxeff.pdf", height = 5, width = 8)
+boxplot(avg_eff, ylab = "Relative efficiency", xaxt = "n",
+  boxwex = .5, col = "pink", horizontal  = TRUE, ylim = c(1,2.5))
+axis(1, at = seq(1, 3, by = .5))
 dev.off()
 

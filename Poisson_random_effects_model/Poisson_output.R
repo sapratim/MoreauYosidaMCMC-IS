@@ -5,14 +5,14 @@
 rm(list = ls())
 source("Poisson_functions.R")
 load("output_single_mala.Rdata")
-load("output_single_bark.Rdata")
+# load("output_single_bark.Rdata")
 load("output_single_hmc.Rdata")
-load("output_poisson.Rdata")
+
 
 ################ ACF plots ################
 dim <- 51
-pdf("plots/acf_poisson.pdf", height = 12, width = 12)
-par(mfrow = c(2,2))
+pdf("plots/poisson_acf_MALA.pdf", height = 6, width = 6)
+par(mfrow = c(1,1))
 
 ################## MALA  #####################
 lag.max <- 50
@@ -31,46 +31,62 @@ for (i in 2:dim)
 
 # Make boxplot of ACFs
 boxplot(t(diff.acf),
-  xlab = "Lags", ylab = "Difference in ACF (MYMala - PxMala)",ylim = c(-.6, .1))
+        xlab = "Lags", col = "pink",
+        ylab = "Difference in ACF of MALAs",ylim = c(-.7, 0.05),
+        names = 0:lag.max, show.names = TRUE)
+
+dev.off()
 
 ################## Barker  #####################
-acf_isb <- acf(output_chain_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
-acf_pxb <- acf(output_chain_bark[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
+# acf_isb <- acf(output_chain_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
+# acf_pxb <- acf(output_chain_bark[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
 
-diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
-diff.acf[,1] <- acf_isb - acf_pxb
+# diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+# diff.acf[,1] <- acf_isb - acf_pxb
 
-for (i in 2:dim) 
-{
-  acf_isb <- acf(output_chain_bark[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
-  acf_pxb <- acf(output_chain_bark[[2]][,i], plot = FALSE, lag.max = lag.max)$acf
-  diff.acf[,i] <- acf_isb - acf_pxb
-}
+# for (i in 2:dim) 
+# {
+#   acf_isb <- acf(output_chain_bark[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
+#   acf_pxb <- acf(output_chain_bark[[2]][,i], plot = FALSE, lag.max = lag.max)$acf
+#   diff.acf[,i] <- acf_isb - acf_pxb
+# }
 
-# Make boxplot of ACFs
-boxplot(t(diff.acf),
-        xlab = "Lags", ylab = "Difference in ACF (MYBarker - PxBarker)",ylim = c(-.6, .1))
+# # Make boxplot of ACFs
+# boxplot(t(diff.acf),
+#         xlab = "Lags", col = "pink",
+#         ylab = "Difference in ACF of MALAs",ylim = c(-.7, 0.05),
+#         names = 0:lag.max, show.names = TRUE)
+
+# dev.off()
 
 ################## True Barker  #####################
 
-acf_isb <- acf(output_chain_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
-acf_trub <- acf(output_chain_bark[[3]][,1], plot = FALSE, lag.max = lag.max)$acf
+# acf_isb <- acf(output_chain_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
+# acf_trub <- acf(output_chain_bark[[3]][,1], plot = FALSE, lag.max = lag.max)$acf
 
-diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
-diff.acf[,1] <- acf_isb - acf_trub
+# diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+# diff.acf[,1] <- acf_isb - acf_trub
 
-for (i in 2:dim) 
-{
-  acf_isb <- acf(output_chain_bark[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
-  acf_trub <- acf(output_chain_bark[[3]][,i], plot = FALSE, lag.max = lag.max)$acf
-  diff.acf[,i] <- acf_isb - acf_trub
-}
+# for (i in 2:dim) 
+# {
+#   acf_isb <- acf(output_chain_bark[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
+#   acf_trub <- acf(output_chain_bark[[3]][,i], plot = FALSE, lag.max = lag.max)$acf
+#   diff.acf[,i] <- acf_isb - acf_trub
+# }
 
-# Make boxplot of ACFs
-boxplot(t(diff.acf),
-        xlab = "Lags", ylab = "Difference in ACF (MYBarker - Barker)",ylim = c(-.6, .1))
+# # Make boxplot of ACFs
+# boxplot(t(diff.acf),
+#         xlab = "Lags", col = "pink",
+#         ylab = "Difference in ACF of MALAs",ylim = c(-.7, 0.05),
+#         names = 0:lag.max, show.names = TRUE)
+
+# dev.off()
+
+
 
 ######################## HMC ########################
+pdf("plots/poisson_acf_HMC.pdf", height = 6, width = 6)
+par(mfrow = c(1,1))
 
 acf_is_hmc <- acf(output_chain_hmc[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
 acf_pxhmc <- acf(output_chain_hmc[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
@@ -87,11 +103,15 @@ for (i in 2:dim)
 
 # Make boxplot of ACFs
 boxplot(t(diff.acf),
-        xlab = "Lags", ylab = "Difference in ACF (MYHMC - PxHMC)",ylim = c(-1, 1))
+        xlab = "Lags", col = "pink",
+        ylab = "Difference in ACF of HMCs",ylim = range(diff.acf),
+        names = 0:lag.max, show.names = TRUE)
 
 dev.off()
 
 ##################  Boxplots of marginal efficiency ##################
+
+load("output_poisson.Rdata")
 
 #### Marginal variance comparison MALA
 #x <- c(1:100)
@@ -112,23 +132,23 @@ rel_eff_mat_mala <- margvar_pxm/margvar_ism
 #### Marginal variance comparison for Barker
 #x <- c(1:100)
 #dim <- 51 
-margvar_isb <- matrix(0, nrow = 100, ncol = dim)
-margvar_pxb <- matrix(0, nrow = 100, ncol = dim)
+# margvar_isb <- matrix(0, nrow = 100, ncol = dim)
+# margvar_pxb <- matrix(0, nrow = 100, ncol = dim)
 margvar_trub <- matrix(0, nrow = 100, ncol = dim)
 for (i in 1:100)
 {
-  asympmat_isb <- matrix(unlist(output_poisson[[i]][[3]]), nrow = dim, ncol = dim, byrow = T)
-  asympmat_pxb <- matrix(unlist(output_poisson[[i]][[4]]), nrow = dim, ncol = dim, byrow = T)
+  # asympmat_isb <- matrix(unlist(output_poisson[[i]][[3]]), nrow = dim, ncol = dim, byrow = T)
+  # asympmat_pxb <- matrix(unlist(output_poisson[[i]][[4]]), nrow = dim, ncol = dim, byrow = T)
   asympmat_trub <- matrix(unlist(output_poisson[[i]][[5]]), nrow = dim, ncol = dim, byrow = T)
   for (j in 1:dim)
   {
-    margvar_isb[i,j] <- asympmat_isb[j,j]
-    margvar_pxb[i,j] <- asympmat_pxb[j,j]
+    # margvar_isb[i,j] <- asympmat_isb[j,j]
+    # margvar_pxb[i,j] <- asympmat_pxb[j,j]
     margvar_trub[i,j] <- asympmat_trub[j,j]
   }
 }
-rel_eff_mat_bark <- margvar_pxb/margvar_isb
-rel_eff_mat_trubark <- margvar_trub/margvar_isb
+# rel_eff_mat_bark <- margvar_pxb/margvar_isb
+rel_eff_mat_trubark <- margvar_trub/margvar_ism
 
 #### Marginal variance comparison for HMC
 
@@ -146,39 +166,41 @@ for (i in 1:100)
 }
 rel_eff_mat_hmc <- margvar_pxh/margvar_ish
 
-pdf(file = "plots/boxplot_mala.pdf", width = 12, height = 8)
-boxplot(rel_eff_mat_mala, use.cols = TRUE, xlab = "Coordinate", 
-        ylab = "Average relative efficiency")
-dev.off()
-pdf(file = "plots/boxplot_bark.pdf", width = 12, height = 8)
-boxplot(rel_eff_mat_bark, use.cols = TRUE, xlab = "Coordinate", 
-        ylab = "Average relative efficiency")
-dev.off()
-pdf(file = "plots/boxplot_trubark.pdf", width = 12, height = 8)
-boxplot(rel_eff_mat_trubark, use.cols = TRUE, xlab = "Coordinate", 
-        ylab = "Average relative efficiency")
-dev.off()
-pdf(file = "plots/boxplot_hmc.pdf", width = 12, height = 8)
-boxplot(rel_eff_mat_hmc, use.cols = TRUE, xlab = "Coordinate", 
-        ylab = "Average relative efficiency")
-dev.off()
+# pdf(file = "plots/boxplot_mala.pdf", width = 12, height = 8)
+# boxplot(rel_eff_mat_mala, use.cols = TRUE, xlab = "Coordinate", 
+#         ylab = "Average relative efficiency")
+# dev.off()
+# pdf(file = "plots/boxplot_bark.pdf", width = 12, height = 8)
+# boxplot(rel_eff_mat_bark, use.cols = TRUE, xlab = "Coordinate", 
+#         ylab = "Average relative efficiency")
+# dev.off()
+# pdf(file = "plots/boxplot_trubark.pdf", width = 12, height = 8)
+# boxplot(rel_eff_mat_trubark, use.cols = TRUE, xlab = "Coordinate", 
+#         ylab = "Average relative efficiency")
+# dev.off()
+# pdf(file = "plots/boxplot_hmc.pdf", width = 12, height = 8)
+# boxplot(rel_eff_mat_hmc, use.cols = TRUE, xlab = "Coordinate", 
+#         ylab = "Average relative efficiency")
+# dev.off()
 
 ###############  Histogram  ###############
 
 avg_rel_eff_mala <- apply(rel_eff_mat_mala, 2, mean)
-avg_rel_eff_bark <- apply(rel_eff_mat_bark, 2, mean)
+# avg_rel_eff_bark <- apply(rel_eff_mat_bark, 2, mean)
 avg_rel_eff_hmc <- apply(rel_eff_mat_hmc, 2, mean)
 avg_rel_eff_trub <-  apply(rel_eff_mat_trubark, 2, mean)
 
 avg_rel_effs <- cbind(avg_rel_eff_mala, avg_rel_eff_trub)
-colnames(avg_rel_effs) <- c("(Px) MALAs",  "Barkers")
+colnames(avg_rel_effs) <- c("MALAs",  "Barker vs IS-MALA")
 
-pdf(file = "plots/box_pois_mala-barker-hmc.pdf", height = 5, width = 10)
-par(mfrow = c(1,2))
-boxplot(avg_rel_effs, col = "pink", horizontal = FALSE,  boxwex = .3,
-  ylab = "Relative Efficiencies")
-boxplot(avg_rel_eff_hmc, col = "pink", horizontal = FALSE, boxwex = .3, show.names = TRUE, 
-  names = "(Px) HMCs", ylab = "Relative Efficiencies")
+pdf(file = "plots/poisson_eff_mala-barker.pdf", height = 5, width = 6)
+boxplot(avg_rel_effs, ylab = "Relative efficiency", show.names = TRUE,
+  boxwex = .5, col = "pink", horizontal  = TRUE)
+dev.off()
+
+pdf(file = "plots/poisson_eff_hmc.pdf", height = 5, width = 6)
+boxplot(avg_rel_eff_hmc, col = "pink", horizontal = TRUE, boxwex = .5, show.names = TRUE, 
+  names = "HMCs", ylab = "Relative Efficiencies")
 dev.off()
 
 # pdf(file = "plots/hist_pois_mala.pdf", width = 10, height = 8)
