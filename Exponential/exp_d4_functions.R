@@ -2,37 +2,33 @@
 ################################# Laplace ######################################
 ################################################################################
 
-log_pi <- function(beta, x)
+log_pi <- function(x)
 {
-  value <- sum(beta*abs(x))
+  value <- sum(x^4)
   return(-value)
 }
 
 # log target of pi-lambda
-log_pilambda <- function(eta,beta,x,lambda)
+log_pilambda <- function(eta,x,lambda)
 {
-  dens_val <- sum(beta*abs(eta)) + sum((eta-x)^2)/(2*lambda)
+  dens_val <- sum(eta^4) + sum((eta-x)^2)/(2*lambda)
   return(-dens_val)
 }
 
-#########  Soft threshold function
-
-softthreshold <- function(beta, u, lambda) {       ####  u is a vector
-  return(sign(u)* pmax(abs(u)-beta*lambda,0))
-}
-
-# function calculates the value of the proximal function
-prox_func <- function(beta, x, lambda)
+# function calculates the proximal function for a particular coordinate
+prox_func <- function(val, mu)
 {
-  prox_val <- softthreshold(beta, x, lambda)
-  return(prox_val)
+  t <- sqrt(3)*sqrt((mu^3)*(27*mu*(val^2) + 1)) + 9*(mu^2)*val
+  numer <- (3^(1/3))*(t^(2/3)) - (3^(2/3))*mu
+  denom <- 6*mu*(t^(1/3))
+  prox <-  numer / denom   
+  return(prox)
 }
 
 # gradient of log target (pi-lambda)
-grad_logpiLam <- function(beta, x, lambda)  
+grad_logpiLam <- function(x, lambda, prox_vector)  
 {
-  prox_val <- prox_func(beta, x, lambda)
-  ans <-  (x-prox_val)/lambda
+  ans <-  (x-prox_vector)/lambda
   return(-ans)
 }
 
@@ -52,7 +48,7 @@ asymp_covmat_fn <- function(chain, weights)
 
 ############### mymala #################
 
-mymala <- function(beta, start, lambda, iter, delta)
+mymala <- function(start, lambda, iter, delta)
 {
   nvar <- length(start)
   samp.mym <- matrix(0, nrow = iter, ncol = nvar)
@@ -60,13 +56,13 @@ mymala <- function(beta, start, lambda, iter, delta)
   
   # starting value computations
   curr_val <- start
-  prox_val.curr <- prox_func(beta, curr_val, lambda)
-  targ_val.curr <- log_pilambda(prox_val.curr,beta,curr_val,lambda)
+  prox_val.curr <- sapply(curr_val, function(x) prox_func(x, mu = lambda))
+  targ_val.curr <- log_pilambda(prox_val.curr,curr_val,lambda)
   samp.mym[1,] <- curr_val
   accept <- 0
   
   # weights calculation
-  g_val <- -log_pi(beta, curr_val) 
+  g_val <- -log_pi(curr_val) 
   g_lambda_val <- -targ_val.curr
   wts_is_est[1] <- g_lambda_val - g_val
   
@@ -74,20 +70,20 @@ mymala <- function(beta, start, lambda, iter, delta)
   for (i in 2:iter) 
   {
     # proposal step
-    prop.mean <- curr_val + (delta / 2)*grad_logpiLam(beta, curr_val, lambda)
+    prop.mean <- curr_val + (delta / 2)*grad_logpiLam(curr_val, lambda, prox_val.curr)
     propval <-  prop.mean + (sqrt(delta))*rnorm(nvar, 0, 1)  
     
     # calculating prox
-    prox_val.next <- prox_func(beta, propval, lambda)
-    targ_val.next <- log_pilambda(prox_val.next,beta,propval,lambda)
+    prox_val.next <- sapply(propval, function(x) prox_func(x, mu = lambda))
+    targ_val.next <- log_pilambda(prox_val.next,propval,lambda)
     
     q.next_to_curr <- sum(dnorm(curr_val, propval + 
-                                  (delta / 2)*grad_logpiLam(beta, propval, lambda),
+                                  (delta / 2)*grad_logpiLam(propval, lambda, prox_val.next),
                                 sqrt(delta), log = TRUE))
     q.curr_to_next <- sum(dnorm(propval, prop.mean, sqrt(delta), log = TRUE)) 
     
     mh.ratio <- targ_val.next + q.next_to_curr - (targ_val.curr + q.curr_to_next)  # mh  ratio
-   
+    
     if(log(runif(1)) <= mh.ratio)
     {
       samp.mym[i,] <- propval
@@ -95,7 +91,7 @@ mymala <- function(beta, start, lambda, iter, delta)
       prox_val.curr <- prox_val.next
       
       # weights
-      g_val <- -log_pi(beta, propval) 
+      g_val <- -log_pi(propval) 
       g_lambda_val <- - targ_val.curr
       wts_is_est[i] <- g_lambda_val - g_val
       accept <- accept + 1
@@ -103,7 +99,7 @@ mymala <- function(beta, start, lambda, iter, delta)
     else
     {
       samp.mym[i,] <- curr_val
-      g_val <- -log_pi(beta, curr_val) 
+      g_val <- -log_pi(curr_val) 
       g_lambda_val <- - targ_val.curr
       wts_is_est[i] <- g_lambda_val - g_val
     }
@@ -120,14 +116,15 @@ mymala <- function(beta, start, lambda, iter, delta)
 
 ############### pxmala #################
 
-pxmala <- function(beta, start, lambda, iter, delta)
+pxmala <- function(start, lambda, iter, delta)
 {
   nvar <- length(start)
   samp.pxm <- matrix(0, nrow = iter, ncol = nvar)
   
   # starting value computations
   curr_val <- start
-  targ_val.curr <- log_pi(beta,curr_val)
+  targ_val.curr <- log_pi(curr_val)
+  prox_val.curr <- sapply(curr_val, function(x) prox_func(x, mu = lambda))
   samp.pxm[1,] <- curr_val
   accept <- 0
   
@@ -135,13 +132,14 @@ pxmala <- function(beta, start, lambda, iter, delta)
   for (i in 2:iter) 
   {
     # proposal step
-    prop.mean <- curr_val + (delta / 2)*grad_logpiLam(beta, curr_val, lambda)
+    prop.mean <- curr_val + (delta / 2)*grad_logpiLam(curr_val, lambda, prox_val.curr)
     propval <-  prop.mean + (sqrt(delta))*rnorm(nvar, 0, 1)  
     
-    targ_val.next <- log_pi(beta,propval)
+    prox_val.next <- sapply(propval, function(x) prox_func(x, mu = lambda))
+    targ_val.next <- log_pi(propval)
     
     q.next_to_curr <- sum(dnorm(curr_val, propval + 
-                                  (delta / 2)*grad_logpiLam(beta, propval, lambda),
+                                  (delta / 2)*grad_logpiLam(propval, lambda, prox_val.next),
                                 sqrt(delta), log = TRUE))
     q.curr_to_next <- sum(dnorm(propval, prop.mean, sqrt(delta), log = TRUE)) 
     
@@ -151,6 +149,7 @@ pxmala <- function(beta, start, lambda, iter, delta)
     {
       samp.pxm[i,] <- propval
       targ_val.curr <- targ_val.next
+      prox_val.curr <- prox_val.next
       accept <- accept + 1
     }
     else
@@ -169,11 +168,9 @@ pxmala <- function(beta, start, lambda, iter, delta)
 
 dimen_func <- function(d, lambda, iter, delta_is, delta_px)
 {
-  beta <- rep(1, d)
   start <- rep(0.5, d)
-  
-  mym.output <- mymala(beta, start, lambda, iter, delta_is)
-  pxm.output <- pxmala(beta, start, lambda, iter, delta_px)
+  mym.output <- mymala(start, lambda, iter, delta_is)
+  pxm.output <- pxmala(start, lambda, iter, delta_px)
   output <- list(mym.output, pxm.output)
   return(output)
 }

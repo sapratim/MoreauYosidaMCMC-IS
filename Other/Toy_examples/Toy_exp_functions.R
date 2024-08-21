@@ -138,6 +138,17 @@ asymp_covmat_fn <- function(chain, weights)
   return(asymp_covmat)
 }
 
+dimen_func <- function(d, lambda, iter, delta_is, delta_px)
+{
+  beta <- rep(1, d)
+  start <- rep(0.5, d)
+  
+  mym.output <- mymala(beta, start, lambda, iter, delta_is)
+  pxm.output <- pxmala(beta, start, lambda, iter, delta_px)
+  output <- list(mym.output, pxm.output)
+  return(output)
+}
+
 ###########################################################################
 ##################  Barker and other old visualisations ###################
 ###########################################################################
