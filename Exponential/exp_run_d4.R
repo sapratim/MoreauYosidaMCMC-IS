@@ -6,23 +6,23 @@ source("exp_d4_functions.R")
 library(mcmcse)
 library(foreach)
 library(doParallel)
-num_cores <- 4
+num_cores <- 50
 doParallel::registerDoParallel(cores = num_cores)
 
-iter <- 1e4
+iter <- 1e6
 reps <- 50
 
-lamb_d1 <- seq(1e-4, 25, length = reps)
-lamb_d5 <- seq(1e-2, 1, length = reps)
+lamb_d1 <- seq(1e-4, 5, length = reps)
+lamb_d5 <- seq(1e-4, .6, length = reps)
 lamb_d10 <- seq(1e-3, 0.5, length = reps)
-lamb_d20 <- seq(1e-4, 0.2, length = reps)
+lamb_d20 <- seq(1e-3, 0.2, length = reps)
 # lamb_d50 <- seq(1e-2, 1.2, length = reps)
 
-delta_is_d1 <- seq(1.7, 92, length = length(lamb_d1))
-delta_px_d1 <- seq(1.5, 1.1, length = length(lamb_d1))
+delta_is_d1 <- seq(.7, 14, length = length(lamb_d1))
+delta_px_d1 <- seq(.7, .45, length = length(lamb_d1))
 
-delta_is_d5 <- seq(0.35, 2.6, length = length(lamb_d5))
-delta_px_d5 <- seq(0.35, 0.13, length = length(lamb_d5))
+delta_is_d5 <- seq(0.35, 1.9, length = length(lamb_d5))
+delta_px_d5 <- seq(0.35, 0.17, length = length(lamb_d5))
 
 delta_is_d10 <- seq(0.2, 1, length = length(lamb_d10))
 delta_px_d10 <- seq(0.2, 0.07, length = length(lamb_d10))  

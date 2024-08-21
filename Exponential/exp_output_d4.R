@@ -7,10 +7,10 @@ load("output_d20.Rdata")
 
 reps <- 50
 cutoff <- c(0.4,0.8)
-lamb_d1 <- seq(1e-4, 25, length = reps)
-lamb_d5 <- seq(1e-2, 1, length = reps)
+lamb_d1 <- seq(1e-3, 10, length = reps)
+lamb_d5 <- seq(1e-3, 1, length = reps)
 lamb_d10 <- seq(1e-3, 0.5, length = reps)
-lamb_d20 <- seq(1e-4, 0.2, length = reps)
+lamb_d20 <- seq(1e-3, 0.2, length = reps)
 
 
 ##########################  For d = 1  ##########################
