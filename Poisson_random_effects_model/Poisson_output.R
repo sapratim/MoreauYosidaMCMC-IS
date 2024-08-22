@@ -4,18 +4,19 @@
 
 rm(list = ls())
 source("Poisson_functions.R")
-load("output_single_mala.Rdata")
-# load("output_single_bark.Rdata")
-load("output_single_hmc.Rdata")
+
+
+
 
 
 ################ ACF plots ################
 dim <- 51
+lag.max <- 50
 pdf("plots/poisson_acf_MALA.pdf", height = 6, width = 6)
 par(mfrow = c(1,1))
 
 ################## MALA  #####################
-lag.max <- 50
+load("output_single_mala.Rdata")
 acf_ism <- acf(output_chain_mala[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
 acf_pxm <- acf(output_chain_mala[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
 
@@ -39,7 +40,7 @@ dev.off()
 
 ################## Barker  #####################
 # acf_isb <- acf(output_chain_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
-# acf_pxb <- acf(output_chain_bark[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
+# acf_true <- acf(output_chain_bark[[3]][,1], plot = FALSE, lag.max = lag.max)$acf
 
 # diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
 # diff.acf[,1] <- acf_isb - acf_pxb
@@ -47,8 +48,8 @@ dev.off()
 # for (i in 2:dim) 
 # {
 #   acf_isb <- acf(output_chain_bark[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
-#   acf_pxb <- acf(output_chain_bark[[2]][,i], plot = FALSE, lag.max = lag.max)$acf
-#   diff.acf[,i] <- acf_isb - acf_pxb
+#   acf_true <- acf(output_chain_bark[[2]][,i], plot = FALSE, lag.max = lag.max)$acf
+#   diff.acf[,i] <- acf_isb - acf_true
 # }
 
 # # Make boxplot of ACFs
@@ -60,31 +61,35 @@ dev.off()
 # dev.off()
 
 ################## True Barker  #####################
+load("output_single_bark.Rdata")
+pdf("plots/poisson_acf_Bark.pdf", height = 6, width = 6)
+par(mfrow = c(1,1))
+acf_isb <- acf(output_chain_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
+acf_trub <- acf(output_chain_bark[[3]][,1], plot = FALSE, lag.max = lag.max)$acf
 
-# acf_isb <- acf(output_chain_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
-# acf_trub <- acf(output_chain_bark[[3]][,1], plot = FALSE, lag.max = lag.max)$acf
+diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
+diff.acf[,1] <- acf_isb - acf_trub
 
-# diff.acf <- matrix(0, ncol = dim, nrow = lag.max + 1)
-# diff.acf[,1] <- acf_isb - acf_trub
+for (i in 2:dim) 
+{
+  acf_isb <- acf(output_chain_bark[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
+  acf_trub <- acf(output_chain_bark[[3]][,i], plot = FALSE, lag.max = lag.max)$acf
+  diff.acf[,i] <- acf_isb - acf_trub
+}
 
-# for (i in 2:dim) 
-# {
-#   acf_isb <- acf(output_chain_bark[[1]][,i], plot = FALSE, lag.max = lag.max)$acf
-#   acf_trub <- acf(output_chain_bark[[3]][,i], plot = FALSE, lag.max = lag.max)$acf
-#   diff.acf[,i] <- acf_isb - acf_trub
-# }
+# Make boxplot of ACFs
+boxplot(t(diff.acf),
+        xlab = "Lags", col = "pink",
+        ylab = "Difference in ACF of Barkers",ylim = c(-.7, 0.18),
+        names = 0:lag.max, show.names = TRUE)
 
-# # Make boxplot of ACFs
-# boxplot(t(diff.acf),
-#         xlab = "Lags", col = "pink",
-#         ylab = "Difference in ACF of MALAs",ylim = c(-.7, 0.05),
-#         names = 0:lag.max, show.names = TRUE)
-
-# dev.off()
+dev.off()
 
 
 
 ######################## HMC ########################
+load("output_single_hmc.Rdata")
+
 pdf("plots/poisson_acf_HMC.pdf", height = 6, width = 6)
 par(mfrow = c(1,1))
 
