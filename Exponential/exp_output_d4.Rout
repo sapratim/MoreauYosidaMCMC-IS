@@ -1,11 +1,13 @@
 
-R version 4.4.1 (2024-06-14) -- "Race for Your Life"
-Copyright (C) 2024 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin20
+R version 4.3.2 (2023-10-31) -- "Eye Holes"
+Copyright (C) 2023 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -24,8 +26,8 @@ Type 'q()' to quit R.
 > 
 > reps <- 50
 > cutoff <- c(0.4,0.8)
-> lamb_d1 <- seq(1e-3, 10, length = reps)
-> lamb_d5 <- seq(1e-3, 1, length = reps)
+> lamb_d1 <- seq(1e-4, 5, length = reps)
+> lamb_d5 <- seq(1e-4, .6, length = reps)
 > lamb_d10 <- seq(1e-3, 0.5, length = reps)
 > lamb_d20 <- seq(1e-3, 0.2, length = reps)
 > 
@@ -145,4 +147,4 @@ null device
 > 
 > proc.time()
    user  system elapsed 
-  0.184   0.073   0.465 
+  0.107   0.062   0.205 
