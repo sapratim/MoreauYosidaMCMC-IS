@@ -33,7 +33,7 @@ for (i in 2:dim)
 # Make boxplot of ACFs
 boxplot(t(diff.acf),
         xlab = "Lags", col = "pink",
-        ylab = "Difference in ACF of MALAs",ylim = c(-.7, 0.05),
+        ylab = "Difference in ACF of MALAs",ylim = c(-1.3, 0.5),
         names = 0:lag.max, show.names = TRUE)
 
 dev.off()
@@ -80,7 +80,7 @@ for (i in 2:dim)
 # Make boxplot of ACFs
 boxplot(t(diff.acf),
         xlab = "Lags", col = "pink",
-        ylab = "Difference in ACF of Barkers",ylim = c(-.7, 0.18),
+        ylab = "Difference in ACF of Barkers",ylim = c(-1.3, 0.5),
         names = 0:lag.max, show.names = TRUE)
 
 dev.off()
@@ -109,7 +109,7 @@ for (i in 2:dim)
 # Make boxplot of ACFs
 boxplot(t(diff.acf),
         xlab = "Lags", col = "pink",
-        ylab = "Difference in ACF of HMCs",ylim = range(diff.acf),
+        ylab = "Difference in ACF of HMCs",ylim = c(-1.3, 0.5),
         names = 0:lag.max, show.names = TRUE)
 
 dev.off()
