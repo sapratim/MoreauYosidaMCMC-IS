@@ -252,6 +252,6 @@ dataset <- data.frame(x, y, lower_quant_mala_pi, upper_quant_mala_pi, post_med_m
 plot <- ggplot(dataset, aes(x, y,group = )) + geom_point() +
   geom_line(aes(x=c(1:100), y=post_med_mala_pi), col = "red")
 conf_bands <- plot + geom_ribbon(aes(ymin = lower_quant_mala_pi, ymax = upper_quant_mala_pi),
-                 alpha = 0.3) +labs(x = "variable") + labs(y = "data")
+                 alpha = 0.3) +labs(x = "index") + labs(y = "y")
 conf_bands
 dev.off()
