@@ -5,10 +5,6 @@
 rm(list = ls())
 source("Poisson_functions.R")
 
-
-
-
-
 ################ ACF plots ################
 dim <- 51
 lag.max <- 50
