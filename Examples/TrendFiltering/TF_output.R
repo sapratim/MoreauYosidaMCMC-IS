@@ -5,7 +5,7 @@ rm(list = ls())
 library(ggplot2)
 source("TF_functions.R")
 load("single_chain_mala.Rdata")
-load("single_chain_bark.Rdata")
+#load("single_chain_bark.Rdata")
 load("single_chain_hmc.Rdata")
 load("single_chain_log_weights.Rdata")
 
@@ -176,12 +176,12 @@ avg_rel_eff_hmc <- apply(rel_eff_mat_hmc, 2, mean)
 
 pdf("plots/tf_boxeff_mala.pdf", height = 5, width = 6)
 boxplot(avg_rel_eff_mala, names = "Relative efficiency for MALA", show.names = TRUE,
-  boxwex = .5, col = "pink", horizontal  = TRUE)
+        boxwex = .5, col = "pink", horizontal  = TRUE)
 dev.off()
 
 pdf("plots/tf_boxeff_hmc.pdf", height = 5, width = 6)
 boxplot(avg_rel_eff_hmc, names = "Relative efficiency for HMC", show.names = TRUE,
-  boxwex = .5, col = "pink", horizontal = TRUE)
+        boxwex = .5, col = "pink", horizontal = TRUE)
 dev.off()
 
 # pdf(file = "plots/hist_tf_mala.pdf", width = 10, height = 8)
@@ -200,7 +200,7 @@ level <- 0.025
 ### MALA
 upper_quant_mala_pi <- quantile_func(output_single_run_mala[[1]], exp(log_wts[[1]]), level)[[1]]
 lower_quant_mala_pi <- quantile_func(output_single_run_mala[[1]], exp(log_wts[[1]]), level)[[2]]
-post_med_mala_pi <- quantile_func(output_single_run_mala[[1]], exp(log_wts[[1]]), level)[[3]]
+post_mean_mala_pi <- post_mean_fn(output_single_run_mala[[1]], log_wts[[1]])
 
 ### Barker
 # upper_quant_bark_pi <- quantile_func(output_single_run_bark[[1]], exp(log_wts[[2]]), level)[[1]]
@@ -210,19 +210,18 @@ post_med_mala_pi <- quantile_func(output_single_run_mala[[1]], exp(log_wts[[1]])
 ### HMC
 upper_quant_hmc_pi <- quantile_func(output_single_run_hmc[[1]], exp(log_wts[[3]]), level)[[1]]
 lower_quant_hmc_pi <- quantile_func(output_single_run_hmc[[1]], exp(log_wts[[3]]), level)[[2]]
-post_med_hmc_pi <- quantile_func(output_single_run_hmc[[1]], exp(log_wts[[3]]), level)[[3]]
+post_mean_hmc_pi <- post_mean_fn(output_single_run_hmc[[1]], log_wts[[3]])
 
 ######################## Quantiles for pi^lambda ########################
 
 ### MALA
 upper_quant_mala_pilambda <- numeric(length = length(y))
 lower_quant_mala_pilambda <- numeric(length = length(y))
-post_med_mala_pilambda <- numeric(length = length(y))
+post_mean_mala_pilambda <- colMeans(output_single_run_mala[[1]])
 for(i in 1:length(y))
 {
   upper_quant_mala_pilambda[i] <- quantile(output_single_run_mala[[1]][,i], probs = 0.975)
   lower_quant_mala_pilambda[i] <- quantile(output_single_run_mala[[1]][,i], probs = 0.025)
-  post_med_mala_pilambda[i] <- quantile(output_single_run_mala[[1]][,i], probs = 0.5)
 }
 
 ### Barker
@@ -239,19 +238,18 @@ for(i in 1:length(y))
 ### HMC
 upper_quant_hmc_pilambda <- numeric(length = length(y))
 lower_quant_hmc_pilambda <- numeric(length = length(y))
-post_med_hmc_pilambda <- numeric(length = length(y))
+post_mean_hmc_pilambda <- colMeans(output_single_run_hmc[[1]])
 for(i in 1:length(y))
 {
   upper_quant_hmc_pilambda[i] <- quantile(output_single_run_hmc[[1]][,i], probs = 0.975)
   lower_quant_hmc_pilambda[i] <- quantile(output_single_run_hmc[[1]][,i], probs = 0.025)
-  post_med_hmc_pilambda[i] <- quantile(output_single_run_hmc[[1]][,i], probs = 0.5)
 }
 
 pdf(file = "plots/tf_quantiles_is_mala.pdf", width = 12, height = 6)
-dataset <- data.frame(x, y, lower_quant_mala_pi, upper_quant_mala_pi, post_med_mala_pi)
+dataset <- data.frame(x, y, lower_quant_mala_pi, upper_quant_mala_pi, post_mean_mala_pi)
 plot <- ggplot(dataset, aes(x, y,group = )) + geom_point() +
-  geom_line(aes(x=c(1:100), y=post_med_mala_pi), col = "red")
+  geom_line(aes(x=c(1:100), y=post_mean_mala_pi), col = "red")
 conf_bands <- plot + geom_ribbon(aes(ymin = lower_quant_mala_pi, ymax = upper_quant_mala_pi),
-                 alpha = 0.3) +labs(x = "index") + labs(y = "y")
+                                 alpha = 0.3) +labs(x = "index") + labs(y = "y")
 conf_bands
 dev.off()
