@@ -6,7 +6,7 @@ source("exp_d4_functions.R")
 library(mcmcse)
 library(foreach)
 library(doParallel)
-num_cores <- 50
+num_cores <- 25
 doParallel::registerDoParallel(cores = num_cores)
 
 iter <- 1e6
@@ -16,7 +16,9 @@ lamb_d1 <- seq(1e-4, 5, length = reps)
 lamb_d5 <- seq(1e-4, .6, length = reps)
 lamb_d10 <- seq(1e-3, 0.5, length = reps)
 lamb_d20 <- seq(1e-3, 0.2, length = reps)
-# lamb_d50 <- seq(1e-2, 1.2, length = reps)
+lamb_d50 <- seq(1e-3, 0.1, length = reps)
+lamb_d100 <- seq(1e-3, 0.05, length = reps)
+#lamb_d500 <- seq(1e-3, 0.01, length = reps)
 
 delta_is_d1 <- seq(.7, 14, length = length(lamb_d1))
 delta_px_d1 <- seq(.7, .45, length = length(lamb_d1))
@@ -30,15 +32,23 @@ delta_px_d10 <- seq(0.2, 0.07, length = length(lamb_d10))
 delta_is_d20 <- seq(0.14, 0.45, length = length(lamb_d20))
 delta_px_d20 <- seq(0.14, 0.04, length = length(lamb_d20))  
 
-# delta_is_d50 <- seq(0.23, 1, length = length(lamb_d50))
-# delta_px_d50 <- seq(0.23, 0.16, length = length(lamb_d50))  
+delta_is_d50 <- seq(0.095, 0.2, length = length(lamb_d50))
+delta_px_d50 <- seq(0.095, 0.025, length = length(lamb_d50))  
+
+delta_is_d100 <- seq(0.07, .12, length = length(lamb_d100))
+delta_px_d100 <- seq(0.07, 0.022, length = length(lamb_d100))  
+
+# delta_is_d500 <- seq(0.04, 0.045, length = length(lamb_d500))
+# delta_px_d500 <- seq(0.038, 0.022, length = length(lamb_d500))  
+
 
 output_exp_d1 <- list()
 output_exp_d5 <- list()
 output_exp_d10 <- list()
 output_exp_d20 <- list()
-# output_exp_d50 <- list()
-
+output_exp_d50 <- list()
+output_exp_d100 <- list()
+#output_exp_d500 <- list()
 
 ######################  dimension = 1  ################################
 
@@ -131,22 +141,66 @@ save(output_exp_d20, file = "output_d20.Rdata")
 
 ######################  dimension = 50  ################################
 
-# output_exp_d50 <- foreach(lam_ani = 1:length(lamb_d50)) %dopar% {
+output_exp_d50 <- foreach(lam_ani = 1:length(lamb_d50)) %dopar% {
+  
+  output_mala_d50 <- dimen_func(d = 50, lambda = lamb_d50[lam_ani], iter = iter,
+                                delta_is_d50[lam_ani], delta_px_d50[lam_ani])
+  
+  asymp_cov_ism_d50 <- asymp_covmat_fn(output_mala_d50[[1]][[1]], exp(output_mala_d50[[1]][[2]]))
+  asymp_ess_pilam_d50 <- ess(output_mala_d50[[1]][[1]], r = 1)
+  asymp_cov_pxm_d50 <- mcse.multi(output_mala_d50[[2]], r = 1)$cov
+  
+  asymp_margvar_is50 <- diag(asymp_cov_ism_d50)   ### marginal variance ismala
+  #asymp_margvar_pilam50 <- diag(asymp_cov_pilam_d50)   ### marginal variance of is for pilambda
+  rel_eff_50 <- diag(asymp_cov_pxm_d50)/ asymp_margvar_is50  ### relative efficiency wrt pi
+  
+  wts <- exp(output_mala_d50[[1]][[2]])
+  ess_ism_d50 <- (mean(wts)^2)/mean(wts^2)
+  
+  list(asymp_margvar_is50, asymp_ess_pilam_d50, rel_eff_50, ess_ism_d50)
+}
+save(output_exp_d50, file = "output_d50.Rdata")
 
-#   output_mala_d50 <- dimen_func(d = 50, lambda = lamb_d50[lam_ani], iter = iter,
-#                                 delta_is_d50[lam_ani], delta_px_d50[lam_ani])
+######################  dimension = 100  ################################
 
-#   asymp_cov_ism_d50 <- asymp_covmat_fn(output_mala_d50[[1]][[1]], exp(output_mala_d50[[1]][[2]]))
-#   asymp_ess_pilam_d50 <- ess(output_mala_d50[[1]][[1]], r = 1)
-#   asymp_cov_pxm_d50 <- mcse.multi(output_mala_d50[[2]], r = 1)$cov
+output_exp_d100 <- foreach(lam_ani = 1:length(lamb_d100)) %dopar% {
+  
+  output_mala_d100 <- dimen_func(d = 100, lambda = lamb_d100[lam_ani], iter = iter,
+                                 delta_is_d100[lam_ani], delta_px_d100[lam_ani])
+  
+  asymp_cov_ism_d100 <- asymp_covmat_fn(output_mala_d100[[1]][[1]], exp(output_mala_d100[[1]][[2]]))
+  asymp_ess_pilam_d100 <- ess(output_mala_d100[[1]][[1]], r = 1)
+  asymp_cov_pxm_d100 <- mcse.multi(output_mala_d100[[2]], r = 1)$cov
+  
+  asymp_margvar_is100 <- diag(asymp_cov_ism_d100)   ### marginal variance ismala
+  #asymp_margvar_pilam100 <- diag(asymp_cov_pilam_d100)   ### marginal variance of is for pilambda
+  rel_eff_100 <- diag(asymp_cov_pxm_d100)/ asymp_margvar_is100  ### relative efficiency wrt pi
+  
+  wts <- exp(output_mala_d100[[1]][[2]])
+  ess_ism_d100 <- (mean(wts)^2)/mean(wts^2)
+  
+  list(asymp_margvar_is100, asymp_ess_pilam_d100, rel_eff_100, ess_ism_d100)
+}
+save(output_exp_d100, file = "output_d100.Rdata")
 
-#   asymp_margvar_is50 <- diag(asymp_cov_ism_d50)   ### marginal variance ismala
-#  # asymp_margvar_pilam50 <- diag(asymp_cov_pilam_d50)   ### marginal variance of is for pilambda
-#   rel_eff_50 <- diag(asymp_cov_pxm_d50)/ asymp_margvar_is50  ### relative efficiency wrt pi
-
-#   wts <- exp(output_mala_d50[[1]][[2]])
-#   ess_ism_d50 <- (mean(wts)^2)/mean(wts^2)
-
-#   list(asymp_margvar_is50, asymp_ess_pilam_d50, rel_eff_50, ess_ism_d50)
+# ######################  dimension = 500  ################################
+# 
+# output_exp_d500_test <- foreach(lam_ani = 1:length(lamb_d500)) %dopar% {
+#   
+#   output_mala_d500 <- dimen_func(d = 500, lambda = lamb_d500[lam_ani], iter = iter,
+#                                  delta_is_d500[lam_ani], delta_px_d500[lam_ani])
+#   
+#   asymp_cov_ism_d500 <- asymp_covmat_fn(output_mala_d500[[1]][[1]], exp(output_mala_d500[[1]][[2]]))
+#   asymp_ess_pilam_d500 <- ess(output_mala_d500[[1]][[1]], r = 1)
+#   asymp_cov_pxm_d500 <- mcse.multi(output_mala_d500[[2]], r = 1)$cov
+#   
+#   asymp_margvar_is500 <- diag(asymp_cov_ism_d500)   ### marginal variance ismala
+#   #asymp_margvar_pilam500 <- diag(asymp_cov_pilam_d500)   ### marginal variance of is for pilambda
+#   rel_eff_500 <- diag(asymp_cov_pxm_d500)/ asymp_margvar_is500  ### relative efficiency wrt pi
+#   
+#   wts <- exp(output_mala_d500[[1]][[2]])
+#   ess_ism_d500 <- (mean(wts)^2)/mean(wts^2)
+#   
+#   list(asymp_margvar_is500, asymp_ess_pilam_d500, rel_eff_500, ess_ism_d500)
 # }
-# save(output_exp_d50, file = "output_d50.Rdata")
+# save(output_exp_d500_test, file = "test/output_d500.Rdata")
