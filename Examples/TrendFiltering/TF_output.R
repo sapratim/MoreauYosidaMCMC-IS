@@ -120,7 +120,10 @@ for (i in 1:100)
     margvar_pxm[i,j] <- asympmat_pxm[j,j]
   }
 }
-rel_eff_mat_mala <- margvar_pxm/margvar_ism
+time_ism <- sapply(output_mala, function(x) x[[5]])
+time_pxm <- sapply(output_mala, function(x) x[[6]])
+
+rel_eff_mat_mala <- (margvar_pxm*time_pxm)/(margvar_ism*time_ism)
 
 #### Marginal variance comparison for IS vs PxBarker
 # x <- c(1:100)
@@ -153,7 +156,11 @@ for (i in 1:100)
     margvar_pxh[i,j] <- asympmat_pxh[j,j]
   }
 }
-rel_eff_mat_hmc <- margvar_pxh/margvar_ish
+
+time_ish <- sapply(output_hmc, function(x) x[[5]])
+time_pxh <- sapply(output_hmc, function(x) x[[6]])
+
+rel_eff_mat_hmc <- (margvar_pxh*time_pxh)/(margvar_ish*time_ish)
 
 # pdf(file = "plots/boxplot_mala.pdf", width = 12, height = 8)
 # boxplot(rel_eff_mat_mala, use.cols = TRUE, xlab = "Coordinate", 
@@ -247,9 +254,23 @@ for(i in 1:length(y))
 
 pdf(file = "plots/tf_quantiles_is_mala.pdf", width = 12, height = 6)
 dataset <- data.frame(x, y, lower_quant_mala_pi, upper_quant_mala_pi, post_mean_mala_pi)
-plot <- ggplot(dataset, aes(x, y,group = )) + geom_point() +
-  geom_line(aes(x=c(1:100), y=post_mean_mala_pi), col = "red")
-conf_bands <- plot + geom_ribbon(aes(ymin = lower_quant_mala_pi, ymax = upper_quant_mala_pi),
-                                 alpha = 0.3) +labs(x = "index") + labs(y = "y")
-conf_bands
+
+plot <- ggplot(dataset, aes(x = x)) + 
+  geom_ribbon(aes(ymin = lower_quant_mala_pi, ymax = upper_quant_mala_pi,
+                  fill = "95% Credible Interval"), alpha = 0.3) +
+  geom_point(aes(y = y, color = "Observed")) +
+  geom_line(aes(y = post_mean_mala_pi, color = "Posterior Mean"), size = 1.2) +
+  scale_color_discrete(name = NULL) +
+  scale_fill_discrete(name = NULL) +
+  labs(x = "Index", y = "y") +
+  theme_minimal() +
+  theme(
+    panel.background = element_rect(fill = "grey90", color = NA),
+    plot.background = element_rect(fill = "grey90", color = NA),
+    legend.position = c(0.95, 0.95),
+    legend.justification = c("right", "top"),
+    legend.background = element_rect(fill = "white", color = "black")
+  )
+
+print(plot)
 dev.off()

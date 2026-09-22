@@ -13,28 +13,31 @@ doParallel::registerDoParallel(cores = num_cores)
 reps <- 100
 
 output_hmc <- foreach(b = 1:reps) %dopar% {
-  my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
-                  eps_hmc = 0.015, L = 100, start = warmup_end_iter)
+  time_ishmc <- system.time(my.hmc <- myhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
+                                            eps_hmc = 0.015, L = 100, start = warmup_end_iter))
   
-  px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
-                  eps_hmc = 0.0003, L = 100, start = warmup_end_iter) 
+  time_pxhmc <- system.time(px.hmc <- pxhmc(y, alpha_hat,sigma2_hat,k=1, grid=x,iter = iter_hmc,
+                                            eps_hmc = 0.00035, L = 100, start = warmup_end_iter))
+  
 hmc_chain <- matrix(unlist(my.hmc[[1]]), nrow = iter_hmc, ncol = length(y))
 weights <- exp(as.numeric(unlist(my.hmc[[2]])))
 imp_ess <- (mean(weights)^2)/mean(weights^2)
 
 # Asymptotic covariance matrix
 asymp_covmat_is <- asymp_covmat_fn(hmc_chain, weights) 
-asymp_covmat_pxhmc <- mcse.multi(px.hmc[[1]])$cov   # PxMALA asymptotic variance
+asymp_covmat_pxhmc <- mcse.multi(px.hmc[[1]])$cov   # PxHMC asymptotic variance
 
 ##  Posterior mean
 post_mean <- post_mean_fn(my.hmc[[1]], my.hmc[[2]])
+time_ishmc <- as.numeric(time_ishmc["elapsed"])
+time_pxhmc <- as.numeric(time_pxhmc["elapsed"])
 
 #  Quantile visualisation
 level <- 0.025
 upper_quant <- quantile_func(hmc_chain, weights, level)[[1]]
 lower_quant <- quantile_func(hmc_chain, weights, level)[[2]]
 post_med <- quantile_func(hmc_chain, weights, level)[[3]]
-list(post_mean, post_med, asymp_covmat_is, 
-     asymp_covmat_pxhmc, upper_quant, lower_quant, imp_ess)
+list(post_mean, post_med, asymp_covmat_is, asymp_covmat_pxhmc, 
+            time_ishmc, time_pxhmc, upper_quant, lower_quant, imp_ess)
 }
 save(output_hmc, file = "output_hmc.Rdata")

@@ -399,6 +399,7 @@ myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   samp.hmc <- matrix(0, nrow = iter, ncol = nvar)
   lambda <- lamb_coeff
   wts_is_est <- numeric(length = iter)
+  L_val <- L
   
   # starting value computations
   beta <- start
@@ -419,6 +420,7 @@ myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
     U_beta <- -grad_logpiLam(beta, lambda,y,sigma2,alpha,k,grid)
     p_current <- p_prop - eps_hmc*U_beta /2  # half step for momentum
     q_current <- beta
+    L <- ifelse(runif(1) <= 0.05, 1, L_val)  # L chosen randomly
     for (j in 1:L)
     {
       beta <- beta + eps_hmc*p_current   # full step for position
@@ -470,6 +472,7 @@ pxhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   nvar <- length(y)
   samp.hmc <- matrix(0, nrow = iter, ncol = nvar)
   lambda <- lamb_coeff
+  L_val <- L
   
   # starting value computations
   beta <- start
@@ -485,6 +488,7 @@ pxhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
     U_beta <- -grad_logpiLam(beta, lambda,y,sigma2,alpha,k,grid)
     p_current <- p_prop - eps_hmc*U_beta /2  # half step for momentum
     q_current <- beta
+    L <- ifelse(runif(1) <= 0.05, 1, L_val)  # L chosen randomly
     for (j in 1:L)
     {
       beta <- beta + eps_hmc*p_current   # full step for position

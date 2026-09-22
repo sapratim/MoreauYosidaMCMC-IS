@@ -31,7 +31,7 @@ plot(lamb_d1, pilam_var_d1, type = 'l', xlab = "lambda",
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d1, is_var_d1, type = 'l', xlab = "lambda",
- ylab ="Importance Sampling Asymptotic variance")
+ ylab ="Importance sampling asymptotic variance")
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
 
@@ -59,7 +59,7 @@ plot(lamb_d5, pilam_var_d5, type = 'l', xlab = expression(lambda),
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d5, is_var_d5, type = 'l', xlab = expression(lambda), 
-  ylab ="Importance Sampling Asymptotic variance")
+  ylab ="Importance sampling asymptotic variance")
 
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
@@ -86,7 +86,7 @@ plot(lamb_d10, pilam_var_d10, type = 'l', xlab = expression(lambda),
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d10, is_var_d10, type = 'l', xlab = expression(lambda), 
-  ylab ="Importance Sampling Asymptotic variance")
+  ylab ="Importance sampling asymptotic variance")
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
 
@@ -113,7 +113,7 @@ plot(lamb_d20, pilam_var_d20, type = 'l', xlab = expression(lambda),
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d20, is_var_d20, type = 'l', xlab = expression(lambda), 
-  ylab ="Importance Sampling Asymptotic variance")
+  ylab ="Importance sampling asymptotic variance")
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
 
