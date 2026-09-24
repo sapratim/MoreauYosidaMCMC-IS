@@ -214,8 +214,8 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     else
     {
       samp.mym[i,] <- beta_current
-      g_val <- -log_pi(beta_current, y, sigma2,alpha)
-      g_lambda_val <- - targ_val.curr
+      # g_val <- -log_pi(beta_current, y, sigma2,alpha)
+      # g_lambda_val <- - targ_val.curr
       wts_is_est[i] <- g_lambda_val - g_val
     }
     beta_current <- samp.mym[i,]
@@ -329,8 +329,8 @@ mybarker <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     else
     {
       samp.bark[i,] <- beta_current
-      g_val <- - log_pi(beta_current, y, sigma2,alpha)
-      g_lambda_val <- - targ_val.curr
+      # g_val <- - log_pi(beta_current, y, sigma2,alpha)
+      # g_lambda_val <- - targ_val.curr
       wts_is_est[i] <- g_lambda_val - g_val
     }
     beta_current <- samp.bark[i,]
@@ -452,7 +452,7 @@ myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
     else
     {
       samp.hmc[i,] <- q_current
-      g_val <- -log_pi(q_current, y, sigma2, alpha)
+      #g_val <- -log_pi(q_current, y, sigma2, alpha)
       wts_is_est[i] <- U_curr - g_val
       beta <- q_current
     }

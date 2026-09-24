@@ -190,8 +190,8 @@ mymala <- function(y, alpha, lambda, sigma2, iter, delta, start)
     else
     {
       samp.mym[i,] <- samp_current
-      psi_val <- - log_pi(samp_current,y,sigma2,alpha)
-      psi_lambda_val <- - log_pilambda(prox_val.curr,samp_current,lambda,y,sigma2,alpha)
+      # psi_val <- - log_pi(samp_current,y,sigma2,alpha)
+      # psi_lambda_val <- - log_pilambda(prox_val.curr,samp_current,lambda,y,sigma2,alpha)
       wts_is_est[i] <- psi_lambda_val - psi_val
     }
     samp_current <- samp.mym[i,]
@@ -301,8 +301,8 @@ mybarker <- function(y, alpha, lambda, sigma2, iter, delta, start)
     else
     {
       samp.bark[i,] <- samp_current
-      psi_val <- - log_pi(samp_current, y, sigma2,alpha)
-      g_lambda_val <- - targ_val.curr
+      # psi_val <- - log_pi(samp_current, y, sigma2,alpha)
+      # g_lambda_val <- - targ_val.curr
       wts_is_est[i] <- psi_lambda_val - psi_val
     }
     samp_current <- samp.bark[i,]
@@ -369,6 +369,7 @@ myhmc <- function(y, alpha, lambda, sigma2, iter, eps_hmc, L, start)
   nvar <- length(y)
   samp.hmc <- matrix(0, nrow = iter, ncol = nvar)
   wts_is_est <- numeric(length = iter)
+  L_val <- L
   
   # starting value computations
   samp <- start
@@ -390,6 +391,7 @@ myhmc <- function(y, alpha, lambda, sigma2, iter, eps_hmc, L, start)
     U_samp <- -grad_logpiLam(samp, lambda,y,sigma2,alpha)
     p_current <- p_prop - eps_hmc*U_samp /2  # half step for momentum
     q_current <- samp
+    L <- ifelse(runif(1) <= 0.05, 1, L_val)  # L chosen randomly
     for (j in 1:L)
     {
       samp <- samp + eps_hmc*p_current   # full step for position
@@ -421,7 +423,7 @@ myhmc <- function(y, alpha, lambda, sigma2, iter, eps_hmc, L, start)
     else
     {
       samp.hmc[i,] <- q_current
-      psi_val <- - log_pi(q_current,y,sigma2,alpha)
+      #psi_val <- - log_pi(q_current,y,sigma2,alpha)
       wts_is_est[i] <- U_curr - psi_val
       samp <- q_current
     }
@@ -440,6 +442,7 @@ pxhmc <- function(y, alpha, lambda, sigma2, iter, eps_hmc, L, start)
 {
   nvar <- length(y)
   samp.hmc <- matrix(0, nrow = iter, ncol = nvar)
+  L_val <- L
   
   # starting value computations
   samp <- start
@@ -455,6 +458,7 @@ pxhmc <- function(y, alpha, lambda, sigma2, iter, eps_hmc, L, start)
     U_samp <- -grad_logpiLam(samp, lambda,y,sigma2,alpha)
     p_current <- p_prop - eps_hmc*U_samp /2  # half step for momentum
     q_current <- samp
+    L <- ifelse(runif(1) <= 0.05, 1, L_val)  # L chosen randomly
     for (j in 1:L)
     {
       samp <- samp + eps_hmc*p_current   # full step for position
