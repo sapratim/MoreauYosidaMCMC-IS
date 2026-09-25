@@ -1,7 +1,7 @@
 
 source("nuclear_norm_functions.R")
 load("warmup_chain.Rdata")
-iter <- 1e5
+iter <- 1e4
 lamb_coeff <- 1e-4
 sigma2_hat <- 0.01
 alpha_hat <- 1.15/sigma2_hat

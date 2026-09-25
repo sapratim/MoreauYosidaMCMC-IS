@@ -50,7 +50,7 @@ y <- vec(image_mat)
 nucl_norm <- function(vect)    ## vector input
 {
   A <- matrix(vect, nrow = n, ncol = n)
-  norm_val <- sum(svd(A)$d)
+  norm_val <- sum(svd(A, nu = 0, nv = 0)$d)
   return(norm_val)
 }
 
