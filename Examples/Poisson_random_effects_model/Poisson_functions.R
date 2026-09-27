@@ -69,7 +69,8 @@ proxfunc <- function(eta, mu, lambda, eta_initial, mu_initial, sigma)
   eta_next <- eta_initial
   mu_next <- mu_initial
 
-  grad_vec <- grad_logp(mu_next, sigma, eta_next) - (c(eta_next, mu_next) - c(eta, mu))/lambda
+  grad_vec <- grad_logp(mu_next, sigma, eta_next) - 
+                    (c(eta_next, mu_next) - c(eta, mu))/lambda
   while (sqrt(sum(grad_vec^2)) > tol_nr) 
   {
    # For eta's
@@ -85,7 +86,8 @@ proxfunc <- function(eta, mu, lambda, eta_initial, mu_initial, sigma)
     mu.num <- (sum(eta_next)/sigma^2 + mu/lambda)
     mu.den <- I/(sigma^2) + 1/(c^2) + 1/lambda
     mu_next <- mu.num/mu.den
-    grad_vec <- grad_logp(mu_next, sigma, eta_next) - (c(eta_next, mu_next) - c(eta, mu))/lambda
+    grad_vec <- grad_logp(mu_next, sigma, eta_next) - 
+                    (c(eta_next, mu_next) - c(eta, mu))/lambda
   }
   optima <- c(eta_next, mu_next)
   return(optima)
@@ -208,7 +210,7 @@ mymala <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
     else
     {
       samp.mym[i,] <- samp_current
-      wts_is_est[i] <- wts_is_est[i-1]
+      wts_is_est[i] <- psi_lambda_val - psi_val
     }
     samp_current <- samp.mym[i,]
     if(i %% (iter/10) == 0){
@@ -326,7 +328,7 @@ mybarker <- function(eta_start, mu_start, lambda, sigma, iter, delta, data)
     else
     {
       samp.bark[i,] <- samp_current
-      wts_is_est[i] <- wts_is_est[i-1]
+      wts_is_est[i] <- psi_lambda_val - psi_val
     }
     samp_current <- samp.bark[i,]
     if(i %% (iter/10) == 0){
@@ -444,6 +446,7 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
 {
   samp.hmc <- matrix(0, nrow = iter, ncol = I+1)
   wts_is_est <- numeric(length = iter)
+  L_val <- L
   
   # starting value computations
   samp <- c(eta_start, mu_start)
@@ -466,6 +469,7 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
                           lambda, eta_start, mu_start, sigma)
     p_current <- p_prop - eps_hmc*U_samp /2  # half step for momentum
     q_current <- samp
+    L <- ifelse(runif(1) <= 0.05, 1, L_val)  # L chosen randomly
     for (j in 1:L)
     {
       samp <- samp + eps_hmc*p_current   # full step for position
@@ -501,8 +505,8 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
     else
     {
       samp.hmc[i,] <- q_current
-      psi_val <- - log_p(q_current[1:I], q_current[I+1], data)
-      wts_is_est[i] <- U_curr - psi_val
+      #psi_val <- - log_p(q_current[1:I], q_current[I+1], data)
+      wts_is_est[i] <- wts_is_est[i-1]
       samp <- q_current
     }
     if(i %% (iter/10) == 0){
@@ -520,6 +524,7 @@ myhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
 pxhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
 {
   samp.hmc <- matrix(0, nrow = iter, ncol = I+1)
+  L_val <- L
   
   # starting value computations
   samp <- c(eta_start, mu_start)
@@ -536,6 +541,7 @@ pxhmc <- function(eta_start, mu_start,lambda, sigma, iter, data, eps_hmc, L)
                           lambda, eta_start, mu_start, sigma)
     p_current <- p_prop - eps_hmc*U_samp /2  # half step for momentum
     q_current <- samp
+    L <- ifelse(runif(1) <= 0.05, 1, L_val)  # L chosen randomly
     for (j in 1:L)
     {
       samp <- samp + eps_hmc*p_current   # full step for position

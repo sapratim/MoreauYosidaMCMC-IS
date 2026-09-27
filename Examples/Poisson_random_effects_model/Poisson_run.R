@@ -22,8 +22,13 @@ output_poisson <- foreach(b = 1:reps) %dopar% {
   
 ################  MALA  ##################
   
-  ismala <- mymala(eta_start, mu_start, lambda, sigma_eta, iter = iter, delta = delta_mym, data)
-  pxmala <- px.mala(eta_start, mu_start, lambda, sigma_eta, iter = iter, delta = delta_pxm, data)
+  time_ism <- system.time(ismala <- mymala(eta_start, mu_start, lambda, sigma_eta, 
+                                          iter = iter, delta = delta_mym, data))
+  time_pxm <- system.time(pxmala <- px.mala(eta_start, mu_start, lambda, sigma_eta,
+                                           iter = iter, delta = delta_pxm, data))
+  
+  time_ism <- time_ism["elapsed"]
+  time_pxm <- time_pxm["elapsed"]
   
   mala_chain <- matrix(unlist(ismala[[1]]), nrow = iter, ncol = I+1)
   weights_ism <- exp(as.numeric(unlist(ismala[[2]])))
@@ -35,9 +40,16 @@ output_poisson <- foreach(b = 1:reps) %dopar% {
   
 ################  Barker  ##################  
   
-  isbark <- mybarker(eta_start, mu_start, lambda, sigma_eta, iter = iter, delta = delta_mybark, data)
-  pxbark <- px.barker(eta_start, mu_start, lambda, sigma_eta, iter = iter, delta = delta_pxbark, data)
-  true_bark <- barker(eta_start,mu_start,sigma_eta,iter = iter, delta = delta_bark, data)
+  time_isb <- system.time(isbark <- mybarker(eta_start, mu_start, lambda, sigma_eta, 
+                                             iter = iter, delta = delta_mybark, data))
+  time_pxb <- system.time(pxbark <- px.barker(eta_start, mu_start, lambda, sigma_eta,
+                                              iter = iter, delta = delta_pxbark, data))
+  time_trueb <- system.time(true_bark <- barker(eta_start, mu_start, sigma_eta, 
+                                                iter = iter, delta = delta_bark, data))
+  
+  time_isb <- time_isb["elapsed"]
+  time_pxb <- time_pxb["elapsed"]
+  time_trueb <- time_trueb["elapsed"]
   
   bark_chain <- matrix(unlist(isbark[[1]]), nrow = iter, ncol = I+1)
   weights_isb <- exp(as.numeric(unlist(isbark[[2]])))
@@ -50,8 +62,13 @@ output_poisson <- foreach(b = 1:reps) %dopar% {
   
 ################  HMC  ##################    
   
-  my.hmc <- myhmc(eta_start, mu_start,lambda, sigma_eta, iter = iter, data, eps_hmc=0.06, L=10)
-  px.hmc <- pxhmc(eta_start, mu_start,lambda, sigma_eta, iter = iter, data, eps_hmc=0.002, L=10) 
+  time_ish <- system.time(my.hmc <- myhmc(eta_start, mu_start,lambda, 
+                                      sigma_eta, iter = iter, data, eps_hmc=0.06, L=10))
+  time_pxh <- system.time(px.hmc <- pxhmc(eta_start, mu_start,lambda, 
+                                      sigma_eta, iter = iter, data, eps_hmc=0.0025, L=10)) 
+  
+  time_ish <- time_ish["elapsed"]
+  time_pxh <- time_pxh["elapsed"]
   
   hmc_chain <- matrix(unlist(my.hmc[[1]]), nrow = iter, ncol = I+1)
   weights_hmc <- exp(as.numeric(unlist(my.hmc[[2]])))
@@ -61,8 +78,10 @@ output_poisson <- foreach(b = 1:reps) %dopar% {
   asymp_covmat_ishmc <- asymp_covmat_fn(hmc_chain, weights_hmc) 
   asymp_covmat_pxhmc <- mcse.multi(px.hmc[[1]])$cov   # PxMALA asymptotic variance
   
-  list(asymp_covmat_ism, asymp_covmat_pxm, asymp_covmat_isb, asymp_covmat_pxb, asymp_covmat_trubark,
-       asymp_covmat_ishmc, asymp_covmat_pxhmc, n_eff_mala, n_eff_bark, n_eff_hmc)
+  list(asymp_covmat_ism, asymp_covmat_pxm, asymp_covmat_isb, asymp_covmat_pxb, 
+       asymp_covmat_trubark, asymp_covmat_ishmc, asymp_covmat_pxhmc, time_ism, 
+       time_pxm, time_isb, time_pxb, time_trueb, time_ish, time_pxh, n_eff_mala,
+                                                               n_eff_bark, n_eff_hmc)
 }
 
 save(output_poisson, file = "output_poisson.Rdata")

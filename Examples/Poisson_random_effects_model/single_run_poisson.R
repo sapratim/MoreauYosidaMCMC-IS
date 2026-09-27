@@ -11,7 +11,7 @@ isbark <- mybarker(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0
 pxbark <- px.barker(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0.0006, data)
 true_bark <- barker(eta_start, mu_start, sigma_eta, iter = rep, delta = 0.0012, data)
 my.hmc <- myhmc(eta_start, mu_start,lambda, sigma_eta, iter = rep, data, eps_hmc=0.06, L=10)
-px.hmc <- pxhmc(eta_start, mu_start,lambda, sigma_eta, iter = rep, data, eps_hmc=0.002, L=10) 
+px.hmc <- pxhmc(eta_start, mu_start,lambda, sigma_eta, iter = rep, data, eps_hmc=0.0022, L=10) 
 
 output_chain_mala <- list(ismala[[1]], pxmala)
 output_chain_bark <- list(isbark[[1]], pxbark[[1]], true_bark[[1]])

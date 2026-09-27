@@ -128,7 +128,10 @@ for (i in 1:100)
     margvar_pxm[i,j] <- asympmat_pxm[j,j]
   }
 }
-rel_eff_mat_mala <- margvar_pxm/margvar_ism
+time_ism <- sapply(output_poisson, function(x) x[[8]])
+time_pxm <- sapply(output_poisson, function(x) x[[9]])  
+  
+rel_eff_mat_mala <- (margvar_pxm*time_pxm)/(margvar_ism*time_ism)
 
 #### Marginal variance comparison for Barker
 #x <- c(1:100)
@@ -148,8 +151,11 @@ for (i in 1:100)
     margvar_trub[i,j] <- asympmat_trub[j,j]
   }
 }
+
+time_trub <- sapply(output_poisson, function(x) x[[12]])
+
 # rel_eff_mat_bark <- margvar_pxb/margvar_isb
-rel_eff_mat_trubark <- margvar_trub/margvar_ism
+rel_eff_mat_trubark <- (margvar_trub*time_trub)/(margvar_ism*time_ism)
 
 #### Marginal variance comparison for HMC
 
@@ -165,7 +171,10 @@ for (i in 1:100)
     margvar_pxh[i,j] <- asympmat_pxh[j,j]
   }
 }
-rel_eff_mat_hmc <- margvar_pxh/margvar_ish
+time_ish <- sapply(output_poisson, function(x) x[[13]])
+time_pxh <- sapply(output_poisson, function(x) x[[14]])  
+
+rel_eff_mat_hmc <- (margvar_pxh*time_pxh)/(margvar_ish*time_ish)
 
 # pdf(file = "plots/boxplot_mala.pdf", width = 12, height = 8)
 # boxplot(rel_eff_mat_mala, use.cols = TRUE, xlab = "Coordinate", 
@@ -201,7 +210,7 @@ dev.off()
 
 pdf(file = "plots/poisson_eff_hmc.pdf", height = 5, width = 6)
 boxplot(avg_rel_eff_hmc, col = "pink", horizontal = TRUE, boxwex = .5, show.names = TRUE, 
-  names = "HMCs", ylab = "Relative Efficiencies")
+  names = "HMCs", ylab = "Relative efficiency")
 dev.off()
 
 # pdf(file = "plots/hist_pois_mala.pdf", width = 10, height = 8)

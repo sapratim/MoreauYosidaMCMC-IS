@@ -75,7 +75,6 @@ dev.off()
 ####### Replications experiment  #####
 load("output_nucl_norm.Rdata")
 
-
 mar_eff_mala <- matrix(0, nrow = 100, ncol = length(y))
 mar_eff_hmc <- matrix(0, nrow = 100, ncol = length(y))
 
@@ -85,11 +84,11 @@ time_ish <- as.numeric(sapply(output, function(x) x[[7]]))
 time_pxh <- as.numeric(sapply(output, function(x) x[[8]]))
 
 for (i in 1:100) {
-  mar_eff_mala[i,] <- as.numeric(unlist(output[[i]][2])*time_pxm[i])/as.numeric(unlist(output[[i]][1])*time_ism[i])
-  mar_eff_hmc[i,] <- as.numeric(unlist(output[[i]][4])*time_pxh[i])/as.numeric(unlist(output[[i]][3])*time_ish[i])
+  mar_eff_mala[i,] <- as.numeric(unlist(output[[i]][2])*time_pxm[i])/
+                                     as.numeric(unlist(output[[i]][1])*time_ism[i])
+  mar_eff_hmc[i,] <- as.numeric(unlist(output[[i]][4])*time_pxh[i])/
+                                     as.numeric(unlist(output[[i]][3])*time_ish[i])
 }
-
-
 
 #############  Histogram
 
