@@ -104,7 +104,7 @@ colnames(avg_eff) <- c("MALA", "HMC")
 
 pdf("Rcpp/plots/nn_boxeff.pdf", height = 5, width = 8)
 boxplot(avg_eff, ylab = "Relative efficiency", xaxt = "n",
-  boxwex = .5, col = "pink", horizontal  = TRUE, ylim = c(0.5,2.5))
+  boxwex = .5, col = "pink", horizontal  = TRUE, ylim = c(1,2.8))
 axis(1, at = seq(1, 3, by = .5))
 dev.off()
 
