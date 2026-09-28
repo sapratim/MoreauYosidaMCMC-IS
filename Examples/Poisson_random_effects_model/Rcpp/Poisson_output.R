@@ -225,3 +225,4 @@ dev.off()
 # pdf(file = "Rcpp/plots/hist_pois_hmc.pdf", width = 10, height = 8)
 # hist(avg_rel_eff_hmc, breaks = 10, main = NULL, xlab = "Average relative efficiency")
 # dev.off()
+
