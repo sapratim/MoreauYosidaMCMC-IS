@@ -1,0 +1,125 @@
+###############################
+# File runs the Nuclear Norm
+# example, all samplers in Rcpp
+# Run from the project root
+###############################
+
+library(mcmcse)
+library(foreach)
+library(doParallel)
+
+# Use a fresh cache for this run, including when retrying after a failed run.
+cache_dir <- tempfile("nuclear_norm_rcpp_")
+options(nuclear_norm.rcpp.cache_dir = cache_dir)
+source("Rcpp/nuclear_norm_functions.R")
+load("warmup_chain.Rdata")
+data <- generate_checkerboard(seed = 8024248)
+y <- data$y
+
+iter <- 1e5
+lamb_coeff <- 1e-4
+sigma2_hat <- 0.01
+alpha_hat <- 1.15/sigma2_hat
+step_ismala <- 0.00012
+step_pxmala <- 0.0001
+# step_isb <- 0.0001
+# step_pxb <- 0.0001
+eps_is <- 0.008
+eps_px <- 0.0038
+L <- 10
+verbose <- TRUE
+
+output <- list()
+parallel::detectCores()
+num_cores <- 20
+reps <- 100
+
+# Load workers one at a time: sourceCpp writes to its cache even when reusing
+# compiled code. Concurrent loads can read a temporarily empty cache file.
+# outfile = "" forwards progress to the console.
+cluster <- parallel::makePSOCKcluster(num_cores, outfile = "")
+output <- tryCatch({
+  for (worker in seq_along(cluster)) {
+    parallel::clusterCall(cluster[worker], function(project_dir, cache) {
+      setwd(project_dir)
+      options(nuclear_norm.rcpp.cache_dir = cache)
+      source("Rcpp/nuclear_norm_functions.R")
+      NULL
+    }, getwd(), cache_dir)
+  }
+  doParallel::registerDoParallel(cluster)
+  # Separate random streams for sampling; this does not change the data seed.
+  parallel::clusterSetRNGStream(cluster, iseed = 20260928)
+
+output <- foreach(b = 1:reps, .packages = "mcmcse",
+                  .noexport = c("px.mala", "mymala", "px.barker", "mybarker",
+                                "pxhmc", "myhmc", "nn_sample_cpp",
+                                "asymp_cov_func", "importance_weights")) %dopar% {
+cat("Replication", b, "of", reps, "\n")
+######################### Running MALA #########################
+
+time_pxm <- system.time(result_pxm <- px.mala(y=y, alpha = alpha_hat, lambda = lamb_coeff,
+             sigma2 = sigma2_hat, iter = iter, delta = step_pxmala,
+             start = warmup_end_iter, verbose = verbose))
+comp_var <- mcse.mat(result_pxm)
+asymp_var_pxm <- iter*(comp_var[,2]^2)   # PxMALA asymptotic variance
+time_pxm <- time_pxm["elapsed"]
+rm(result_pxm)
+
+time_ism <- system.time(result_ism <- mymala(y=y, alpha = alpha_hat, lambda = lamb_coeff,
+             sigma2 = sigma2_hat, iter = iter, delta = step_ismala,
+             start = warmup_end_iter, verbose = verbose))
+# Subtracting the maximum log weight is a numerically stable rescaling.
+wts_mala <- importance_weights(result_ism[[2]])
+asymp_var_ism <- asymp_cov_func(result_ism[[1]], wts_mala)
+n_eff_mala <- (mean(wts_mala)^2)/mean(wts_mala^2)
+time_ism <- time_ism["elapsed"]
+rm(result_ism)
+
+######################### Running Barker #########################
+
+# time_pxb <- system.time(result_pxb <- px.barker(y=y, alpha = alpha_hat, lambda = lamb_coeff,
+#              sigma2 = sigma2_hat, iter = iter, delta = step_pxb,
+#              start = warmup_end_iter, verbose = verbose))
+# comp_var <- mcse.mat(result_pxb[[1]])
+# asymp_var_pxb <- iter*(comp_var[,2]^2)   # PxBarker asymptotic variance
+# time_pxb <- time_pxb["elapsed"]
+# rm(result_pxb)
+#
+# time_isb <- system.time(result_isb <- mybarker(y=y, alpha = alpha_hat, lambda = lamb_coeff,
+#              sigma2 = sigma2_hat, iter = iter, delta = step_isb,
+#              start = warmup_end_iter, verbose = verbose))
+# wts_bark <- importance_weights(result_isb[[2]])
+# asymp_var_isb <- asymp_cov_func(result_isb[[1]], wts_bark)
+# n_eff_bark <- (mean(wts_bark)^2)/mean(wts_bark^2)
+# time_isb <- time_isb["elapsed"]
+# rm(result_isb)
+
+######################### Running HMC #########################
+
+time_pxh <- system.time(result_pxhmc <- pxhmc(y=y, alpha = alpha_hat, lambda = lamb_coeff,
+          sigma2 = sigma2_hat, iter = iter, eps_hmc = eps_px, L=L,
+          start = warmup_end_iter, verbose = verbose))
+comp_var <- mcse.mat(result_pxhmc[[1]])
+asymp_var_pxhmc <- iter*(comp_var[,2]^2)   # PxHMC asymptotic variance
+time_pxh <- time_pxh["elapsed"]
+rm(result_pxhmc)
+
+time_ish <- system.time(result_ishmc <- myhmc(y=y, alpha = alpha_hat, lambda = lamb_coeff,
+          sigma2 = sigma2_hat, iter = iter, eps_hmc = eps_is, L=L,
+          start = warmup_end_iter, verbose = verbose))
+wts_hmc <- importance_weights(result_ishmc[[2]])
+asymp_var_ishmc <- asymp_cov_func(result_ishmc[[1]], wts_hmc)
+n_eff_hmc <- (mean(wts_hmc)^2)/mean(wts_hmc^2)
+time_ish <- time_ish["elapsed"]
+rm(result_ishmc)
+
+list(asymp_var_ism, asymp_var_pxm, asymp_var_ishmc, asymp_var_pxhmc,
+     time_ism, time_pxm, time_ish, time_pxh, n_eff_mala, n_eff_hmc)
+}
+output
+}, finally = {
+  parallel::stopCluster(cluster)
+  foreach::registerDoSEQ()
+})
+save(output, file = "Rcpp/output_nucl_norm.Rdata")
