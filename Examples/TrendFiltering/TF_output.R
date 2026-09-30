@@ -44,7 +44,7 @@ for (i in 2:100)
 boxplot(t(diff.acf),
         xlab = "Lags", col = "pink",
         ylab = "Difference in ACFs of MALAs",ylim = range(diff.acf),
-        names = 0:lag.max, show.names = TRUE)
+        names = 0:lag.max, show.names = TRUE, cex.lab = 1.5)
 dev.off()
 ######## Barker #################
 
@@ -94,7 +94,7 @@ for (i in 2:100)
 boxplot(t(diff.acf),
         xlab = "Lags", col = "pink",
         ylab = "Difference in ACF of HMCs",ylim = range(diff.acf),
-        names = 0:lag.max, show.names = TRUE)
+        names = 0:lag.max, show.names = TRUE, cex.lab = 1.5)
 
 dev.off()
 
@@ -183,12 +183,12 @@ avg_rel_eff_hmc <- apply(rel_eff_mat_hmc, 2, mean)
 
 pdf("plots/tf_boxeff_mala.pdf", height = 5, width = 6)
 boxplot(avg_rel_eff_mala, names = "Relative efficiency for MALA", show.names = TRUE,
-        boxwex = .5, col = "pink", horizontal  = TRUE)
+        boxwex = .5, col = "pink", horizontal  = TRUE, cex.axis = 1.5)
 dev.off()
 
 pdf("plots/tf_boxeff_hmc.pdf", height = 5, width = 6)
 boxplot(avg_rel_eff_hmc, names = "Relative efficiency for HMC", show.names = TRUE,
-        boxwex = .5, col = "pink", horizontal = TRUE)
+        boxwex = .5, col = "pink", horizontal = TRUE, cex.axis = 1.5)
 dev.off()
 
 # pdf(file = "plots/hist_tf_mala.pdf", width = 10, height = 8)
@@ -267,6 +267,17 @@ plot <- ggplot(dataset, aes(x = x)) +
   theme(
     panel.background = element_rect(fill = "grey90", color = NA),
     plot.background = element_rect(fill = "grey90", color = NA),
+    
+    # Axis labels: "Index" and "y"
+    axis.title = element_text(size = 16),
+    
+    # Axis tick labels
+    axis.text = element_text(size = 13),
+    
+    # Legend text
+    legend.text = element_text(size = 14),
+    
+    # Legend position
     legend.position = c(0.95, 0.95),
     legend.justification = c("right", "top"),
     legend.background = element_rect(fill = "white", color = "black")
