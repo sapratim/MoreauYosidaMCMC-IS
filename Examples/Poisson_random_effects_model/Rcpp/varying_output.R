@@ -2,8 +2,8 @@
 
 ############## varying lambda output ################
 
-lambda <- seq(0.0001, 0.01, length = 10)
-load("output_variable_lambda.Rdata")
+lambda <- seq(0.0001, 0.004, length = 10)
+load("Rcpp/output_variable_lambda.Rdata")
 
 matrices_mala <- lapply(output_lambda, '[[', 1)
 
@@ -21,20 +21,23 @@ y_mala <- rowMeans(mean_mat_mala)
 y_bark <- rowMeans(mean_mat_bark)
 y_hmc  <- rowMeans(mean_mat_hmc)
 
-pdf("plots/varying_lambda.pdf", width = 8, height = 6)
+pdf("Rcpp/plots/varying_lambda.pdf", width = 8, height = 6)
 
 plot(lambda, y_mala,
      type = "o",
      col = "red",
      xlab = expression(lambda),
      ylab = "Relative efficiency per unit time",
-     ylim = range(c(y_mala, y_bark, y_hmc)))
+     ylim = range(c(y_mala, y_bark, y_hmc)),
+     cex.axis = 1.5, cex.lab = 1.5)
 
 lines(lambda, y_bark,
       col = "blue", type = "o")
 
 lines(lambda, y_hmc,
       col = "orange", type = "o")
+
+abline(v = 0.001, lty = 2)
 
 legend("topright",
        legend = c("ISMALA vs PxMALA",
