@@ -5,15 +5,15 @@ cache_dir <- tempfile("poisson_rcpp_")
 options(poisson.rcpp.cache_dir = cache_dir)
 source("Rcpp/Poisson_functions.R")
 
-lambda <- seq(0.0001, 0.01, length = 10)
+lambda <- seq(0.0001, 0.004, length = 10)
 eta_start <- log(rowMeans(data)+1)
 mu_start <- mean(eta_start)
-iter <- 1e4
+iter <- 1e6
 
-delta_mym_seq <- c(0.00135, 0.0038, 0.0055, 0.0075, 0.009, 0.012, 0.013, 0.0135, 0.015, 0.017)
-delta_pxm_seq <- c(0.0011, 0.00062, 0.0005, 0.00046, 0.00042, 0.00035, 0.00037, 0.00032, 0.0003, 0.00027)
-delta_mybark_seq <- c(0.0015, 0.0032, 0.0045, 0.0058, 0.0068, 0.008, 0.0088, 0.01, 0.011, 0.0122)
-delta_pxbark_seq <- c(0.0012, 0.00065, 0.0005, 0.00035, 0.00034, 0.00038, 0.00038, 0.0003, 0.0003, 0.00028)
+delta_mym_seq <- c(0.0013, 0.00235, 0.0032, 0.004, 0.0048, 0.0055, 0.0062, 0.007, 0.0075, 0.0082)
+delta_pxm_seq <- c(0.001, 0.0008, 0.0006, 0.00055, 0.00048, 0.00045, 0.0004, 0.00036, 0.00036, 0.00033)
+# delta_mybark_seq <- c(0.0015, 0.0032, 0.0045, 0.0058, 0.0068, 0.008, 0.0088, 0.01, 0.011, 0.0122)
+# delta_pxbark_seq <- c(0.0012, 0.00065, 0.0005, 0.00035, 0.00034, 0.00038, 0.00038, 0.0003, 0.0003, 0.00028)
 delta_bark <- 0.0012
 
 output_lambda <- list()
@@ -38,14 +38,16 @@ output_lambda <- tryCatch({
   
         output_lambda <- foreach(b = 1:reps, .packages = "mcmcse",
                             .noexport = c("mymala", "px.mala", "mybarker", "px.barker", "barker", "myhmc", "pxhmc",
-                                          "poisson_sample_cpp", "asymp_covmat_fn", "importance_weights")) %do% {
+                                          "poisson_sample_cpp", "asymp_covmat_fn", "importance_weights")) %dopar% {
                                             
         mala_lambda_var <- matrix(0, nrow = length(lambda), ncol = length(eta_start)+1)
         bark_lambda_var <- matrix(0, nrow = length(lambda), ncol = length(eta_start)+1)
         hmc_lambda_var <- matrix(0, nrow = length(lambda), ncol = length(eta_start)+1)
-                                                                                
+        
+                                                           
         time_trueb <- system.time(true_bark <- barker(eta_start, mu_start, sigma_eta, 
-                                               iter = iter, delta = delta_bark, data))                                    
+                                               iter = iter, delta = delta_bark, data))   
+        
         time_trueb <- time_trueb["elapsed"]
         
         asymp_var_trubark <- diag(mcse.multi(true_bark[[1]])$cov)                                    
@@ -56,8 +58,10 @@ output_lambda <- tryCatch({
              ################  MALA  ##################
         time_ism <- system.time(ismala <- mymala(eta_start, mu_start, lambda[i], sigma_eta, 
                                     iter = iter, delta = delta_mym_seq[i], data)) 
+        
         time_pxm <- system.time(pxmala <- px.mala(eta_start, mu_start, lambda[i], sigma_eta,
                                  iter = iter, delta = delta_pxm_seq[i], data))
+        
                                             
         time_ism <- time_ism["elapsed"]
         time_pxm <- time_pxm["elapsed"]
@@ -98,14 +102,15 @@ output_lambda <- tryCatch({
       
       
          ################  HMC  ##################    
-     eps_is <- c(0.034, 0.058, 0.075, 0.08, 0.102, 0.102, 0.108, 0.12, 0.125, 0.132)
-     eps_px <- c(0.03, 0.002, 0.0017, 0.0016, 0.0015, 0.00148, 0.00142, 0.0014, 0.0014, 0.00138)  
-     
+     eps_is <- c(0.034, 0.045, 0.0593, 0.061, 0.068, 0.075, 0.081, 0.087, 0.092, 0.097)
+     eps_px <- c(0.03, 0.0035, 0.0024, 0.002, 0.0019, 0.00175, 0.00165, 0.0016, 0.00157, 0.00155)  
+                      
      time_ish <- system.time(my.hmc <- myhmc(eta_start, mu_start,lambda[i], 
                              sigma_eta, iter = iter, data, eps_hmc= eps_is[i], L=10))
-      time_pxh <- system.time(px.hmc <- pxhmc(eta_start, mu_start,lambda[i], 
+     
+     time_pxh <- system.time(px.hmc <- pxhmc(eta_start, mu_start,lambda[i], 
                             sigma_eta, iter = iter, data, eps_hmc= eps_px[i], L=10)) 
-                                            
+                                           
       time_ish <- time_ish["elapsed"]
       time_pxh <- time_pxh["elapsed"]
                                             
@@ -119,11 +124,10 @@ output_lambda <- tryCatch({
        
        hmc_lambda_var[i,] <- (asymp_var_pxh*time_pxh)/(asymp_var_ish*time_ish)
        
-        }                                         
-  list(mala_lambda_var, bark_lambda_var, hmc_lambda_var, time_ism, time_pxm, 
+        }     
+    list(mala_lambda_var, bark_lambda_var, hmc_lambda_var, time_ism, time_pxm, 
          time_trueb, time_ish, time_pxh, n_eff_mala, n_eff_hmc)
-  }
-  
+    }
   output_lambda
 }, finally = {
   parallel::stopCluster(cluster)

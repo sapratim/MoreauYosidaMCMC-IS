@@ -27,5 +27,5 @@ dim <- c(1,5,10,20,50,100)
 
 pdf(file = "plots/dimension_vs_re.pdf", width = 8, height = 6)
 plot(dim, rel_eff_vec, type = 'o', main = "Laplace",
-     ylim = c(0.5, 10), xlab = "dimension", ylab = "Relative efficiency")
+     ylim = c(0.5, 10), xlab = "dimension", ylab = "Relative efficiency", cex.lab = 1.8,  cex.axis = 1.5,  cex.main = 1.8)
 dev.off()
