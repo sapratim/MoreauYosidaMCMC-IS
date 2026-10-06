@@ -185,15 +185,17 @@ mymala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
   for (i in 2:iter) 
   {
     # proposal step
-    prop.mean <- beta_current + (delta / 2)*grad_logpiLam(beta_current,lambda,y,sigma2,alpha,k,grid)
+    grad.curr <- -(beta_current - prox_val.curr)/lambda
+    prop.mean <- beta_current + (delta / 2)*grad.curr
     beta_next <-  prop.mean + (sqrt(delta))*rnorm(nvar, 0, 1)  
     
     # calculating prox
     prox_val.next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
+    grad.next <- -(beta_next - prox_val.next)/lambda
     targ_val.next <- log_pilambda(prox_val.next,beta_next,lambda,y,sigma2,alpha)
     
     q.next_to_curr <- sum(dnorm(beta_current, beta_next + 
-                                   (delta / 2)*grad_logpiLam(beta_next,lambda,y,sigma2,alpha,k,grid),
+                                   (delta / 2)*grad.next,
                                   sqrt(delta), log = TRUE))
     q.curr_to_next <- sum(dnorm(beta_next, prop.mean, sqrt(delta), log = TRUE)) 
     
@@ -240,20 +242,24 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
   # starting value computations
   beta_current <- start
   samp.pxm[1,] <- beta_current
+  
+  prox_curr <- prox_func(beta_current, lambda, alpha, sigma2, k, grid)
+  grad_curr <- -(beta_current - prox_curr)/lambda
+  
   U_betacurr <- log_pi(beta_current, y, sigma2, alpha)
   accept <- 0
   
   for (i in 2:iter)
   {
     # proposal step
-    prop.mean <- beta_current +  (delta / 
-                                    2)*grad_logpiLam(beta_current,lambda,y,sigma2,alpha,k,grid)
-    beta_next <-  prop.mean + sqrt(delta)*rnorm(nvar, 0, 1) 
+    prop.mean <- beta_current + (delta/2) * grad_curr
+    beta_next <- prop.mean + sqrt(delta) * rnorm(nvar)
     
+    prox_next <- prox_func(beta_next, lambda, alpha, sigma2, k, grid)
+    grad_next <- -(beta_next - prox_next)/lambda
     U_betanext <- log_pi(beta_next, y, sigma2, alpha)
     q.next_to_curr <- sum(dnorm(beta_current, beta_next +
-                                   (delta /  2)*grad_logpiLam
-                                 (beta_next,lambda,y,sigma2,alpha,k,grid), 
+                                   (delta /  2)*grad_next, 
                                  sqrt(delta), log = TRUE))
     q.curr_to_next <- sum(dnorm(beta_next, prop.mean, sqrt(delta), log = TRUE))
     
@@ -262,7 +268,11 @@ px.mala <- function(y, alpha, sigma2, k, grid, iter, delta, start)
     if(log(runif(1)) <= mh.ratio)
     {
       samp.pxm[i,] <- beta_next
+      beta_current <- beta_next
       U_betacurr <- U_betanext
+      
+      prox_curr <- prox_next
+      grad_curr <- grad_next
       accept <- accept + 1
     }
     else
@@ -398,75 +408,104 @@ myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   nvar <- length(y)
   samp.hmc <- matrix(0, nrow = iter, ncol = nvar)
   lambda <- lamb_coeff
-  wts_is_est <- numeric(length = iter)
+  wts_is_est <- numeric(iter)
   L_val <- L
   
-  # starting value computations
+  ## initial state
   beta <- start
+  samp.hmc[1, ] <- beta
+  
+  ## cache prox and gradient at current state
   proxval_curr <- prox_func(beta, lambda, alpha, sigma2, k, grid)
-  samp.hmc[1,] <- beta
+  grad_curr <- -(beta - proxval_curr)/lambda
   
-  # weights calculation
-  g_val <- - log_pi(beta, y, sigma2, alpha)
-  g_lambda_val <- - log_pilambda(proxval_curr, beta, lambda=lambda, y, sigma2, alpha)
-  wts_is_est[1] <- g_lambda_val - g_val
+  ## current MY potential
+  U_curr <- -log_pilambda(
+    proxval_curr, beta, lambda, y, sigma2, alpha
+  )
   
-  # For HMC
+  ## initial weight
+  g_val <- -log_pi(beta, y, sigma2, alpha)
+  wts_is_est[1] <- U_curr - g_val
+  
   mom_mat <- matrix(rnorm(iter*nvar), nrow = iter, ncol = nvar)
   accept <- 0
-  for (i in 2:iter) 
+  
+  for (i in 2:iter)
   {
-    p_prop <- mom_mat[i,]
-    U_beta <- -grad_logpiLam(beta, lambda,y,sigma2,alpha,k,grid)
-    p_current <- p_prop - eps_hmc*U_beta /2  # half step for momentum
+    p_prop <- mom_mat[i, ]
     q_current <- beta
-    L <- ifelse(runif(1) <= 0.05, 1, L_val)  # L chosen randomly
-    for (j in 1:L)
+    
+    ## use cached current gradient
+    U_beta <- -grad_curr
+    p_current <- p_prop - eps_hmc * U_beta / 2
+    L_run <- ifelse(runif(1) <= 0.05, 1, L_val)
+    
+    for (j in 1:L_run)
     {
-      beta <- beta + eps_hmc*p_current   # full step for position
-      U_beta <- -grad_logpiLam(beta, lambda,y,sigma2,alpha,k,grid)
-      if(j!=L) p_current <- p_current - eps_hmc*U_beta  # full step for momentum
-    }
-    p_current <- p_current - eps_hmc*U_beta/2
-    p_current <- - p_current  # negation to make proposal symmetric
-    
-    #  calculating prox
-    proxval_prop <- prox_func(beta = beta,lambda,alpha,sigma2,k,grid)
-    U_curr <- - log_pilambda(proxval_curr,q_current,lambda,y,sigma2,alpha)
-    U_prop <- - log_pilambda(proxval_prop,beta,lambda,y,sigma2,alpha)
-    K_curr <-  sum((p_prop^2)/2)
-    K_prop <-  sum((p_current^2)/2)
-    
-    log_acc_prob = U_curr - U_prop + K_curr - K_prop    # mh ratio
-    
-    if(log(runif(1)) <= log_acc_prob )
-    {
-      samp.hmc[i,] <- beta
-      proxval_curr <- proxval_prop
+      beta <- beta + eps_hmc * p_current
       
-      # weights
+      ## one prox evaluation at each new position
+      prox_beta <- prox_func(beta, lambda, alpha, sigma2, k, grid)
+      grad_beta <- -(beta - prox_beta)/lambda
+      U_beta <- -grad_beta
+      
+      if (j != L_run)
+        p_current <- p_current - eps_hmc * U_beta
+    }
+    
+    p_current <- p_current - eps_hmc * U_beta / 2
+    p_current <- -p_current
+    
+    ## final proposal prox is already prox_beta
+    proxval_prop <- prox_beta
+    grad_prop <- grad_beta
+    
+    U_prop <- -log_pilambda(
+      proxval_prop, beta, lambda, y, sigma2, alpha
+    )
+    
+    K_curr <- sum(p_prop^2)/2
+    K_prop <- sum(p_current^2)/2
+    
+    log_acc_prob <- U_curr - U_prop + K_curr - K_prop
+    
+    if (log(runif(1)) <= log_acc_prob)
+    {
+      samp.hmc[i, ] <- beta
+      
+      ## cache accepted state
+      proxval_curr <- proxval_prop
+      grad_curr <- grad_prop
+      U_curr <- U_prop
+      
+      ## weight
       g_val <- -log_pi(beta, y, sigma2, alpha)
-      wts_is_est[i] <- U_prop - g_val
+      wts_is_est[i] <- U_curr - g_val
+      
       accept <- accept + 1
     }
     else
     {
-      samp.hmc[i,] <- q_current
-      #g_val <- -log_pi(q_current, y, sigma2, alpha)
-      wts_is_est[i] <- U_curr - g_val
       beta <- q_current
+      samp.hmc[i, ] <- beta
+      
+      ## all cached quantities remain unchanged
+      wts_is_est[i] <- U_curr - g_val
     }
-    if(i %% (iter/10) == 0){
-      j <- accept/iter
-      print(cat(i, j))}
-  } 
-  print(acc_rate <- accept/iter)
-  object <- list(samp.hmc, wts_is_est, acc_rate)
-  return(object)
+    
+    if (i %% (iter/10) == 0) {
+      print(cat(i, accept/iter))
+    }
+  }
+  
+  acc_rate <- accept/iter
+  print(acc_rate)
+  
+  list(samp.hmc, wts_is_est, acc_rate)
 }
 
 ## pxhmc samples
-
 pxhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
 {
   nvar <- length(y)
@@ -474,52 +513,78 @@ pxhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   lambda <- lamb_coeff
   L_val <- L
   
-  # starting value computations
   beta <- start
-  samp.hmc[1,] <- beta
+  samp.hmc[1, ] <- beta
   
-  # For HMC
+  ## cache current gradient
+  proxval_curr <- prox_func(beta, lambda, alpha, sigma2, k, grid)
+  grad_curr <- -(beta - proxval_curr)/lambda
+  
+  ## cache current target value
+  U_curr <- -log_pi(beta, y, sigma2, alpha)
+  
   mom_mat <- matrix(rnorm(iter*nvar), nrow = iter, ncol = nvar)
   accept <- 0
   
-  for (i in 2:iter) 
+  for (i in 2:iter)
   {
-    p_prop <- mom_mat[i,]
-    U_beta <- -grad_logpiLam(beta, lambda,y,sigma2,alpha,k,grid)
-    p_current <- p_prop - eps_hmc*U_beta /2  # half step for momentum
+    p_prop <- mom_mat[i, ]
     q_current <- beta
-    L <- ifelse(runif(1) <= 0.05, 1, L_val)  # L chosen randomly
-    for (j in 1:L)
+    
+    ## cached gradient
+    U_beta <- -grad_curr
+    p_current <- p_prop - eps_hmc * U_beta / 2
+    L_run <- ifelse(runif(1) <= 0.05, 1, L_val)
+    
+    for (j in 1:L_run)
     {
-      beta <- beta + eps_hmc*p_current   # full step for position
-      U_beta <- -grad_logpiLam(beta, lambda,y,sigma2,alpha,k,grid)
-      if(j!=L) p_current <- p_current - eps_hmc*U_beta  # full step for momentum
+      beta <- beta + eps_hmc * p_current
+      
+      prox_beta <- prox_func(beta, lambda, alpha, sigma2, k, grid)
+      grad_beta <- -(beta - prox_beta)/lambda
+      U_beta <- -grad_beta
+      
+      if (j != L_run)
+        p_current <- p_current - eps_hmc * U_beta
     }
-    p_current <- p_current - eps_hmc*U_beta/2
-    p_current <- - p_current  # negation to make proposal symmetric
     
-    U_curr <- - log_pi(q_current, y, sigma2, alpha)
-    U_prop <- - log_pi(beta, y, sigma2, alpha)
-    K_curr <-  sum((p_prop^2)/2)
-    K_prop <-  sum((p_current^2)/2)
+    p_current <- p_current - eps_hmc * U_beta / 2
+    p_current <- -p_current
     
-    log_acc_prob = U_curr - U_prop + K_curr - K_prop
+    ## only target at proposal needs evaluating
+    U_prop <- -log_pi(beta, y, sigma2, alpha)
     
-    if(log(runif(1)) <= log_acc_prob )
+    K_curr <- sum(p_prop^2)/2
+    K_prop <- sum(p_current^2)/2
+    
+    log_acc_prob <- U_curr - U_prop + K_curr - K_prop
+    
+    if (log(runif(1)) <= log_acc_prob)
     {
-      samp.hmc[i,] <- beta
+      samp.hmc[i, ] <- beta
+      
+      ## cache everything at accepted proposal
+      proxval_curr <- prox_beta
+      grad_curr <- grad_beta
+      U_curr <- U_prop
+      
       accept <- accept + 1
     }
     else
     {
-      samp.hmc[i,] <- q_current
       beta <- q_current
+      samp.hmc[i, ] <- beta
+      
+      ## proxval_curr, grad_curr and U_curr remain unchanged
     }
-    if(i %% (iter/10) == 0){
-      j <- accept/iter
-      print(cat(i, j))}
-  } 
-  print(acc_rate <- accept/iter)
-  object <- list(samp.hmc, acc_rate)
-  return(object)
+    
+    if (i %% (iter/10) == 0) {
+      print(cat(i, accept/iter))
+    }
+  }
+  
+  acc_rate <- accept/iter
+  print(acc_rate)
+  
+  list(samp.hmc, acc_rate)
 }
