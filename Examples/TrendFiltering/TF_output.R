@@ -122,6 +122,7 @@ for (i in 1:100)
 }
 time_ism <- sapply(output_mala, function(x) x[[5]])
 time_pxm <- sapply(output_mala, function(x) x[[6]])
+cbind(mean(time_ism), mean(time_pxm))
 
 rel_eff_mat_mala <- (margvar_pxm*time_pxm)/(margvar_ism*time_ism)
 
@@ -159,6 +160,7 @@ for (i in 1:100)
 
 time_ish <- sapply(output_hmc, function(x) x[[5]])
 time_pxh <- sapply(output_hmc, function(x) x[[6]])
+cbind(mean(time_ish), mean(time_pxh))
 
 rel_eff_mat_hmc <- (margvar_pxh*time_pxh)/(margvar_ish*time_ish)
 
