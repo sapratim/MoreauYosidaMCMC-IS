@@ -13,7 +13,7 @@ load("single_chain_log_weights.Rdata")
 mala_wts <- exp(log_wts[[1]])
 mean(mala_wts)^2/mean(mala_wts^2)
 
-hmc_wts <- exp(log_wts[[3]])
+hmc_wts <- exp(log_wts[[2]])
 mean(hmc_wts)^2/mean(hmc_wts^2)
 
 ################ ACF plots ################
@@ -217,9 +217,9 @@ post_mean_mala_pi <- post_mean_fn(output_single_run_mala[[1]], log_wts[[1]])
 # post_med_bark_pi <- quantile_func(output_single_run_bark[[1]], exp(log_wts[[2]]), level)[[3]]
 
 ### HMC
-upper_quant_hmc_pi <- quantile_func(output_single_run_hmc[[1]], exp(log_wts[[3]]), level)[[1]]
-lower_quant_hmc_pi <- quantile_func(output_single_run_hmc[[1]], exp(log_wts[[3]]), level)[[2]]
-post_mean_hmc_pi <- post_mean_fn(output_single_run_hmc[[1]], log_wts[[3]])
+upper_quant_hmc_pi <- quantile_func(output_single_run_hmc[[1]], exp(log_wts[[2]]), level)[[1]]
+lower_quant_hmc_pi <- quantile_func(output_single_run_hmc[[1]], exp(log_wts[[2]]), level)[[2]]
+post_mean_hmc_pi <- post_mean_fn(output_single_run_hmc[[1]], log_wts[[2]])
 
 ######################## Quantiles for pi^lambda ########################
 
