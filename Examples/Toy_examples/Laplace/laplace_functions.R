@@ -171,10 +171,11 @@ dimen_func <- function(d, lambda, iter, delta_is, delta_px)
 {
   beta <- rep(1, d)
   start <- rep(0.5, d)
-  
-  mym.output <- mymala(beta, start, lambda, iter, delta_is)
-  pxm.output <- pxmala(beta, start, lambda, iter, delta_px)
-  output <- list(mym.output, pxm.output)
+  mym.time <- system.time(mym.output <- mymala(beta, start, lambda, iter, delta_is))
+  pxm.time <- system.time(pxm.output <- pxmala(beta, start, lambda, iter, delta_px))
+  time_mym <- mym.time["elapsed"]
+  time_pxm <- pxm.time["elapsed"]
+  output <- list(mym.output, pxm.output, time_mym, time_pxm)
   return(output)
 }
 

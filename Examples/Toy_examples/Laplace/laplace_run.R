@@ -59,7 +59,9 @@ output_laplace_d1 <- foreach(lam_ani = 1:length(lamb_d1)) %dopar%{
   
   asymp_margvar_is1 <- diag(asymp_cov_ism_d1)   ### marginal variance ismala
  # asymp_margvar_pilam1 <- diag(asymp_cov_pilam_d1)   ### marginal variance of is for pilambda
-  rel_eff_1 <- diag(asymp_cov_pxm_d1)/ asymp_margvar_is1  ### relative efficiency wrt pi
+  time_is1 <- output_mala_d1[[3]]
+  time_px1 <- output_mala_d1[[4]]
+  rel_eff_1 <- (diag(asymp_cov_pxm_d1) * time_px1) / (asymp_margvar_is1 * time_is1) ### relative efficiency wrt pi
   
   wts <- exp(output_mala_d1[[1]][[2]])
   ess_ism_d1 <- (mean(wts)^2)/mean(wts^2)
@@ -82,7 +84,9 @@ output_laplace_d5 <- foreach(lam_ani = 1:length(lamb_d5)) %dopar%{
   
   asymp_margvar_is5 <- diag(asymp_cov_ism_d5)   ### marginal variance ismala
  # asymp_margvar_pilam5 <- diag(asymp_cov_pilam_d5)   ### marginal variance of is for pilambda
-  rel_eff_5 <- diag(asymp_cov_pxm_d5)/ asymp_margvar_is5  ### relative efficiency wrt pi
+  time_is5 <- output_mala_d5[[3]]
+  time_px5 <- output_mala_d5[[4]]
+  rel_eff_5 <- (diag(asymp_cov_pxm_d5) * time_px5)/ (asymp_margvar_is5 * time_is5 ) ### relative efficiency wrt pi
   
   wts <- exp(output_mala_d5[[1]][[2]])
   ess_ism_d5 <- (mean(wts)^2)/mean(wts^2)
@@ -104,7 +108,9 @@ output_laplace_d10 <- foreach(lam_ani = 1:length(lamb_d10)) %dopar% {
   
   asymp_margvar_is10 <- diag(asymp_cov_ism_d10)   ### marginal variance ismala
   #asymp_margvar_pilam10 <- diag(asymp_cov_pilam_d10)   ### marginal variance of is for pilambda
-  rel_eff_10 <- diag(asymp_cov_pxm_d10)/ asymp_margvar_is10  ### relative efficiency wrt pi
+  time_is10 <- output_mala_d10[[3]]
+  time_px10 <- output_mala_d10[[4]]
+  rel_eff_10 <- (diag(asymp_cov_pxm_d10) * time_px10) / (asymp_margvar_is10 * time_is10)  ### relative efficiency wrt pi
   
   wts <- exp(output_mala_d10[[1]][[2]])
   ess_ism_d10 <- (mean(wts)^2)/mean(wts^2)
@@ -126,12 +132,14 @@ output_laplace_d20 <- foreach(lam_ani = 1:length(lamb_d20)) %dopar% {
   
   asymp_margvar_is20 <- diag(asymp_cov_ism_d20)   ### marginal variance ismala
 #  asymp_margvar_pilam20 <- diag(asymp_cov_pilam_d20)   ### marginal variance of is for pilambda
-  rel_eff_20 <- diag(asymp_cov_pxm_d20)/ asymp_margvar_is20  ### relative efficiency wrt pi
+  time_is20 <- output_mala_d20[[3]]
+  time_px20 <- output_mala_d20[[4]]
+  rel_eff_20 <- (diag(asymp_cov_pxm_d20) * time_px20) / (asymp_margvar_is20 * time_is20)  ### relative efficiency wrt pi
   
   wts <- exp(output_mala_d20[[1]][[2]])
   ess_ism_d20 <- (mean(wts)^2)/mean(wts^2)
   
-  list(asymp_margvar_is20, asymp_ess_pilam_d20/iter, rel_eff_20, ess_ism_d20)
+  list(asymp_margvar_is20, asymp_ess_pilam_d20, rel_eff_20, ess_ism_d20)
 }
 save(output_laplace_d20, file = "output_d20.Rdata")
 
@@ -148,7 +156,9 @@ output_laplace_d50 <- foreach(lam_ani = 1:length(lamb_d50)) %dopar% {
   
   asymp_margvar_is50 <- diag(asymp_cov_ism_d50)   ### marginal variance ismala
   # asymp_margvar_pilam50 <- diag(asymp_cov_pilam_d50)   ### marginal variance of is for pilambda
-  rel_eff_50 <- diag(asymp_cov_pxm_d50)/ asymp_margvar_is50  ### relative efficiency wrt pi
+  time_is50 <- output_mala_d50[[3]]
+  time_px50 <- output_mala_d50[[4]]
+  rel_eff_50 <- (diag(asymp_cov_pxm_d50) * time_px50) / (asymp_margvar_is50 * time_is50)  ### relative efficiency wrt pi
   
   wts <- exp(output_mala_d50[[1]][[2]])
   ess_ism_d50 <- (mean(wts)^2)/mean(wts^2)
@@ -170,7 +180,9 @@ output_laplace_d100 <- foreach(lam_ani = 1:length(lamb_d100)) %dopar% {
   
   asymp_margvar_is100 <- diag(asymp_cov_ism_d100)   ### marginal variance ismala
   # asymp_margvar_pilam100 <- diag(asymp_cov_pilam_d100)   ### marginal variance of is for pilambda
-  rel_eff_100 <- diag(asymp_cov_pxm_d100)/ asymp_margvar_is100  ### relative efficiency wrt pi
+  time_is100 <- output_mala_d100[[3]]
+  time_px100 <- output_mala_d100[[4]]
+  rel_eff_100 <- (diag(asymp_cov_pxm_d100) * time_px100) / (asymp_margvar_is100 * time_is100)  ### relative efficiency wrt pi
   
   wts <- exp(output_mala_d100[[1]][[2]])
   ess_ism_d100 <- (mean(wts)^2)/mean(wts^2)

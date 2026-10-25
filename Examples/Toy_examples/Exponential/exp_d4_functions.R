@@ -169,9 +169,11 @@ pxmala <- function(start, lambda, iter, delta)
 dimen_func <- function(d, lambda, iter, delta_is, delta_px)
 {
   start <- rep(0.5, d)
-  mym.output <- mymala(start, lambda, iter, delta_is)
-  pxm.output <- pxmala(start, lambda, iter, delta_px)
-  output <- list(mym.output, pxm.output)
+  time.mym <- system.time(mym.output <- mymala(start, lambda, iter, delta_is))
+  time.pxm <- system.time(pxm.output <- pxmala(start, lambda, iter, delta_px))
+  time_mym <- time.mym["elapsed"]
+  time_pxm <- time.pxm["elapsed"]
+  output <- list(mym.output, pxm.output, time_mym, time_pxm)
   return(output)
 }
 

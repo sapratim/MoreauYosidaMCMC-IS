@@ -46,7 +46,7 @@ dim <- c(1,5,10,20,50,100)
 pdf(file = "plots/dimension_vs_re.pdf", width = 8, height = 6)
 par(mar = c(5, 5, 4, 2) + 0.1)
 plot(dim, mean_vec, type = 'o', main = "Laplace",
-     ylim = c(0.5, 10), xlab = "dimension", ylab = "Relative efficiency",
+     ylim = c(0.5, 8), xlab = "dimension", ylab = "Relative efficiency",
      cex.lab = 1.8,  cex.axis = 1.5,  cex.main = 1.8)
 segments(dim, mean_vec - se_vec,
          dim, mean_vec + se_vec, lwd = 3, col = "blue")
