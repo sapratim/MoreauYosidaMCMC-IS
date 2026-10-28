@@ -22,7 +22,7 @@ y <- fx_linear + rnorm(length(x), sd = 3)
 
 
 # setting parameters for the proximal mappings
-tol <- 1e-6
+tol <- 1e-3
 max_iter <- 200L
 
 
@@ -62,8 +62,9 @@ prox_func <- function(beta,lambda,alpha,sigma2,k,grid)
 {
   betaval <- (beta*sigma2+(lambda*y))/(sigma2+lambda)
   lambdaval <- (alpha)/ ((lambda + sigma2)/ (lambda*sigma2) )
-  temp = trendfilter(grid,betaval, k=k,lambda = lambdaval,
-                     control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))$beta
+  foo = trendfilter(grid,betaval, k=k,lambda = lambdaval, beta0 = y,
+                     control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))
+  temp <- foo$beta
   return(as.vector(temp))
 }
 
