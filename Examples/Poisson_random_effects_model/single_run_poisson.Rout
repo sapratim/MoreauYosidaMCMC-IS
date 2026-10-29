@@ -1,7 +1,7 @@
 
-R version 4.4.0 (2024-04-24) -- "Puppy Cup"
-Copyright (C) 2024 The R Foundation for Statistical Computing
-Platform: x86_64-pc-linux-gnu
+R version 4.5.1 (2025-06-13) -- "Great Square Root"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -17,8 +17,9 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+> # Run from the project root.
 > 
-> source("Poisson_functions.R")
+> source("Rcpp/Poisson_functions.R")
 Loading required package: iterators
 Loading required package: parallel
 > eta_start <- log(rowMeans(data)+1)
@@ -27,99 +28,99 @@ Loading required package: parallel
 > rep <- 1e6
 > 
 > ismala <- mymala(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0.0032, data)
-100000 0.057315NULL
-200000 0.115108NULL
-300000 0.172864NULL
-400000 0.230603NULL
-500000 0.288445NULL
-600000 0.346023NULL
-700000 0.40339NULL
-800000 0.46089NULL
-900000 0.51854NULL
-1000000 0.575949NULL
-[1] 0.575949
+MYMALA: 10% (100000 / 1000000)
+MYMALA: 20% (200000 / 1000000)
+MYMALA: 30% (300000 / 1000000)
+MYMALA: 40% (400000 / 1000000)
+MYMALA: 50% (500000 / 1000000)
+MYMALA: 60% (600000 / 1000000)
+MYMALA: 70% (700000 / 1000000)
+MYMALA: 80% (800000 / 1000000)
+MYMALA: 90% (900000 / 1000000)
+MYMALA: 100% (1000000 / 1000000)
+MYMALA acceptance rate: 0.575949
 > pxmala <- px.mala(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0.00065, data)
-100000 0.056959NULL
-200000 0.113517NULL
-300000 0.170333NULL
-400000 0.22703NULL
-500000 0.284255NULL
-600000 0.340689NULL
-700000 0.397683NULL
-800000 0.454493NULL
-900000 0.51106NULL
-1000000 0.567916NULL
-[1] 0.567916
+PxMALA: 10% (100000 / 1000000)
+PxMALA: 20% (200000 / 1000000)
+PxMALA: 30% (300000 / 1000000)
+PxMALA: 40% (400000 / 1000000)
+PxMALA: 50% (500000 / 1000000)
+PxMALA: 60% (600000 / 1000000)
+PxMALA: 70% (700000 / 1000000)
+PxMALA: 80% (800000 / 1000000)
+PxMALA: 90% (900000 / 1000000)
+PxMALA: 100% (1000000 / 1000000)
+PxMALA acceptance rate: 0.567917
 > isbark <- mybarker(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0.003, data)
-100000 0.05723NULL
-200000 0.114438NULL
-300000 0.171811NULL
-400000 0.229387NULL
-500000 0.286621NULL
-600000 0.343774NULL
-700000 0.40095NULL
-800000 0.457792NULL
-900000 0.515332NULL
-1000000 0.572645NULL
-[1] 0.572645
+MYBarker: 10% (100000 / 1000000)
+MYBarker: 20% (200000 / 1000000)
+MYBarker: 30% (300000 / 1000000)
+MYBarker: 40% (400000 / 1000000)
+MYBarker: 50% (500000 / 1000000)
+MYBarker: 60% (600000 / 1000000)
+MYBarker: 70% (700000 / 1000000)
+MYBarker: 80% (800000 / 1000000)
+MYBarker: 90% (900000 / 1000000)
+MYBarker: 100% (1000000 / 1000000)
+MYBarker acceptance rate: 0.574044
 > pxbark <- px.barker(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0.0006, data)
-100000 0.057959NULL
-200000 0.115708NULL
-300000 0.173261NULL
-400000 0.230837NULL
-500000 0.288305NULL
-600000 0.345989NULL
-700000 0.403793NULL
-800000 0.461484NULL
-900000 0.518721NULL
-1000000 0.576685NULL
-[1] 0.576685
+PxBarker: 10% (100000 / 1000000)
+PxBarker: 20% (200000 / 1000000)
+PxBarker: 30% (300000 / 1000000)
+PxBarker: 40% (400000 / 1000000)
+PxBarker: 50% (500000 / 1000000)
+PxBarker: 60% (600000 / 1000000)
+PxBarker: 70% (700000 / 1000000)
+PxBarker: 80% (800000 / 1000000)
+PxBarker: 90% (900000 / 1000000)
+PxBarker: 100% (1000000 / 1000000)
+PxBarker acceptance rate: 0.576686
 > true_bark <- barker(eta_start, mu_start, sigma_eta, iter = rep, delta = 0.0012, data)
-100000 0.058779NULL
-200000 0.117591NULL
-300000 0.175978NULL
-400000 0.234425NULL
-500000 0.293053NULL
-600000 0.351877NULL
-700000 0.410641NULL
-800000 0.469196NULL
-900000 0.527866NULL
-1000000 0.586191NULL
-[1] 0.586191
+Barker: 10% (100000 / 1000000)
+Barker: 20% (200000 / 1000000)
+Barker: 30% (300000 / 1000000)
+Barker: 40% (400000 / 1000000)
+Barker: 50% (500000 / 1000000)
+Barker: 60% (600000 / 1000000)
+Barker: 70% (700000 / 1000000)
+Barker: 80% (800000 / 1000000)
+Barker: 90% (900000 / 1000000)
+Barker: 100% (1000000 / 1000000)
+Barker acceptance rate: 0.586192
 > my.hmc <- myhmc(eta_start, mu_start,lambda, sigma_eta, iter = rep, data, eps_hmc=0.06, L=10)
-100000 0.06684NULL
-200000 0.134032NULL
-300000 0.201136NULL
-400000 0.268242NULL
-500000 0.335549NULL
-600000 0.402912NULL
-700000 0.470078NULL
-800000 0.536921NULL
-900000 0.604388NULL
-1000000 0.671483NULL
-[1] 0.671483
-> px.hmc <- pxhmc(eta_start, mu_start,lambda, sigma_eta, iter = rep, data, eps_hmc=0.002, L=10) 
-100000 0.067856NULL
-200000 0.135511NULL
-300000 0.203374NULL
-400000 0.271093NULL
-500000 0.338986NULL
-600000 0.406694NULL
-700000 0.474701NULL
-800000 0.542461NULL
-900000 0.610424NULL
-1000000 0.678345NULL
-[1] 0.678345
+MYHMC: 10% (100000 / 1000000)
+MYHMC: 20% (200000 / 1000000)
+MYHMC: 30% (300000 / 1000000)
+MYHMC: 40% (400000 / 1000000)
+MYHMC: 50% (500000 / 1000000)
+MYHMC: 60% (600000 / 1000000)
+MYHMC: 70% (700000 / 1000000)
+MYHMC: 80% (800000 / 1000000)
+MYHMC: 90% (900000 / 1000000)
+MYHMC: 100% (1000000 / 1000000)
+MYHMC acceptance rate: 0.663462
+> px.hmc <- pxhmc(eta_start, mu_start,lambda, sigma_eta, iter = rep, data, eps_hmc=0.0022, L=10)
+PxHMC: 10% (100000 / 1000000)
+PxHMC: 20% (200000 / 1000000)
+PxHMC: 30% (300000 / 1000000)
+PxHMC: 40% (400000 / 1000000)
+PxHMC: 50% (500000 / 1000000)
+PxHMC: 60% (600000 / 1000000)
+PxHMC: 70% (700000 / 1000000)
+PxHMC: 80% (800000 / 1000000)
+PxHMC: 90% (900000 / 1000000)
+PxHMC: 100% (1000000 / 1000000)
+PxHMC acceptance rate: 0.667588
 > 
 > output_chain_mala <- list(ismala[[1]], pxmala)
 > output_chain_bark <- list(isbark[[1]], pxbark[[1]], true_bark[[1]])
 > output_chain_hmc <- list(my.hmc[[1]], px.hmc[[1]])
 > 
-> save(output_chain_mala, file = "output_single_mala.Rdata")
-> save(output_chain_bark, file = "output_single_bark.Rdata")
-> save(output_chain_hmc, file = "output_single_hmc.Rdata")
+> save(output_chain_mala, file = "Rcpp/output_single_mala.Rdata")
+> save(output_chain_bark, file = "Rcpp/output_single_bark.Rdata")
+> save(output_chain_hmc, file = "Rcpp/output_single_hmc.Rdata")
 > 
 > 
 > proc.time()
-     user    system   elapsed 
-28466.610    19.026 28485.652 
+   user  system elapsed 
+218.341   3.554 224.569 

@@ -17,7 +17,7 @@ data <- matrix(0, nrow = I, ncol = ni_s)
 identity_mat <- diag(1, I, I)
 mu <- rnorm(1, 0, c)
 eta_vec <- rnorm(I, mu, sigma_eta)
-tol_nr <- 1e-8
+tol_nr <- 1e-2
 for (j in 1:ni_s) data[, j] <- rpois(I, exp(eta_vec))
 
 # Public mathematical helpers retain their original positional arguments.

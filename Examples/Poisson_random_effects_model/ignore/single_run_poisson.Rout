@@ -1,0 +1,125 @@
+
+R version 4.4.0 (2024-04-24) -- "Puppy Cup"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> source("Poisson_functions.R")
+Loading required package: iterators
+Loading required package: parallel
+> eta_start <- log(rowMeans(data)+1)
+> mu_start <- mean(eta_start)
+> lambda <- 0.001
+> rep <- 1e6
+> 
+> ismala <- mymala(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0.0032, data)
+100000 0.057315NULL
+200000 0.115108NULL
+300000 0.172864NULL
+400000 0.230603NULL
+500000 0.288445NULL
+600000 0.346023NULL
+700000 0.40339NULL
+800000 0.46089NULL
+900000 0.51854NULL
+1000000 0.575949NULL
+[1] 0.575949
+> pxmala <- px.mala(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0.00065, data)
+100000 0.056959NULL
+200000 0.113517NULL
+300000 0.170333NULL
+400000 0.22703NULL
+500000 0.284255NULL
+600000 0.340689NULL
+700000 0.397683NULL
+800000 0.454493NULL
+900000 0.51106NULL
+1000000 0.567916NULL
+[1] 0.567916
+> isbark <- mybarker(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0.003, data)
+100000 0.05723NULL
+200000 0.114438NULL
+300000 0.171811NULL
+400000 0.229387NULL
+500000 0.286621NULL
+600000 0.343774NULL
+700000 0.40095NULL
+800000 0.457792NULL
+900000 0.515332NULL
+1000000 0.572645NULL
+[1] 0.572645
+> pxbark <- px.barker(eta_start, mu_start, lambda, sigma_eta, iter = rep, delta = 0.0006, data)
+100000 0.057959NULL
+200000 0.115708NULL
+300000 0.173261NULL
+400000 0.230837NULL
+500000 0.288305NULL
+600000 0.345989NULL
+700000 0.403793NULL
+800000 0.461484NULL
+900000 0.518721NULL
+1000000 0.576685NULL
+[1] 0.576685
+> true_bark <- barker(eta_start, mu_start, sigma_eta, iter = rep, delta = 0.0012, data)
+100000 0.058779NULL
+200000 0.117591NULL
+300000 0.175978NULL
+400000 0.234425NULL
+500000 0.293053NULL
+600000 0.351877NULL
+700000 0.410641NULL
+800000 0.469196NULL
+900000 0.527866NULL
+1000000 0.586191NULL
+[1] 0.586191
+> my.hmc <- myhmc(eta_start, mu_start,lambda, sigma_eta, iter = rep, data, eps_hmc=0.06, L=10)
+100000 0.06684NULL
+200000 0.134032NULL
+300000 0.201136NULL
+400000 0.268242NULL
+500000 0.335549NULL
+600000 0.402912NULL
+700000 0.470078NULL
+800000 0.536921NULL
+900000 0.604388NULL
+1000000 0.671483NULL
+[1] 0.671483
+> px.hmc <- pxhmc(eta_start, mu_start,lambda, sigma_eta, iter = rep, data, eps_hmc=0.002, L=10) 
+100000 0.067856NULL
+200000 0.135511NULL
+300000 0.203374NULL
+400000 0.271093NULL
+500000 0.338986NULL
+600000 0.406694NULL
+700000 0.474701NULL
+800000 0.542461NULL
+900000 0.610424NULL
+1000000 0.678345NULL
+[1] 0.678345
+> 
+> output_chain_mala <- list(ismala[[1]], pxmala)
+> output_chain_bark <- list(isbark[[1]], pxbark[[1]], true_bark[[1]])
+> output_chain_hmc <- list(my.hmc[[1]], px.hmc[[1]])
+> 
+> save(output_chain_mala, file = "output_single_mala.Rdata")
+> save(output_chain_bark, file = "output_single_bark.Rdata")
+> save(output_chain_hmc, file = "output_single_hmc.Rdata")
+> 
+> 
+> proc.time()
+     user    system   elapsed 
+28466.610    19.026 28485.652 

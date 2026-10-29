@@ -2,16 +2,17 @@
 ################## Poisson example output visualisation ########################
 ################################################################################
 
-source("Rcpp/Poisson_functions.R")
+rm(list = ls())
+source("Poisson_functions.R")
 
 ################ ACF plots ################
-dim <- I + 1
+dim <- 51
 lag.max <- 50
-pdf("Rcpp/plots/poisson_acf_MALA.pdf", height = 6, width = 6)
+pdf("plots/poisson_acf_MALA.pdf", height = 6, width = 6)
 par(mfrow = c(1,1))
 
 ################## MALA  #####################
-load("Rcpp/output_single_mala.Rdata")
+load("output_single_mala.Rdata")
 acf_ism <- acf(output_chain_mala[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
 acf_pxm <- acf(output_chain_mala[[2]][,1], plot = FALSE, lag.max = lag.max)$acf
 
@@ -56,8 +57,8 @@ dev.off()
 # dev.off()
 
 ################## True Barker  #####################
-load("Rcpp/output_single_bark.Rdata")
-pdf("Rcpp/plots/poisson_acf_Bark.pdf", height = 6, width = 6)
+load("output_single_bark.Rdata")
+pdf("plots/poisson_acf_Bark.pdf", height = 6, width = 6)
 par(mfrow = c(1,1))
 acf_isb <- acf(output_chain_bark[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
 acf_trub <- acf(output_chain_bark[[3]][,1], plot = FALSE, lag.max = lag.max)$acf
@@ -83,9 +84,9 @@ dev.off()
 
 
 ######################## HMC ########################
-load("Rcpp/output_single_hmc.Rdata")
+load("output_single_hmc.Rdata")
 
-pdf("Rcpp/plots/poisson_acf_HMC.pdf", height = 6, width = 6)
+pdf("plots/poisson_acf_HMC.pdf", height = 6, width = 6)
 par(mfrow = c(1,1))
 
 acf_is_hmc <- acf(output_chain_hmc[[1]][,1], plot = FALSE, lag.max = lag.max)$acf
@@ -111,14 +112,13 @@ dev.off()
 
 ##################  Boxplots of marginal efficiency ##################
 
-load("Rcpp/output_poisson.Rdata")
-reps <- length(output_poisson)
+load("output_poisson.Rdata")
 
 #### Marginal variance comparison MALA
-#x <- c(seq_len(reps))
-margvar_ism <- matrix(0, nrow = reps, ncol = dim)
-margvar_pxm <- matrix(0, nrow = reps, ncol = dim)
-for (i in seq_len(reps))
+#x <- c(1:100)
+margvar_ism <- matrix(0, nrow = 100, ncol = dim)
+margvar_pxm <- matrix(0, nrow = 100, ncol = dim)
+for (i in 1:100)
 {
   asympmat_ism <- matrix(unlist(output_poisson[[i]][[1]]), nrow = dim, ncol = dim, byrow = T)
   asympmat_pxm <- matrix(unlist(output_poisson[[i]][[2]]), nrow = dim, ncol = dim, byrow = T)
@@ -134,12 +134,12 @@ time_pxm <- sapply(output_poisson, function(x) x[[9]])
 rel_eff_mat_mala <- (margvar_pxm*time_pxm)/(margvar_ism*time_ism)
 
 #### Marginal variance comparison for Barker
-#x <- c(seq_len(reps))
-#dim <- I + 1 
-# margvar_isb <- matrix(0, nrow = reps, ncol = dim)
-# margvar_pxb <- matrix(0, nrow = reps, ncol = dim)
-margvar_trub <- matrix(0, nrow = reps, ncol = dim)
-for (i in seq_len(reps))
+#x <- c(1:100)
+#dim <- 51 
+# margvar_isb <- matrix(0, nrow = 100, ncol = dim)
+# margvar_pxb <- matrix(0, nrow = 100, ncol = dim)
+margvar_trub <- matrix(0, nrow = 100, ncol = dim)
+for (i in 1:100)
 {
   # asympmat_isb <- matrix(unlist(output_poisson[[i]][[3]]), nrow = dim, ncol = dim, byrow = T)
   # asympmat_pxb <- matrix(unlist(output_poisson[[i]][[4]]), nrow = dim, ncol = dim, byrow = T)
@@ -159,9 +159,9 @@ rel_eff_mat_trubark <- (margvar_trub*time_trub)/(margvar_ism*time_ism)
 
 #### Marginal variance comparison for HMC
 
-margvar_ish <- matrix(0, nrow = reps, ncol = dim)
-margvar_pxh <- matrix(0, nrow = reps, ncol = dim)
-for (i in seq_len(reps))
+margvar_ish <- matrix(0, nrow = 100, ncol = dim)
+margvar_pxh <- matrix(0, nrow = 100, ncol = dim)
+for (i in 1:100)
 {
   asympmat_ish <- matrix(unlist(output_poisson[[i]][6]), nrow = dim, ncol = dim, byrow = T)
   asympmat_pxh <- matrix(unlist(output_poisson[[i]][7]), nrow = dim, ncol = dim, byrow = T)
@@ -176,19 +176,19 @@ time_pxh <- sapply(output_poisson, function(x) x[[14]])
 
 rel_eff_mat_hmc <- (margvar_pxh*time_pxh)/(margvar_ish*time_ish)
 
-# pdf(file = "Rcpp/plots/boxplot_mala.pdf", width = 12, height = 8)
+# pdf(file = "plots/boxplot_mala.pdf", width = 12, height = 8)
 # boxplot(rel_eff_mat_mala, use.cols = TRUE, xlab = "Coordinate", 
 #         ylab = "Average relative efficiency")
 # dev.off()
-# pdf(file = "Rcpp/plots/boxplot_bark.pdf", width = 12, height = 8)
+# pdf(file = "plots/boxplot_bark.pdf", width = 12, height = 8)
 # boxplot(rel_eff_mat_bark, use.cols = TRUE, xlab = "Coordinate", 
 #         ylab = "Average relative efficiency")
 # dev.off()
-# pdf(file = "Rcpp/plots/boxplot_trubark.pdf", width = 12, height = 8)
+# pdf(file = "plots/boxplot_trubark.pdf", width = 12, height = 8)
 # boxplot(rel_eff_mat_trubark, use.cols = TRUE, xlab = "Coordinate", 
 #         ylab = "Average relative efficiency")
 # dev.off()
-# pdf(file = "Rcpp/plots/boxplot_hmc.pdf", width = 12, height = 8)
+# pdf(file = "plots/boxplot_hmc.pdf", width = 12, height = 8)
 # boxplot(rel_eff_mat_hmc, use.cols = TRUE, xlab = "Coordinate", 
 #         ylab = "Average relative efficiency")
 # dev.off()
@@ -203,26 +203,25 @@ avg_rel_eff_trub <-  apply(rel_eff_mat_trubark, 2, mean)
 avg_rel_effs <- cbind(avg_rel_eff_mala, avg_rel_eff_trub)
 colnames(avg_rel_effs) <- c("MALAs",  "Barker vs IS-MALA")
 
-pdf(file = "Rcpp/plots/poisson_eff_mala-barker.pdf", height = 5, width = 6)
+pdf(file = "plots/poisson_eff_mala-barker.pdf", height = 5, width = 6)
 boxplot(avg_rel_effs, ylab = "Relative efficiency", show.names = TRUE,
   boxwex = .5, col = "pink", horizontal  = TRUE)
 dev.off()
 
-pdf(file = "Rcpp/plots/poisson_eff_hmc.pdf", height = 5, width = 6)
+pdf(file = "plots/poisson_eff_hmc.pdf", height = 5, width = 6)
 boxplot(avg_rel_eff_hmc, col = "pink", horizontal = TRUE, boxwex = .5, show.names = TRUE, 
   names = "HMCs", ylab = "Relative efficiency")
 dev.off()
 
-# pdf(file = "Rcpp/plots/hist_pois_mala.pdf", width = 10, height = 8)
+# pdf(file = "plots/hist_pois_mala.pdf", width = 10, height = 8)
 # hist(avg_rel_eff_mala, breaks = 10, main = NULL, xlab = "Average relative efficiency")
 # dev.off()
-# pdf(file = "Rcpp/plots/hist_pois_bark.pdf", width = 10, height = 8)
+# pdf(file = "plots/hist_pois_bark.pdf", width = 10, height = 8)
 # hist(avg_rel_eff_bark, breaks = 10, main = NULL, xlab = "Average relative efficiency")
 # dev.off()
-# pdf(file = "Rcpp/plots/hist_pois_trubark.pdf", width = 10, height = 8)
+# pdf(file = "plots/hist_pois_trubark.pdf", width = 10, height = 8)
 # hist(avg_rel_eff_trub, breaks = 10, main = NULL, xlab = "Average relative efficiency")
 # dev.off()
-# pdf(file = "Rcpp/plots/hist_pois_hmc.pdf", width = 10, height = 8)
+# pdf(file = "plots/hist_pois_hmc.pdf", width = 10, height = 8)
 # hist(avg_rel_eff_hmc, breaks = 10, main = NULL, xlab = "Average relative efficiency")
 # dev.off()
-

@@ -32,17 +32,6 @@ for (i in 1:100) {
 #         ylab = "Values", col = "lightblue",names = paste0("Column ", 1:ncol(mar_eff_hmc)))
 
 
-# MALA
-lower_mala <- apply(mar_eff_mala, 2, quantile, probs = 0.025, na.rm = TRUE)
-upper_mala <- apply(mar_eff_mala, 2, quantile, probs = 0.925, na.rm = TRUE)
-mu <- colMeans(mar_eff_mala, na.rm = TRUE)
-
-pdf(file = "Rcpp/plots/boxplots_unc_mala.pdf", width = 10, height = 5)
-# Plot the band
-matplot(1:ncol(mar_eff_mala),cbind(lower_mala, upper_mala, mu),type = "l",lty = c(2, 2, 1), 
-        lwd = 2,col = c("blue", "blue", "red"),xlab = "Column",ylab = "Value",
-        main = "90% Quantile Band and Mean for MALA")
-dev.off()
 
 # HMC
 lower_hmc <- apply(mar_eff_hmc, 2, quantile, probs = 0.025, na.rm = TRUE)

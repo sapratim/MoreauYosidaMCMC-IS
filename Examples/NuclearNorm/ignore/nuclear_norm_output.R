@@ -3,15 +3,13 @@
 ################## Nuclear Norm example output visualisation #################
 ################################################################################
 
-# Run from the project root.
-source("Rcpp/nuclear_norm_functions.R")
-y <- generate_checkerboard(seed = 8024248)$y
+source("nuclear_norm_functions.R")
 
 # Files below are too big to be on GitHub. Please run
-# source("Rcpp/single_chain.R")
-# to generate the files.
-load("Rcpp/output_single_chain_mala.Rdata")
-load("Rcpp/output_single_chain_hmc.Rdata")
+# source("single_chain.R")
+# to generate the files. Run time roughly 10 hours
+load("output_single_chain_mala.Rdata")
+load("output_single_chain_hmc.Rdata")
 
 
 # subset <- 100
@@ -20,7 +18,7 @@ dim <- length(y)
 ################ ACF plots ################
 
 #### MALA
-pdf("Rcpp/plots/nn_acf_MALA.pdf", height = 6, width = 6)
+pdf("plots/nn_acf_MALA.pdf", height = 6, width = 6)
 par(mfrow = c(1,1))
 
 lag.max <- 100
@@ -48,7 +46,7 @@ dev.off()
 
 ########################  HMC  #############################
 
-pdf("Rcpp/plots/nn_acf_HMC.pdf", height = 6, width = 6)
+pdf("plots/nn_acf_HMC.pdf", height = 6, width = 6)
 acf_is_hmc <- acf(output_single_hmc[[1]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 acf_pxhmc <- acf(output_single_hmc[[2]][,rand[1]], plot = FALSE, lag.max = lag.max)$acf
 
@@ -75,7 +73,7 @@ dev.off()
 
 ################  Boxplots visualisation  ################
 ####### Replications experiment  #####
-load("Rcpp/output_nucl_norm.Rdata")
+load("output_nucl_norm.Rdata")
 
 mar_eff_mala <- matrix(0, nrow = 100, ncol = length(y))
 mar_eff_hmc <- matrix(0, nrow = 100, ncol = length(y))
@@ -102,9 +100,9 @@ avg_eff <- cbind(avg_rel_eff_mala, avg_rel_eff_hmc)
 colnames(avg_eff) <- c("MALA", "HMC")
 
 
-pdf("Rcpp/plots/nn_boxeff.pdf", height = 5, width = 8)
+pdf("plots/nn_boxeff.pdf", height = 5, width = 8)
 boxplot(avg_eff, ylab = "Relative efficiency", xaxt = "n",
-  boxwex = .5, col = "pink", horizontal  = TRUE, ylim = c(1,2.8))
+  boxwex = .5, col = "pink", horizontal  = TRUE, ylim = c(0.5,2.5))
 axis(1, at = seq(1, 3, by = .5))
 dev.off()
 
