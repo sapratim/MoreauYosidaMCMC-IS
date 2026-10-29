@@ -22,9 +22,9 @@ y <- fx_linear + rnorm(length(x), sd = 3)
 
 
 # setting parameters for the proximal mappings
-tol <- 1e-3
+tol <- 1e-5
 max_iter <- 200L
-
+trend_control <- trendfilter.control.list(obj_tol = tol, max_iter = max_iter)
 
 # function calculates the D matrix of the penalty term
 getD <- function(k, n, x=NULL){
@@ -62,9 +62,8 @@ prox_func <- function(beta,lambda,alpha,sigma2,k,grid)
 {
   betaval <- (beta*sigma2+(lambda*y))/(sigma2+lambda)
   lambdaval <- (alpha)/ ((lambda + sigma2)/ (lambda*sigma2) )
-  foo = trendfilter(grid,betaval, k=k,lambda = lambdaval, beta0 = y,
-                     control = trendfilter.control.list(obj_tol = tol, max_iter = max_iter))
-  temp <- foo$beta
+  temp = trendfilter(grid,betaval, k=k,lambda = lambdaval,
+                     control = trend_control)$beta
   return(as.vector(temp))
 }
 
@@ -429,12 +428,12 @@ myhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   g_val <- -log_pi(beta, y, sigma2, alpha)
   wts_is_est[1] <- U_curr - g_val
   
-  mom_mat <- matrix(rnorm(iter*nvar), nrow = iter, ncol = nvar)
+  #mom_mat <- matrix(rnorm(iter*nvar), nrow = iter, ncol = nvar)
   accept <- 0
   
   for (i in 2:iter)
   {
-    p_prop <- mom_mat[i, ]
+    p_prop <- rnorm(nvar) #mom_mat[i, ]
     q_current <- beta
     
     ## use cached current gradient
@@ -524,12 +523,12 @@ pxhmc <- function(y, alpha, sigma2, k, grid, iter, eps_hmc, L, start)
   ## cache current target value
   U_curr <- -log_pi(beta, y, sigma2, alpha)
   
-  mom_mat <- matrix(rnorm(iter*nvar), nrow = iter, ncol = nvar)
+  #mom_mat <- matrix(rnorm(iter*nvar), nrow = iter, ncol = nvar)
   accept <- 0
   
   for (i in 2:iter)
   {
-    p_prop <- mom_mat[i, ]
+    p_prop <- rnorm(nvar) #mom_mat[i, ]
     q_current <- beta
     
     ## cached gradient
