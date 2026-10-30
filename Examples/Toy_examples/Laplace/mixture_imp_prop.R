@@ -53,8 +53,8 @@ mixture_means <- pxm_for_thin[seq(1, nrow(pxm_for_thin), by = 100)]  ### thinned
  hist(mym.output[[2]], breaks = breaks, probability = TRUE,
       xlim = range(mym.output[[2]], mixture.output[[2]]), ylim = ylim,
       col = rgb(1, 0, 0, 0.4), border = "red",
-      main = "Comparison of Importance Weights",
-      xlab = "Weight")
+      main = "Comparison of log of importance weights",
+      xlab = "Weight", ylab = "Frequency")
  
  hist(mixture.output[[2]], breaks = breaks, probability = TRUE,
       col = rgb(0, 0, 1, 0.4), border = "blue",
