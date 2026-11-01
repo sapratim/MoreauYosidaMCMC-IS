@@ -3,7 +3,7 @@
 ################################################################################
 
 ################ ACF plots ################
-dim <- I + 1
+dim <- 50 + 1
 lag.max <- 50
 
 ################## MALA  #####################
@@ -267,3 +267,5 @@ legend("topright", bty = "n",
 
 dev.off()
 
+
+colMeans(cbind(time_ism, time_pxm, time_ish, time_pxh, time_trub))
