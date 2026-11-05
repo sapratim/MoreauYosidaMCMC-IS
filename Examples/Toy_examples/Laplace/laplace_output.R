@@ -8,8 +8,6 @@ lamb_d5 <- seq(1e-2, 7, length = reps)
 lamb_d10 <- seq(1e-2, 4, length = reps)
 lamb_d20 <- seq(1e-2, 1.8, length = reps)
 
-
-
 ##########################  For d = 1  ##########################
 load("output_d1.Rdata")
 
@@ -20,18 +18,19 @@ is_var_d1 <- sapply(output_laplace_d1, function(l) l[[1]])
 opt_win <- c(max(lamb_d1[which(ess_d1 >= cutoff[1])]), min(lamb_d1[which(ess_d1 <= cutoff[2])]))
 
 pdf(file = "plots/lap_plot_d1.pdf", height = 4, width = 12)
+par(mar = c(5, 6, 4, 2))
 par(mfrow = c(1,3))
 
-plot(lamb_d1, ess_d1, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
+plot(lamb_d1, ess_d1, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n), cex.lab = 1.5)
 # lines(abline(h=cutoff, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
-plot(lamb_d1, pilam_var_d1, type = 'l', xlab = "lambda", 
-     ylab = expression(paste("MCMC ESS under ",pi^lambda))) 
+plot(lamb_d1, pilam_var_d1, type = 'l', xlab = expression(lambda), 
+     ylab = expression(paste("MCMC ESS under ",pi^lambda)), cex.lab = 1.5) 
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
-plot(lamb_d1, is_var_d1, type = 'l', xlab = "lambda",
- ylab ="Importance sampling asymptotic variance")
+plot(lamb_d1, is_var_d1, type = 'l', xlab = expression(lambda),
+ ylab ="Importance sampling asymptotic variance", cex.lab = 1.5)
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
 
@@ -48,18 +47,19 @@ opt_win <- c(max(lamb_d5[which(ess_d5 >= cutoff[1])]), min(lamb_d5[which(ess_d5 
 
 
 pdf(file = "plots/lap_plot_d5.pdf", height = 4, width = 12)
+par(mar = c(5, 6, 4, 2))
 par(mfrow = c(1,3))
 
-plot(lamb_d5, ess_d5, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
+plot(lamb_d5, ess_d5, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n), cex.lab = 1.5)
 # lines(abline(h=cutoff, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d5, pilam_var_d5, type = 'l', xlab = expression(lambda), 
-  ylab = expression(paste("MCMC ESS under ",pi^lambda))) 
+  ylab = expression(paste("MCMC ESS under ",pi^lambda)), cex.lab = 1.5) 
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d5, is_var_d5, type = 'l', xlab = expression(lambda), 
-  ylab ="Importance sampling asymptotic variance")
+  ylab ="Importance sampling asymptotic variance", cex.lab = 1.5)
 
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
@@ -75,18 +75,19 @@ is_var_d10 <- colMeans(sapply(output_laplace_d10, function(l) l[[1]]))
 opt_win <- c(max(lamb_d10[which(ess_d10 >= cutoff[1])]), min(lamb_d10[which(ess_d10 <= cutoff[2])]))
 
 pdf(file = "plots/lap_plot_d10.pdf", height = 4, width = 12)
+par(mar = c(5, 6, 4, 2))
 par(mfrow = c(1,3))
 
-plot(lamb_d10, ess_d10, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
+plot(lamb_d10, ess_d10, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n), cex.lab = 1.5)
 # lines(abline(h=cutoff, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d10, pilam_var_d10, type = 'l', xlab = expression(lambda), 
-  ylab = expression(paste("MCMC ESS under ",pi^lambda))) 
+  ylab = expression(paste("MCMC ESS under ",pi^lambda)), cex.lab = 1.5) 
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d10, is_var_d10, type = 'l', xlab = expression(lambda), 
-  ylab ="Importance sampling asymptotic variance")
+  ylab ="Importance sampling asymptotic variance", cex.lab = 1.5)
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
 
@@ -102,18 +103,19 @@ opt_win <- c(max(lamb_d20[which(ess_d20 >= cutoff[1])]), min(lamb_d20[which(ess_
 
 
 pdf(file = "plots/lap_plot_d20.pdf", height = 4, width = 12)
+par(mar = c(5, 6, 4, 2))
 par(mfrow = c(1,3))
 
-plot(lamb_d20, ess_d20, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
+plot(lamb_d20, ess_d20, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n), cex.lab = 1.5)
 # lines(abline(h=cutoff, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d20, pilam_var_d20, type = 'l', xlab = expression(lambda), 
-  ylab = expression(paste("MCMC ESS under ",pi^lambda))) 
+  ylab = expression(paste("MCMC ESS under ",pi^lambda)), cex.lab = 1.5) 
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot(lamb_d20, is_var_d20, type = 'l', xlab = expression(lambda), 
-  ylab ="Importance sampling asymptotic variance")
+  ylab ="Importance sampling asymptotic variance", cex.lab = 1.5)
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
 

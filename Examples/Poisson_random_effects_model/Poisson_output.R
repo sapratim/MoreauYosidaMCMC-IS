@@ -261,7 +261,7 @@ abline(v = 0.001, lty = 2)
 legend("topright", bty = "n",
        legend = c("ISMALA vs PxMALA",
                   "ISMALA vs Barker",
-                  "ISHMC vs PxHMC"),
+                  "ISHMC vs nsHMC"),
        col = c("red", "blue", "orange"),
        lty = 1, cex = 0.72)
 
