@@ -23,17 +23,18 @@ is_var_d1 <- sapply(output_exp_d1, function(l) l[[1]])
 opt_win <- c(max(lamb_d1[which(ess_d1 >= cutoff[1])]), min(lamb_d1[which(ess_d1 <= cutoff[2])]))
 
 pdf(file = "plots/exp_plot_d1.pdf", height = 4, width = 12)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d1, ess_d1, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
 # lines(abline(h=cutoff, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
-plot(lamb_d1, pilam_var_d1, type = 'l', xlab = "lambda", 
+plot(lamb_d1, pilam_var_d1, type = 'l', xlab = expression(lambda), 
      ylab = expression(paste("MCMC ESS under ",pi^lambda))) 
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
-plot(lamb_d1, is_var_d1, type = 'l', xlab = "lambda",
+plot(lamb_d1, is_var_d1, type = 'l', xlab = expression(lambda),
      ylab ="Importance sampling asymptotic variance")
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
@@ -49,6 +50,7 @@ opt_win <- c(max(lamb_d5[which(ess_d5 >= cutoff[1])]), min(lamb_d5[which(ess_d5 
 
 
 pdf(file = "plots/exp_plot_d5.pdf", height = 4, width = 12)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d5, ess_d5, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
@@ -76,6 +78,7 @@ is_var_d10 <- colMeans(sapply(output_exp_d10, function(l) l[[1]]))
 opt_win <- c(max(lamb_d10[which(ess_d10 >= cutoff[1])]), min(lamb_d10[which(ess_d10 <= cutoff[2])]))
 
 pdf(file = "plots/exp_plot_d10.pdf", height = 4, width = 12)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d10, ess_d10, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
@@ -103,6 +106,7 @@ opt_win <- c(max(lamb_d20[which(ess_d20 >= cutoff[1])]), min(lamb_d20[which(ess_
 
 
 pdf(file = "plots/exp_plot_d20.pdf", height = 4, width = 12)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d20, ess_d20, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
