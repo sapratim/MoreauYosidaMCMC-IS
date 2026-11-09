@@ -1,5 +1,5 @@
 # Run from the TrendFiltering directory:
-source("Timings_check/simple_2000_functions.R")
+source("Timings_check/timings_functions.R")
 load("warmup.Rdata")
 
 iter <- 2000
@@ -22,4 +22,5 @@ set.seed(54321)
 px <- pxhmc_record(y, alpha_hat, sigma2_hat, k = 1, grid = x,
                    iter = iter, eps_hmc = eps_px, L = L, start = warmup_end_iter)
 
+# Saves both final-proposal records and all intermediate leapfrog ADMM/roughness records.
 save(iter, my, px, file = "Timings_check/small_run.Rdata")
