@@ -7,18 +7,19 @@ library(mcmcse)
 library(foreach)
 library(doParallel)
 
-num_cores <- 25
+num_cores <- 4
 doParallel::registerDoParallel(cores = num_cores)
 
-iter <- 1e6
-reps <- 50
+iter <- 1e4
+n_lambda <- 50
+reps <- 50  # Independent replications
 
-lamb_d1 <- seq(0.1, 20, length = reps)
-lamb_d5 <- seq(1e-2, 7, length = reps)
-lamb_d10 <- seq(1e-2, 4, length = reps)
-lamb_d20 <- seq(1e-2, 1.8, length = reps)
-lamb_d50 <- seq(1e-2, 1.2, length = reps)
-lamb_d100 <- seq(1e-2, .65, length = reps)
+lamb_d1 <- seq(0.1, 20, length = n_lambda)
+lamb_d5 <- seq(1e-2, 7, length = n_lambda)
+lamb_d10 <- seq(1e-2, 4, length = n_lambda)
+lamb_d20 <- seq(1e-2, 1.8, length = n_lambda)
+lamb_d50 <- seq(1e-2, 1.2, length = n_lambda)
+lamb_d100 <- seq(1e-2, .65, length = n_lambda)
 
 
 delta_is_d1 <- seq(2.8, 45, length = length(lamb_d1))
@@ -48,7 +49,10 @@ output_laplace_d100 <- list()
 
 ######################  dimension = 1  ################################
 
-output_laplace_d1 <- foreach(lam_ani = 1:length(lamb_d1)) %dopar%{
+# Indexed as [[replication]][[lambda]][[metric]].
+output_laplace_d1 <- foreach(rep_ani = seq_len(reps), .packages = "mcmcse") %dopar% {
+  set.seed(100 + 1 * reps + rep_ani)
+  lapply(seq_along(lamb_d1), function(lam_ani) {
   
   output_mala_d1 <- dimen_func(d = 1, lambda = lamb_d1[lam_ani], iter = iter,
                                delta_is_d1[lam_ani], delta_px_d1[lam_ani])
@@ -66,14 +70,18 @@ output_laplace_d1 <- foreach(lam_ani = 1:length(lamb_d1)) %dopar%{
   wts <- exp(output_mala_d1[[1]][[2]])
   ess_ism_d1 <- (mean(wts)^2)/mean(wts^2)
   
-  list(asymp_margvar_is1, asymp_ess_pilam_d1/iter, rel_eff_1, ess_ism_d1)
+  list(asymp_margvar_is1, asymp_ess_pilam_d1, rel_eff_1, ess_ism_d1)
+  })
 }
- save(output_laplace_d1, file = "output_d1.Rdata")
+save(output_laplace_d1, n_lambda, reps, iter, lamb_d1, file = "output_d1.Rdata")
 
 
 ######################  dimension = 5  ################################
 
-output_laplace_d5 <- foreach(lam_ani = 1:length(lamb_d5)) %dopar%{
+# Indexed as [[replication]][[lambda]][[metric]].
+output_laplace_d5 <- foreach(rep_ani = seq_len(reps), .packages = "mcmcse") %dopar% {
+  set.seed(100 + 5 * reps + rep_ani)
+  lapply(seq_along(lamb_d5), function(lam_ani) {
   
   output_mala_d5 <- dimen_func(d = 5, lambda = lamb_d5[lam_ani], iter = iter,
                                delta_is_d5[lam_ani], delta_px_d5[lam_ani])
@@ -91,13 +99,17 @@ output_laplace_d5 <- foreach(lam_ani = 1:length(lamb_d5)) %dopar%{
   wts <- exp(output_mala_d5[[1]][[2]])
   ess_ism_d5 <- (mean(wts)^2)/mean(wts^2)
   
-  list(asymp_margvar_is5, asymp_ess_pilam_d5/iter , rel_eff_5, ess_ism_d5)
+  list(asymp_margvar_is5, asymp_ess_pilam_d5 , rel_eff_5, ess_ism_d5)
+  })
 }
-save(output_laplace_d5, file = "output_d5.Rdata")
+save(output_laplace_d5, n_lambda, reps, iter, lamb_d5, file = "output_d5.Rdata")
 
 ######################  dimension = 10  ################################
 
-output_laplace_d10 <- foreach(lam_ani = 1:length(lamb_d10)) %dopar% {
+# Indexed as [[replication]][[lambda]][[metric]].
+output_laplace_d10 <- foreach(rep_ani = seq_len(reps), .packages = "mcmcse") %dopar% {
+  set.seed(100 + 10 * reps + rep_ani)
+  lapply(seq_along(lamb_d10), function(lam_ani) {
   
   output_mala_d10 <- dimen_func(d = 10, lambda = lamb_d10[lam_ani], iter = iter,
                                 delta_is_d10[lam_ani], delta_px_d10[lam_ani])
@@ -115,13 +127,17 @@ output_laplace_d10 <- foreach(lam_ani = 1:length(lamb_d10)) %dopar% {
   wts <- exp(output_mala_d10[[1]][[2]])
   ess_ism_d10 <- (mean(wts)^2)/mean(wts^2)
   
-  list(asymp_margvar_is10, asymp_ess_pilam_d10/iter , rel_eff_10, ess_ism_d10)
+  list(asymp_margvar_is10, asymp_ess_pilam_d10 , rel_eff_10, ess_ism_d10)
+  })
 }
-save(output_laplace_d10, file = "output_d10.Rdata")
+save(output_laplace_d10, n_lambda, reps, iter, lamb_d10, file = "output_d10.Rdata")
 
 ######################  dimension = 20  ################################
 
-output_laplace_d20 <- foreach(lam_ani = 1:length(lamb_d20)) %dopar% {
+# Indexed as [[replication]][[lambda]][[metric]].
+output_laplace_d20 <- foreach(rep_ani = seq_len(reps), .packages = "mcmcse") %dopar% {
+  set.seed(100 + 20 * reps + rep_ani)
+  lapply(seq_along(lamb_d20), function(lam_ani) {
   
   output_mala_d20 <- dimen_func(d = 20, lambda = lamb_d20[lam_ani], iter = iter,
                                 delta_is_d20[lam_ani], delta_px_d20[lam_ani])
@@ -140,12 +156,16 @@ output_laplace_d20 <- foreach(lam_ani = 1:length(lamb_d20)) %dopar% {
   ess_ism_d20 <- (mean(wts)^2)/mean(wts^2)
   
   list(asymp_margvar_is20, asymp_ess_pilam_d20, rel_eff_20, ess_ism_d20)
+  })
 }
-save(output_laplace_d20, file = "output_d20.Rdata")
+save(output_laplace_d20, n_lambda, reps, iter, lamb_d20, file = "output_d20.Rdata")
 
 ######################  dimension = 50  ################################
 
-output_laplace_d50 <- foreach(lam_ani = 1:length(lamb_d50)) %dopar% {
+# Indexed as [[replication]][[lambda]][[metric]].
+output_laplace_d50 <- foreach(rep_ani = seq_len(reps), .packages = "mcmcse") %dopar% {
+  set.seed(100 + 50 * reps + rep_ani)
+  lapply(seq_along(lamb_d50), function(lam_ani) {
   
   output_mala_d50 <- dimen_func(d = 50, lambda = lamb_d50[lam_ani], iter = iter,
                                 delta_is_d50[lam_ani], delta_px_d50[lam_ani])
@@ -164,12 +184,16 @@ output_laplace_d50 <- foreach(lam_ani = 1:length(lamb_d50)) %dopar% {
   ess_ism_d50 <- (mean(wts)^2)/mean(wts^2)
   
   list(asymp_margvar_is50, asymp_ess_pilam_d50, rel_eff_50, ess_ism_d50)
+  })
 }
-save(output_laplace_d50, file = "output_d50.Rdata")
+save(output_laplace_d50, n_lambda, reps, iter, lamb_d50, file = "output_d50.Rdata")
 
 #######################  dimension = 100  ################################
 
-output_laplace_d100 <- foreach(lam_ani = 1:length(lamb_d100)) %dopar% {
+# Indexed as [[replication]][[lambda]][[metric]].
+output_laplace_d100 <- foreach(rep_ani = seq_len(reps), .packages = "mcmcse") %dopar% {
+  set.seed(100 + 100 * reps + rep_ani)
+  lapply(seq_along(lamb_d100), function(lam_ani) {
   
   output_mala_d100 <- dimen_func(d = 100, lambda = lamb_d100[lam_ani], iter = iter,
                                  delta_is_d100[lam_ani], delta_px_d100[lam_ani])
@@ -188,27 +212,7 @@ output_laplace_d100 <- foreach(lam_ani = 1:length(lamb_d100)) %dopar% {
   ess_ism_d100 <- (mean(wts)^2)/mean(wts^2)
   
   list(asymp_margvar_is100, asymp_ess_pilam_d100, rel_eff_100, ess_ism_d100)
+  })
 }
-save(output_laplace_d100, file = "output_d100.Rdata")
+save(output_laplace_d100, n_lambda, reps, iter, lamb_d100, file = "output_d100.Rdata")
 
-#######################  dimension = 500  ################################
-
-#   output_laplace_d500 <- foreach(lam_ani = 1:length(lamb_d500)) %dopar% {
-#   
-#   output_mala_d500 <- dimen_func(d = 500, lambda = lamb_d500[lam_ani], iter = iter,
-#                                  delta_is_d500[lam_ani], delta_px_d500[lam_ani])
-#   
-#   asymp_cov_ism_d500 <- asymp_covmat_fn(output_mala_d500[[1]][[1]], exp(output_mala_d500[[1]][[2]]))
-#   asymp_ess_pilam_d500 <- ess(output_mala_d500[[1]][[1]], r = 1)
-#   asymp_cov_pxm_d500 <- mcse.multi(output_mala_d500[[2]], r = 1)$cov
-#   
-#   asymp_margvar_is500 <- diag(asymp_cov_ism_d500)   ### marginal variance ismala
-#   # asymp_margvar_pilam100 <- diag(asymp_cov_pilam_d100)   ### marginal variance of is for pilambda
-#   rel_eff_500 <- diag(asymp_cov_pxm_d500)/ asymp_margvar_is500  ### relative efficiency wrt pi
-#   
-#   wts <- exp(output_mala_d500[[1]][[2]])
-#   ess_ism_d500 <- (mean(wts)^2)/mean(wts^2)
-#   
-#   list(asymp_margvar_is500, asymp_ess_pilam_d500, rel_eff_500, ess_ism_d500)
-# }
-# save(output_laplace_d500, file = "output_d500.Rdata") 
