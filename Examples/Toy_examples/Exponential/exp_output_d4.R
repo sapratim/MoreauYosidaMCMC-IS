@@ -5,6 +5,7 @@ load("output_d5.Rdata")
 load("output_d10.Rdata")
 load("output_d20.Rdata")
 
+iter <- 1e6    ##### Number of iterations
 reps <- 50
 cutoff <- c(0.4,0.8)
 lamb_d1 <- seq(1e-4, 5, length = reps)
@@ -23,7 +24,7 @@ is_var_d1 <- sapply(output_exp_d1, function(l) l[[1]])
 opt_win <- c(max(lamb_d1[which(ess_d1 >= cutoff[1])]), min(lamb_d1[which(ess_d1 <= cutoff[2])]))
 
 pdf(file = "plots/exp_plot_d1.pdf", height = 4, width = 12)
-par(mar = c(5, 7, 4, 2), cex.lab = 1.5)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5, cex.axis = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d1, ess_d1, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
@@ -50,7 +51,7 @@ opt_win <- c(max(lamb_d5[which(ess_d5 >= cutoff[1])]), min(lamb_d5[which(ess_d5 
 
 
 pdf(file = "plots/exp_plot_d5.pdf", height = 4, width = 12)
-par(mar = c(5, 7, 4, 2), cex.lab = 1.5)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5, cex.axis = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d5, ess_d5, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
@@ -78,7 +79,7 @@ is_var_d10 <- colMeans(sapply(output_exp_d10, function(l) l[[1]]))
 opt_win <- c(max(lamb_d10[which(ess_d10 >= cutoff[1])]), min(lamb_d10[which(ess_d10 <= cutoff[2])]))
 
 pdf(file = "plots/exp_plot_d10.pdf", height = 4, width = 12)
-par(mar = c(5, 7, 4, 2), cex.lab = 1.5)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5, cex.axis = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d10, ess_d10, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))
@@ -99,14 +100,14 @@ dev.off()
 load("output_d20.Rdata")
 
 ess_d20 <- sapply(output_exp_d20, function(l) l[[4]])
-pilam_var_d20 <- colMeans(sapply(output_exp_d20, function(l) l[[2]]))
+pilam_var_d20 <- colMeans(sapply(output_exp_d20, function(l) l[[2]])*iter) ###
 is_var_d20 <- colMeans(sapply(output_exp_d20, function(l) l[[1]]))
 
 opt_win <- c(max(lamb_d20[which(ess_d20 >= cutoff[1])]), min(lamb_d20[which(ess_d20 <= cutoff[2])]))
 
 
 pdf(file = "plots/exp_plot_d20.pdf", height = 4, width = 12)
-par(mar = c(5, 7, 4, 2), cex.lab = 1.5)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5, cex.axis = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d20, ess_d20, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n))

@@ -2,6 +2,7 @@
 # load("output_lap_laplace.Rdata")
 reps <- 50
 
+iter <- 1e6    ##### Number of iterations
 cutoff <- c(0.4,0.8)
 lamb_d1 <- seq(0.1, 20, length = reps)
 lamb_d5 <- seq(1e-2, 7, length = reps)
@@ -12,13 +13,13 @@ lamb_d20 <- seq(1e-2, 1.8, length = reps)
 load("output_d1.Rdata")
 
 ess_d1 <- sapply(output_laplace_d1, function(l) l[[4]])
-pilam_var_d1 <- sapply(output_laplace_d1, function(l) l[[2]])
+pilam_var_d1 <- sapply(output_laplace_d1, function(l) l[[2]]*iter)
 is_var_d1 <- sapply(output_laplace_d1, function(l) l[[1]])
 
 opt_win <- c(max(lamb_d1[which(ess_d1 >= cutoff[1])]), min(lamb_d1[which(ess_d1 <= cutoff[2])]))
 
 pdf(file = "plots/lap_plot_d1.pdf", height = 4, width = 12)
-par(mar = c(5, 6, 4, 2))
+par(mar = c(5, 6, 4, 2), cex.axis = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d1, ess_d1, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n), cex.lab = 1.5)
@@ -40,14 +41,14 @@ dev.off()
 load("output_d5.Rdata")
 
 ess_d5 <- sapply(output_laplace_d5, function(l) l[[4]])
-pilam_var_d5 <- colMeans(sapply(output_laplace_d5, function(l) l[[2]]))
+pilam_var_d5 <- colMeans(sapply(output_laplace_d5, function(l) l[[2]])*iter)
 is_var_d5 <- colMeans(sapply(output_laplace_d5, function(l) l[[1]]))
 
 opt_win <- c(max(lamb_d5[which(ess_d5 >= cutoff[1])]), min(lamb_d5[which(ess_d5 <= cutoff[2])]))
 
 
 pdf(file = "plots/lap_plot_d5.pdf", height = 4, width = 12)
-par(mar = c(5, 6, 4, 2))
+par(mar = c(5, 6, 4, 2), cex.axis = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d5, ess_d5, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n), cex.lab = 1.5)
@@ -69,13 +70,13 @@ dev.off()
 load("output_d10.Rdata")
 
 ess_d10 <- sapply(output_laplace_d10, function(l) l[[4]])
-pilam_var_d10 <- colMeans(sapply(output_laplace_d10, function(l) l[[2]]))
+pilam_var_d10 <- colMeans(sapply(output_laplace_d10, function(l) l[[2]])*iter)
 is_var_d10 <- colMeans(sapply(output_laplace_d10, function(l) l[[1]]))
 
 opt_win <- c(max(lamb_d10[which(ess_d10 >= cutoff[1])]), min(lamb_d10[which(ess_d10 <= cutoff[2])]))
 
 pdf(file = "plots/lap_plot_d10.pdf", height = 4, width = 12)
-par(mar = c(5, 6, 4, 2))
+par(mar = c(5, 6, 4, 2), cex.axis = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d10, ess_d10, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n), cex.lab = 1.5)
@@ -103,7 +104,7 @@ opt_win <- c(max(lamb_d20[which(ess_d20 >= cutoff[1])]), min(lamb_d20[which(ess_
 
 
 pdf(file = "plots/lap_plot_d20.pdf", height = 4, width = 12)
-par(mar = c(5, 6, 4, 2))
+par(mar = c(5, 6, 4, 2), cex.axis = 1.5)
 par(mfrow = c(1,3))
 
 plot(lamb_d20, ess_d20, type = 'l', xlab = expression(lambda), ylab = expression(n[e]/n), cex.lab = 1.5)
