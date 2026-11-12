@@ -23,8 +23,8 @@ par(mar = c(5.5, 5.5, 4, 2) + 0.1)
 plot(
   sigma2_vec, laplace_gaussian_mean_ess,
   type = "b", pch = 19, col = "steelblue",
-  xlab = expression(sigma^2), ylab = "Mean ESS / n",
-  cex.lab = 1.5, cex.axis = 1.5
+  xlab = expression(sigma^2), ylab = expression("Average " * n[e] / n),
+  cex.lab = 2, cex.axis = 2
 )
 abline(v = laplace_gaussian_sigma2, col = "firebrick", lty = 2)
 
@@ -57,7 +57,7 @@ hist(
   col = rgb(1, 0, 0, 0.4), border = "red",
   main = "Histogram of Laplace",
   xlab = "Log importance weight", ylab = "Density",
-  cex.lab = 1.5, cex.axis = 1.5, cex.main = 1.8
+  cex.lab = 2, cex.axis = 2, cex.main = 1.8
 )
 hist(
   laplace_gaussian_mix_logs, breaks = laplace_gaussian_breaks, probability = TRUE,
@@ -85,8 +85,8 @@ par(mar = c(5.5, 5.5, 4, 2) + 0.1)
 plot(
   sigma2_vec, laplace_student_mean_ess,
   type = "b", pch = 19, col = "steelblue",
-  xlab = expression(sigma^2), ylab = "Mean ESS / n",
-  cex.lab = 1.5, cex.axis = 1.5
+  xlab = expression(sigma^2), ylab = expression("Average " * n[e] / n),
+  cex.lab = 2, cex.axis = 2
 )
 abline(v = laplace_student_sigma2, col = "firebrick", lty = 2)
 
@@ -119,7 +119,7 @@ hist(
   col = rgb(1, 0, 0, 0.4), border = "red",
   main = "Histogram of Laplace",
   xlab = "Log importance weight", ylab = "Density",
-  cex.lab = 1.5, cex.axis = 1.5, cex.main = 1.8
+  cex.lab = 2, cex.axis = 2, cex.main = 1.8
 )
 hist(
   laplace_student_mix_logs, breaks = laplace_student_breaks, probability = TRUE,
@@ -147,8 +147,8 @@ par(mar = c(5.5, 5.5, 4, 2) + 0.1)
 plot(
   sigma2_vec, exp4_gaussian_mean_ess,
   type = "b", pch = 19, col = "steelblue",
-  xlab = expression(sigma^2), ylab = "Mean ESS / n",
-  cex.lab = 1.5, cex.axis = 1.5
+  xlab = expression(sigma^2), ylab = expression("Average " * n[e] / n),
+  cex.lab = 2, cex.axis = 2
 )
 abline(v = exp4_gaussian_sigma2, col = "firebrick", lty = 2)
 
@@ -181,7 +181,7 @@ hist(
   col = rgb(1, 0, 0, 0.4), border = "red",
   main = "Histogram of Super-Gaussian",
   xlab = "Log importance weight", ylab = "Density",
-  cex.lab = 1.5, cex.axis = 1.5, cex.main = 1.8
+  cex.lab = 2, cex.axis = 2, cex.main = 1.8
 )
 hist(
   exp4_gaussian_mix_logs, breaks = exp4_gaussian_breaks, probability = TRUE,
@@ -209,8 +209,8 @@ par(mar = c(5.5, 5.5, 4, 2) + 0.1)
 plot(
   sigma2_vec, exp4_student_mean_ess,
   type = "b", pch = 19, col = "steelblue",
-  xlab = expression(sigma^2), ylab = "Mean ESS / n",
-  cex.lab = 1.5, cex.axis = 1.5
+  xlab = expression(sigma^2), ylab = expression("Average " * n[e] / n),
+  cex.lab = 2, cex.axis = 2
 )
 abline(v = exp4_student_sigma2, col = "firebrick", lty = 2)
 
@@ -243,7 +243,7 @@ hist(
   col = rgb(1, 0, 0, 0.4), border = "red",
   main = "Histogram of Super-Gaussian",
   xlab = "Log importance weight", ylab = "Density",
-  cex.lab = 1.5, cex.axis = 1.5, cex.main = 1.8
+  cex.lab = 2, cex.axis = 2, cex.main = 1.8
 )
 hist(
   exp4_student_mix_logs, breaks = exp4_student_breaks, probability = TRUE,
