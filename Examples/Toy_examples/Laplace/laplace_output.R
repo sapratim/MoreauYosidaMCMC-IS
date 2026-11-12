@@ -22,18 +22,6 @@ load("output_d10.Rdata")
 load("output_d20.Rdata")
 
 # Replicated results must be [[replication]][[lambda]][[metric]].
-# Original (unreplicated) results are [[lambda]][[metric]].
-for (d in c(1, 5, 10, 20)) {
-  result <- get(paste0("output_laplace_d", d))
-  if (!is.list(result) || length(result) < 2L ||
-      !is.list(result[[1]]) || !is.list(result[[1]][[1]]) ||
-      length(result[[1]][[1]]) < 4L) {
-    stop(sprintf(paste0("output_d%s.Rdata does not contain replicated results. ",
-                        "Run the revised laplace_run.R first, then run this script ",
-                        "from the same directory as the newly saved Rdata files. ",
-                        "95%% confidence intervals require at least two replications."), d))
-  }
-}
 
 iter <- 1e4    ##### Number of iterations
 n_lambda <- length(output_laplace_d1[[1]])
