@@ -20,6 +20,8 @@ load("output_d1.Rdata")
 load("output_d5.Rdata")
 load("output_d10.Rdata")
 load("output_d20.Rdata")
+load("output_d50.Rdata")
+load("output_d50.Rdata")
 
 # Replicated results must be [[replication]][[lambda]][[metric]].
 
@@ -171,6 +173,84 @@ plot_mean_ci(lamb_d20, pilam_var_d20_reps, xlab = expression(lambda),
 # lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 
 plot_mean_ci(lamb_d20, is_var_d20_reps, xlab = expression(lambda), 
+     ylab ="Importance sampling asymptotic variance")
+lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
+dev.off()
+
+
+
+
+##########################  For d = 50  ##########################
+load("output_d50.Rdata")
+
+ess_d50_reps <- vapply(output_laplace_d50, function(rep_output)
+  vapply(rep_output, function(l) mean(l[[4]]), numeric(1)),
+  numeric(length(lamb_d50)))
+ess_d50 <- rowMeans(ess_d50_reps)
+pilam_var_d50_reps <- vapply(output_laplace_d50, function(rep_output)
+  vapply(rep_output, function(l) mean(l[[2]]), numeric(1)),
+  numeric(length(lamb_d50)))
+pilam_var_d50 <- rowMeans(pilam_var_d50_reps)
+is_var_d50_reps <- vapply(output_laplace_d50, function(rep_output)
+  vapply(rep_output, function(l) mean(l[[1]]), numeric(1)),
+  numeric(length(lamb_d50)))
+is_var_d50 <- rowMeans(is_var_d50_reps)
+
+opt_win <- c(max(lamb_d50[which(ess_d50 >= cutoff[1])]), min(lamb_d50[which(ess_d50 <= cutoff[2])]))
+
+
+pdf(file = "plots/lap_plot_d50.pdf", height = 4, width = 12)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5, cex.axis = 1.5)
+par(mfrow = c(1,3))
+
+plot_mean_ci(lamb_d50, ess_d50_reps, xlab = expression(lambda), ylab = expression(n[e]/n))
+# lines(abline(h=cutoff, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
+lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
+
+plot_mean_ci(lamb_d50, pilam_var_d50_reps, xlab = expression(lambda), 
+     ylab = expression(paste("MCMC ESS under ",pi^lambda))) 
+# lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
+
+plot_mean_ci(lamb_d50, is_var_d50_reps, xlab = expression(lambda), 
+     ylab ="Importance sampling asymptotic variance")
+lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
+dev.off()
+
+
+
+
+##########################  For d = 100  ##########################
+load("output_d100.Rdata")
+
+ess_d100_reps <- vapply(output_laplace_d100, function(rep_output)
+  vapply(rep_output, function(l) mean(l[[4]]), numeric(1)),
+  numeric(length(lamb_d100)))
+ess_d100 <- rowMeans(ess_d100_reps)
+pilam_var_d100_reps <- vapply(output_laplace_d100, function(rep_output)
+  vapply(rep_output, function(l) mean(l[[2]]), numeric(1)),
+  numeric(length(lamb_d100)))
+pilam_var_d100 <- rowMeans(pilam_var_d100_reps)
+is_var_d100_reps <- vapply(output_laplace_d100, function(rep_output)
+  vapply(rep_output, function(l) mean(l[[1]]), numeric(1)),
+  numeric(length(lamb_d100)))
+is_var_d100 <- rowMeans(is_var_d100_reps)
+
+opt_win <- c(max(lamb_d100[which(ess_d100 >= cutoff[1])]), min(lamb_d100[which(ess_d100 <= cutoff[2])]))
+
+
+pdf(file = "plots/lap_plot_d100.pdf", height = 4, width = 12)
+par(mar = c(5, 7, 4, 2), cex.lab = 1.5, cex.axis = 1.5)
+par(mfrow = c(1,3))
+
+plot_mean_ci(lamb_d100, ess_d100_reps, xlab = expression(lambda), ylab = expression(n[e]/n))
+# lines(abline(h=cutoff, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
+lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
+
+plot_mean_ci(lamb_d100, pilam_var_d100_reps, xlab = expression(lambda), 
+     ylab = expression(paste("MCMC ESS under ",pi^lambda))) 
+# lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
+
+plot_mean_ci(lamb_d100, is_var_d100_reps, xlab = expression(lambda), 
      ylab ="Importance sampling asymptotic variance")
 lines(abline(v=opt_win, col=c("blue", "blue"), lty=c(2,2), lwd=c(1, 1)))
 dev.off()
